@@ -6,7 +6,7 @@ import (
 
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/minim/panel"
+	"github.com/codemodify/uitoolkit/skingen/panel"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
 )
