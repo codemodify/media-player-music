@@ -1,0 +1,19 @@
+# Go build output
+/media-player-music
+*.exe
+*.test
+*.out
+
+# Coverage and profiles
+*.prof
+coverage.*
+
+# Screenshots written by -shot
+/shots/
+/out/
+
+# Editors and OS
+.idea/
+.vscode/
+*~
+.DS_Store
