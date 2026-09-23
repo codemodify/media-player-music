@@ -11,7 +11,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/media-player-music/internal/players/minim/panel"
+	"github.com/codemodify/uitoolkit/skingen/panel"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
 	"github.com/codemodify/uitoolkit/widgets"
