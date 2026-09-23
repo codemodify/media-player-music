@@ -82,7 +82,7 @@ func newQueuePane(p *Player) *queuePane {
 
 	// A filter that filters nothing: the field is here because a playlist
 	// window of this shape had one, and because it is the one control in
-	// all three players that takes text — which is what proves the bare
+	// the whole application that takes text — which is what proves the bare
 	// letters the transport uses are not stealing keys from a text field.
 	q.search = widgets.NewTextField("", "Filter the queue", func(s string) { q.filter(s) })
 	q.search.SetAccessibleName("Filter")

@@ -6,8 +6,8 @@
 // It is a **visual demo**. Nothing is decoded and nothing is played; the
 // status bar says so and so does the About box.
 //
-// The switch is the point of this one. A skin in this toolkit is a *pack* —
-// it lists in Settings beside the other hundred and twenty-odd, it is chosen
+// The switch is the point of this one. A skin is an ordinary theme *pack* —
+// it lists in the toolkit's Settings beside every other theme, it is chosen
 // by the same preference, and applying one is the same call as applying
 // Breeze. So "show me this app without its skin" is not a mode the app has
 // to implement: it is style.WithAppearance with a different pack id, the

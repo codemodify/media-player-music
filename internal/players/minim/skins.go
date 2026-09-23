@@ -94,7 +94,7 @@ func (p *Player) DropSkin() {
 // it opens from, and the strip is a hundred and sixteen design pixels tall:
 // a fifth row, a separator or a shortcut column would have the menu scroll
 // or cut its own labels off in the one window it is most often opened from.
-// The keys are on the skin key's name and in docs/players.md instead.
+// The keys are on the skin key's name and in docs/faces.md instead.
 func (p *Player) skinMenu(from widget.Component, at paintengine2d.Point) {
 	cur := p.Worn()
 	var items []*widgets.MenuItem
