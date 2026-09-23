@@ -330,9 +330,6 @@ func (s *Shell) Keys(w *app.Window, e widget.KeyEvent) bool {
 	return false
 }
 
-// KeyHelp is the line the faces show for the keys they share.
-const KeyHelp = players.KeyHelp + " · Ctrl+F face · Ctrl+K skin"
-
 // ---- what is remembered ---------------------------------------------------------
 
 // packs are the skins of the face being put on.

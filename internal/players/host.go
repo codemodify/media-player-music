@@ -88,16 +88,6 @@ type Host struct {
 // a face on its own, as a test opens one.
 func NewHost(a *app.Application) *Host { return &Host{App: a, Model: NewModel()} }
 
-// Transport, Spectrum and Equaliser are the model, for a face that would
-// otherwise reach through two fields to say anything.
-func (h *Host) Transport() *Transport { return h.Model.Transport }
-
-// Spectrum is the analyser's model.
-func (h *Host) Spectrum() *Spectrum { return h.Model.Spectrum }
-
-// Equaliser is the curve every face that shows one shares.
-func (h *Host) Equaliser() *Equalizer { return h.Model.Equaliser }
-
 // Command runs a transport command through the application, so the clock is
 // running behind whatever it started.
 func (h *Host) Command(c Command) {
