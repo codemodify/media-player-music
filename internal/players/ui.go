@@ -1026,6 +1026,8 @@ func Typing(c widget.Component) bool {
 	return false
 }
 
-// KeyHelp is the line every player shows for its keys, so the three agree
-// and a screenshot of one explains the others.
-const KeyHelp = "Space play/pause · Z/B track · V stop · ←/→ seek · ↑/↓ volume · M mute · S shuffle · R repeat"
+// KeyHelp is the line every face shows for its keys, so the three agree and
+// a screenshot of one explains the others. The last two are the
+// application's rather than the transport's, and work in every window of
+// every face.
+const KeyHelp = "Space play/pause · Z/B track · V stop · ←/→ seek · ↑/↓ volume · M mute · S shuffle · R repeat · Ctrl+F face · Ctrl+K skin"
