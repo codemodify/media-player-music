@@ -19,7 +19,9 @@ func open(t *testing.T, pack string, scale float32) (*uitoolkit.Application, *Pl
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, pack)
 	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
-	p, err := New(a, Options{Headless: true, Scale: scale})
+	h := players.NewHost(a)
+	h.Packs = func() []string { return []string{Skin} }
+	p, err := New(h, Options{Headless: true, Scale: scale})
 	if err != nil {
 		t.Fatal(err)
 	}

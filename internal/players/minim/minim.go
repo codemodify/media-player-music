@@ -51,8 +51,11 @@ const (
 // it was drawn for.
 const Skin = "minim"
 
-// Player is the three windows and the one model under them.
+// Player is the three windows and the one model under them. The model is
+// the application's (players.Host): this face shows it, and putting on
+// another face leaves it exactly where it was.
 type Player struct {
+	Host *players.Host
 	App  *app.Application
 	Desk *rack.Desk
 
@@ -64,7 +67,8 @@ type Player struct {
 	strip          *strip
 	eqPane         *eqPane
 	listPane       *listPane
-	pulse          *players.Pulse
+	// dropLook takes the look watcher off again when the face is closed.
+	dropLook func()
 
 	// iMain, iEq, iList are the panes in the desk's rack.
 	iMain, iEq, iList int
@@ -74,10 +78,6 @@ type Player struct {
 	stacked bool
 	tries   int
 
-	// lastSkin is the skin Ctrl+Shift+K puts back; remember is whether a
-	// switch is written down for the next run.
-	lastSkin string
-	remember bool
 	// auto is the equaliser's AUTO key: a preset per track. lastTrack is the
 	// track it last chose for, so it chooses once per track and then leaves
 	// the faders to whoever moves them.
@@ -92,23 +92,24 @@ type Options struct {
 	Scale float32
 	// NoEq and NoList open the main strip on its own.
 	NoEq, NoList bool
-	// Remember writes a skin switch down for the next run (skins.go).
-	Remember bool
 }
 
-// New opens the player's windows and wires them to one model.
-func New(a *app.Application, opts Options) (*Player, error) {
-	list := players.NewLibrary()
+// New opens the player's windows on the application's own model.
+func New(h *players.Host, opts Options) (*Player, error) {
+	a := h.App
 	p := &Player{
+		Host:      h,
 		App:       a,
-		Transport: players.NewTransport(list),
-		Spectrum:  players.NewSpectrum(20),
-		Equaliser: players.NewEqualizer(),
+		Transport: h.Model.Transport,
+		Spectrum:  h.Model.Spectrum,
+		Equaliser: h.Model.Equaliser,
 		iEq:       -1,
 		iList:     -1,
-		remember:  opts.Remember,
 		lastTrack: -1,
 	}
+	// This face's analyser falls a little faster than the others: its
+	// window is a hundred and sixteen design pixels tall and a marker that
+	// hangs about is a marker in the way.
 	p.Spectrum.Fall = 0.7
 
 	main, err := p.open(a, opts, "Minim — a visual demo", layoutStrip, StripW, StripH)
@@ -150,14 +151,10 @@ func New(a *app.Application, opts Options) (*Player, error) {
 
 	p.Transport.Changed = p.refresh
 	p.Equaliser.Changed = p.refresh
-	p.pulse = players.NewPulse(70*time.Millisecond, p.advance)
-	if isSkin(p.Worn()) {
-		p.lastSkin = p.Worn()
-	}
 	// A look can change under the player from outside it too — Settings,
 	// an edited look.json, UITK_THEME on a watcher — and the titles and the
 	// focus follow the face whichever way it changed.
-	a.OnLookChange(p.restyle)
+	p.dropLook = a.OnLookChange(p.restyle)
 	p.restyle()
 	p.refresh()
 	// Something in every window has the keyboard from the first frame. A
@@ -198,14 +195,35 @@ func (p *Player) open(a *app.Application, opts Options, title, role string, w, h
 	return win, nil
 }
 
-// Start begins the clock and shows the windows.
-func (p *Player) Start() {
-	p.Transport.Play()
-	p.pulse.Start(p.Main)
+// Close takes the face off: its windows go, and the model they were showing
+// stays exactly as it is.
+func (p *Player) Close() {
+	if p.dropLook != nil {
+		p.dropLook()
+		p.dropLook = nil
+	}
+	for _, w := range []*app.Window{p.List, p.Eq, p.Main} {
+		if w != nil {
+			w.Close()
+		}
+	}
 }
 
-// Pulse is the clock, for a test that wants to drive it by hand.
-func (p *Player) Pulse() *players.Pulse { return p.pulse }
+// Windows are the face's windows, named, for a caller taking a picture of
+// each.
+func (p *Player) Windows() []players.NamedWindow {
+	out := []players.NamedWindow{{Name: "strip", Window: p.Main}}
+	if p.Eq != nil {
+		out = append(out, players.NamedWindow{Name: "equaliser", Window: p.Eq})
+	}
+	if p.List != nil {
+		out = append(out, players.NamedWindow{Name: "playlist", Window: p.List})
+	}
+	return out
+}
+
+// MainWindow is the window the application's clock wakes on.
+func (p *Player) MainWindow() *app.Window { return p.Main }
 
 // Pose puts the player in a stated position with the analyser advanced to
 // match, and touches no clock at all.
@@ -216,22 +234,21 @@ func (p *Player) Pulse() *players.Pulse { return p.pulse }
 // analyser is in the same shape, because the analyser is a function of the
 // position and not of a timer.
 func (p *Player) Pose(pos time.Duration) {
-	p.Transport.State = players.Playing
-	p.Transport.Pos = pos
-	p.Spectrum.Reset()
-	p.Spectrum.Advance(pos, true, 250*time.Millisecond)
+	p.Host.Pose(pos)
 	p.refresh()
 }
 
-// advance is one tick: the transport, the analyser, and a look at where the
-// desktop has put the windows.
-func (p *Player) advance(dt time.Duration) {
-	p.Transport.Tick(dt)
-	p.Spectrum.Advance(p.Transport.Pos, p.Transport.State == players.Playing, dt)
+// Advance is what this face does on each of the application's ticks, beyond
+// the model the application has already moved: it looks at where the desktop
+// has put the three windows.
+func (p *Player) Advance(time.Duration) {
 	p.settle()
 	p.Desk.Follow()
 	p.refresh()
 }
+
+// Refresh puts the model back into the controls.
+func (p *Player) Refresh() { p.refresh() }
 
 // settle builds the stack once the desktop has said where it put the
 // windows, and then never again.
@@ -295,14 +312,9 @@ func (p *Player) refresh() {
 	}
 }
 
-// Command runs one of the shared transport commands, and keeps the clock
-// running when it starts something.
-func (p *Player) Command(c players.Command) {
-	p.Transport.Do(c)
-	if p.Transport.State == players.Playing {
-		p.pulse.Start(p.Main)
-	}
-}
+// Command runs one of the shared transport commands through the
+// application, which keeps the clock going behind it.
+func (p *Player) Command(c players.Command) { p.Host.Command(c) }
 
 // Keys is the handler every one of the three windows shares, so the keys
 // work wherever the focus is. It returns false for anything it does not
@@ -313,24 +325,12 @@ func (p *Player) Command(c players.Command) {
 // one: the guard below asks what has the keyboard, and in a player with
 // three windows that is a different answer in each.
 func (p *Player) Keys(w *app.Window, e widget.KeyEvent) bool {
-	if e.Key == platform.KeyEscape {
-		p.App.Quit()
-		return true
-	}
 	if p.skinKeys(w, e, w.Content()) {
 		return true
 	}
-	if players.Typing(w.Focus()) {
-		// The focus is in something that takes text: its letters are its
-		// own. Nothing the transport answers to is a modifier chord, so
-		// there is nothing left to try.
-		return false
-	}
-	if c := players.CommandFor(e); c != players.CmdNone {
-		p.Command(c)
-		return true
-	}
-	return false
+	// Everything else — the transport table, the face switch, Escape — is
+	// the application's, and is the same in every face.
+	return p.Host.Keys(w, e)
 }
 
 // Status is the one line the strip shows about itself, and what the

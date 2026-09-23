@@ -1,10 +1,6 @@
 package minim
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
-
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/style"
@@ -14,8 +10,8 @@ import (
 
 // The skin switch.
 //
-// Minim wears three skins, and changing between them is the call Settings
-// makes for any theme — a skin is a pack, so choosing one is choosing the
+// This face wears three skins, and changing between them is the call
+// Settings makes for any theme — a skin is a pack, so choosing one is choosing the
 // appearance's pack id and rebuilding the look. Every window of the
 // application follows, because that is what Application.SetLook does, and
 // nothing in the widget tree is rebuilt: the faces (face.go) move and
@@ -31,10 +27,9 @@ import (
 //   - a menu listing the skins by name, on a right-click anywhere on the
 //     face of any window, or on the menu key (Shift+F10) from the keyboard.
 //
-// The choice is kept for the next run in $XDG_CONFIG_HOME/uitoolkit/
-// minim.json, the one piece of state the player keeps; examples/minim reads
-// it back before it builds the application, since the look is chosen when
-// the application is.
+// The switching itself is the application's (players.Host): a skin is a
+// pack, the same call whichever face asks for it, and the choice is written
+// down per face in the application's settings for the next run.
 
 // The skins, and the pack the skin drops to.
 const (
@@ -66,62 +61,30 @@ func SkinLabel(id string) string {
 }
 
 // Worn is the pack the player is wearing now.
-func (p *Player) Worn() string { return style.LookAppearance(p.App.Look()).Name }
+func (p *Player) Worn() string { return p.Host.Worn() }
 
-// SetSkin puts the player in a pack — one of its skins, or any other — and
-// remembers the choice for the next run.
+// SetSkin puts the player in a pack — one of its skins, or any other. The
+// application applies it to every window it has and remembers the choice.
 func (p *Player) SetSkin(id string) {
-	if id == "" {
-		return
-	}
-	if isSkin(id) {
-		p.lastSkin = id
-	}
-	ap := style.LookAppearance(p.App.Look())
-	ap.FollowDesktop = false
-	ap.Name = id
-	p.App.SetLook(style.WithAppearance(p.App.Look(), ap))
-	if p.remember {
-		_ = Remember(id)
-	}
+	p.Host.SetSkin(id)
 	p.restyle()
 	p.refresh()
 }
 
-// NextSkin steps to the next of Minim's skins, and from the themed fallback
-// back to the first.
+// NextSkin steps to the next of this face's skins, and from the themed
+// fallback back to the first.
 func (p *Player) NextSkin() {
-	cur := p.Worn()
-	for i, id := range Skins {
-		if id == cur {
-			p.SetSkin(Skins[(i+1)%len(Skins)])
-			return
-		}
-	}
-	p.SetSkin(Skins[0])
+	p.Host.NextSkin()
+	p.restyle()
+	p.refresh()
 }
 
 // DropSkin drops the skin for the themed fallback, or puts back the skin
 // that was dropped.
 func (p *Player) DropSkin() {
-	if isSkin(p.Worn()) {
-		p.SetSkin(Themed)
-		return
-	}
-	last := p.lastSkin
-	if last == "" {
-		last = Skin
-	}
-	p.SetSkin(last)
-}
-
-func isSkin(id string) bool {
-	for _, s := range Skins {
-		if s == id {
-			return true
-		}
-	}
-	return false
+	p.Host.DropSkin()
+	p.restyle()
+	p.refresh()
 }
 
 // skinMenu opens the menu of skins at a point in from's window: the three
@@ -181,47 +144,4 @@ func (p *Player) rightClick(c widget.Component, e widget.MouseEvent) bool {
 	o := widget.DeviceOrigin(c)
 	p.skinMenu(c, paintengine2d.Pt(o.X+e.Pos.X, o.Y+e.Pos.Y))
 	return true
-}
-
-// ---- remembering it --------------------------------------------------------------
-
-// stateFile is where the choice is kept.
-func stateFile() string { return filepath.Join(style.ConfigDir(), "minim.json") }
-
-type savedState struct {
-	Skin string `json:"skin"`
-}
-
-// Remembered is the pack the player was last switched to, or "" when it
-// never was or the file says something this build cannot wear.
-func Remembered() string {
-	b, err := os.ReadFile(stateFile())
-	if err != nil {
-		return ""
-	}
-	var s savedState
-	if json.Unmarshal(b, &s) != nil || s.Skin == "" {
-		return ""
-	}
-	if _, ok := style.LoadTheme(s.Skin); !ok && !style.IsSkin(s.Skin) {
-		return ""
-	}
-	return s.Skin
-}
-
-// Remember keeps a pack as the one to start in next time.
-func Remember(id string) error {
-	path := stateFile()
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return err
-	}
-	b, err := json.MarshalIndent(savedState{Skin: id}, "", "  ")
-	if err != nil {
-		return err
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(b, '\n'), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
 }

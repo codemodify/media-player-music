@@ -23,7 +23,11 @@ func open(t *testing.T, pack string, scale float32) (*uitoolkit.Application, *Pl
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, pack)
 	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
-	p, err := New(a, Options{Headless: true, Scale: scale})
+	// The face on its own, with a model of its own: a host with no
+	// application behind it is what a face's own tests open it with.
+	h := players.NewHost(a)
+	h.Packs = func() []string { return Skins }
+	p, err := New(h, Options{Headless: true, Scale: scale})
 	if err != nil {
 		t.Fatal(err)
 	}
