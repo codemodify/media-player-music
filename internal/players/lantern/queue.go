@@ -3,9 +3,9 @@ package lantern
 import (
 	"fmt"
 
+	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/uitoolkit/layout"
 	"github.com/codemodify/uitoolkit/rack"
 	"github.com/codemodify/uitoolkit/style"

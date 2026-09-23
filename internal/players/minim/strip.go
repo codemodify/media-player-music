@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/uitoolkit/layout"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
@@ -56,20 +56,17 @@ func newStrip(p *Player) *strip {
 	// The seek bar is a fader on its side rather than the toolkit's slider,
 	// because a panel draws its thumb as a picture and the toolkit's slider
 	// draws its own. The clock does not move it while the pointer does.
-	s.seek = players.NewFader(0, 1, 0, "Seek", func(v float32) { p.Transport.Seek(v) })
-	s.seek.Horizontal = true
+	s.seek = players.NewBar(0, 1, 0, "Seek", func(v float32) { p.Transport.Seek(v) })
 	s.seek.Step, s.seek.Page = 0.02, 0.1
 	s.seek.Format = func(v float32) string {
 		n := p.Transport.Length()
 		return players.Clock(time.Duration(float64(n)*float64(v))) + " of " + players.Clock(n)
 	}
-	s.volume = players.NewFader(0, 100, p.Transport.Volume*100, "Volume", func(v float32) {
+	s.volume = players.NewBar(0, 100, p.Transport.Volume*100, "Volume", func(v float32) {
 		p.Transport.SetVolume(v / 100)
 	})
-	s.volume.Horizontal = true
 	s.volume.Format = func(v float32) string { return fmt.Sprintf("%d%%", int(v+0.5)) }
-	s.balance = players.NewFader(-1, 1, p.Transport.Pan, "Balance", func(v float32) { p.Transport.SetPan(v) })
-	s.balance.Horizontal = true
+	s.balance = players.NewBar(-1, 1, p.Transport.Pan, "Balance", func(v float32) { p.Transport.SetPan(v) })
 	s.balance.Format = balanceText
 
 	s.prev = players.NewGlyphButton(players.GlyphPrev, "Previous track", func() { p.Command(players.CmdPrev) })

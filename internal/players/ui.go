@@ -10,6 +10,7 @@ import (
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
+	"github.com/codemodify/uitoolkit/widgets"
 )
 
 // The pieces of interface all three players share.
@@ -203,51 +204,48 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 
 // ---- a transport button ------------------------------------------------------
 
-// GlyphButton is a transport control: one of the look's faces with a glyph
-// painted on it.
+// GlyphButton is a transport control: the toolkit's own tool button with one
+// of the marks painted on its face.
 //
-// It is an ordinary component and that is the whole point of it. It takes
-// the focus, Return and Space work it, it names itself in the accessibility
-// tree, and ShapeRole hands the look the face it paints — so a skin whose
-// art for that face is a disc decides where the button really is, and a
-// press in the corner of its box falls through to whatever is behind.
+// It is a [widgets.ToolButton] and almost nothing else. The button's focus,
+// its keyboard, its press dragged off and back on, its tooltip, its node in
+// the accessibility tree and its silhouette are the toolkit's; what this
+// adds is the mark, the label a glyph cannot carry, and a way in for a skin
+// that draws the key as a picture of its own.
+//
+// It used to be a component of its own — three hundred lines of presses,
+// keys and accessibility that a button already had — because a button could
+// not be painted by its app. widgets.ButtonPainter and widgets.ButtonShaper
+// are what let it go.
 type GlyphButton struct {
-	widget.Base
+	widgets.ToolButton
+	// Glyph is the mark, and Label what the button is called: its
+	// accessible name and its tooltip. A glyph has no text to fall back
+	// on, so the label is not optional and a11y.Check says so when it is
+	// missing.
 	Glyph Glyph
-	// Label is what the button is called: its accessible name and its
-	// tooltip. A glyph has no text to fall back on, so this is not
-	// optional and a11y.Check says so when it is missing.
 	Label string
-	// Role is the face it paints. RoleTool is the transport row's — a mark
-	// on the shell that grows a face under the pointer; RoleButton is a
-	// push button with a face of its own at rest.
-	Role style.Role
-	// Checked draws the button in its on state (shuffle, repeat, the
-	// playlist toggle) and says so in the accessibility tree.
-	Checked bool
-	// Toggle makes it a toggle for a screen reader's benefit rather than a
-	// button that happens to look pressed.
-	Toggle  bool
-	OnClick func()
-	// Painter, when set, paints the button in place of the look's face and
-	// the glyph, and reports whether it did. It is how a player whose skin
-	// draws each key as a picture of its own puts that picture on an
-	// ordinary button: the button is still the component, the art is only
-	// what it looks like, and a look the painter has nothing for falls back
-	// to the face and the mark.
-	Painter func(ctx *paintengine2d.Context, b paintengine2d.Rect, st style.ControlState) bool
-	// Shaper, when set, is the silhouette of what Painter paints, for a
-	// box of size — a round key painted as a picture takes the pointer on
-	// the picture (widget.ArtShape). Nil, or a nil answer, leaves the
-	// button to its face's shape.
-	Shaper func(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette
-
-	hovered, pressed, outside bool
+	// Push draws the key as the look's *push button* rather than as the
+	// mark on the shell a tool face is: the transport row of a player big
+	// enough to have faces at rest. It changes nothing else — the button
+	// is the same component either way.
+	Push bool
+	// Art, when set, paints the key from a skin's own art and reports
+	// whether it did; it is tried before the look's face and the mark. It
+	// is the player's way of putting a picture on an ordinary button: the
+	// button is still the component, the art is only what it looks like,
+	// and a look the art has nothing for falls back to the face and the
+	// mark. [widgets.ToolButton.Shaper] is where the art says where it
+	// really is.
+	Art func(ctx *paintengine2d.Context, b paintengine2d.Rect, st style.ControlState) bool
 }
 
 // NewGlyphButton is a transport button on the tool face.
 func NewGlyphButton(g Glyph, label string, on func()) *GlyphButton {
-	b := &GlyphButton{Glyph: g, Label: label, Role: style.RoleTool, OnClick: on}
+	b := &GlyphButton{Glyph: g, Label: label}
+	b.OnClick = on
+	b.Tip = label
+	b.Painter = b.paint
 	b.Init(b)
 	b.SetWantsFocus(true)
 	b.SetFocusVisibleOnly(true)
@@ -255,20 +253,37 @@ func NewGlyphButton(g Glyph, label string, on func()) *GlyphButton {
 	return b
 }
 
-// Tooltip is the button's label, since its face has no words on it.
-func (b *GlyphButton) Tooltip() string { return b.Label }
-
-// ShapeRole is the face the button paints, so a skin that gives that face a
-// silhouette decides where the pointer has to be.
-func (b *GlyphButton) ShapeRole() style.Role { return b.Role }
-
-// ArtShape is the silhouette of the picture Painter paints, when the button
-// is painted as one (Shaper).
-func (b *GlyphButton) ArtShape(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
-	if b.Shaper == nil {
-		return nil
+// paint is the face under the mark: the skin's art where there is any, and
+// otherwise the look's own face with the mark drawn on it. The focus ring is
+// drawn over whatever it paints by the button itself — a painter never gets
+// to leave the ring out.
+func (b *GlyphButton) paint(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+	lk := b.Look()
+	if b.Art != nil && b.Art(ctx, r, st) {
+		return true
 	}
-	return b.Shaper(lk, size)
+	if b.Push {
+		// A push face is a face at rest, so the auto-raise the tool face
+		// asks for is taken back off.
+		lk.DrawButton(ctx, r, st&^style.StateAutoRaise, "")
+	} else {
+		lk.DrawToolButton(ctx, r, st, "", style.IconNone)
+	}
+	DrawGlyph(ctx, r, b.Glyph, GlyphInk(lk, st), style.Dip(lk, 1.6))
+	return true
+}
+
+// Describe is the tool button's node with the label a glyph cannot carry.
+// The tooltip is the label too, and a reader that said it twice would be
+// reading the same word twice, so it is not also the description.
+func (b *GlyphButton) Describe(n *a11y.Node) {
+	b.ToolButton.Describe(n)
+	if n.Name == "" {
+		n.Name = b.Label
+	}
+	if n.Description == n.Name {
+		n.Description = ""
+	}
 }
 
 // SetGlyph swaps the mark — play becomes pause — and repaints.
@@ -277,58 +292,9 @@ func (b *GlyphButton) SetGlyph(g Glyph, label string) {
 		return
 	}
 	b.Glyph, b.Label = g, label
+	b.Tip = label
 	b.SetAccessibleName(label)
 	b.Invalidate()
-}
-
-// SetChecked turns the button on or off.
-func (b *GlyphButton) SetChecked(on bool) {
-	if b.Checked == on {
-		return
-	}
-	b.Checked = on
-	b.Invalidate()
-}
-
-// PaintState is the state the face is painted in.
-func (b *GlyphButton) PaintState() style.ControlState {
-	st := b.State()
-	if b.hovered && !b.outside {
-		st |= style.StateHovered
-	}
-	if b.pressed && !b.outside {
-		st |= style.StatePressed
-	}
-	if b.Checked {
-		st |= style.StateChecked
-	}
-	return st
-}
-
-func (b *GlyphButton) Measure(c layout.Constraints) paintengine2d.Point {
-	h := b.Look().Metrics().ControlH
-	return c.Constrain(paintengine2d.Pt(h, h))
-}
-
-func (b *GlyphButton) Arrange(r paintengine2d.Rect) { b.SetBounds(r) }
-
-func (b *GlyphButton) Paint(ctx *paintengine2d.Context) {
-	lk, r := b.Look(), b.LocalBounds()
-	st := b.PaintState()
-	if b.Painter != nil && b.Painter(ctx, r, st) {
-		// A picture of a key is still a key, and a key the keyboard is on
-		// says so: the painter never gets to leave the ring out.
-		if st.Focused() {
-			lk.DrawFocusRing(ctx, r)
-		}
-		return
-	}
-	if b.Role == style.RoleButton {
-		lk.DrawButton(ctx, r, st, "")
-	} else {
-		lk.DrawToolButton(ctx, r, st, "", style.IconNone)
-	}
-	DrawGlyph(ctx, r, b.Glyph, GlyphInk(lk, st), style.Dip(lk, 1.6))
 }
 
 // GlyphInk is the colour a mark is drawn in for a control state.
@@ -349,95 +315,6 @@ func GlyphInk(lk style.LookAndFeel, st style.ControlState) paintengine2d.Color {
 		return pal.TextMuted
 	}
 	return pal.Text
-}
-
-func (b *GlyphButton) MouseEnter() { b.hovered = true; b.Base.MouseEnter() }
-
-func (b *GlyphButton) MouseExit() {
-	b.hovered, b.pressed = false, false
-	b.Base.MouseExit()
-}
-
-// MousePress takes the primary button only: a right-click on a key is a
-// right-click on the face it sits in, and bubbles there, rather than a
-// press of the key.
-func (b *GlyphButton) MousePress(e widget.MouseEvent) bool {
-	if !b.Enabled() || e.Button != platform.ButtonLeft {
-		return false
-	}
-	b.MarkPointerFocus()
-	b.RequestFocus()
-	b.pressed = true
-	b.Invalidate()
-	return true
-}
-
-// MouseMove tracks a press dragged off the button and back on, exactly as
-// widgets.Button does: it pops up, and releasing outside does not click.
-func (b *GlyphButton) MouseMove(e widget.MouseEvent) bool {
-	if !b.pressed {
-		return false
-	}
-	if out := !b.LocalBounds().Contains(e.Pos); out != b.outside {
-		b.outside = out
-		b.Invalidate()
-	}
-	return true
-}
-
-func (b *GlyphButton) MouseRelease(e widget.MouseEvent) bool {
-	was := b.pressed
-	b.pressed, b.outside = false, false
-	b.Invalidate()
-	if was && b.LocalBounds().Contains(e.Pos) && b.Enabled() {
-		b.fire()
-	}
-	return true
-}
-
-func (b *GlyphButton) KeyPress(e widget.KeyEvent) bool {
-	if !b.Enabled() {
-		return false
-	}
-	if e.Key == platform.KeyReturn || e.Key == platform.KeySpace {
-		b.MarkKeyboardFocus()
-		b.fire()
-		return true
-	}
-	return false
-}
-
-func (b *GlyphButton) fire() {
-	if b.OnClick != nil {
-		b.OnClick()
-	}
-}
-
-// Describe puts the button in the accessibility tree as what it is: a
-// button, or a toggle when it is one, with the label its glyph does not
-// have.
-func (b *GlyphButton) Describe(n *a11y.Node) {
-	n.Role = a11y.RoleButton
-	if b.Toggle {
-		n.Role = a11y.RoleToggleButton
-	}
-	if n.Name == "" {
-		n.Name = b.Label
-	}
-	if b.Checked {
-		n.State |= a11y.StateChecked | a11y.StatePressed
-	}
-	n.Actions = n.Actions.With(a11y.ActionDefault)
-}
-
-// AccessibleAction runs the button from the accessibility tree, which is
-// what a screen reader's "press" does.
-func (b *GlyphButton) AccessibleAction(a a11y.Action) bool {
-	if a != a11y.ActionDefault || !b.Enabled() {
-		return false
-	}
-	b.fire()
-	return true
 }
 
 // ---- text a display needs and a look does not offer --------------------------
@@ -551,54 +428,57 @@ func ScrollK(lk style.LookAndFeel, over float32, pos time.Duration) float64 {
 
 // ---- a fader -----------------------------------------------------------------
 
-// Fader is a slider stood on end.
+// Fader is the toolkit's slider with the few things a player's fader has and
+// a general-purpose slider does not: a label, a reading a screen reader can
+// say out loud, and a step and a page of the app's own choosing.
 //
-// The toolkit's widgets.Slider is horizontal — it measures its height from
-// the look's slider metric and draws along its width — and an equaliser is
-// the one control that has to be vertical, because ten of them side by side
-// *is* the control and a row of horizontal ones is a form. So this is a
-// component of its own rather than a flag on that one, and it paints through
-// the same three parts a slider does (slider.track, slider.fill,
-// slider.thumb) by asking the look to draw a slider into a box it has
-// rotated, which is what keeps a skinned fader skinned.
+// It is a [widgets.Slider] — the same component, the same track, fill and
+// thumb, the same skin parts — stood on end by widgets.Slider.Vertical, and
+// painted by a skin through widgets.SliderPainter where the art is a picture
+// of a thumb riding a printed groove. Every line of the drag, the press on
+// the track, the paint and the rotation is the toolkit's.
+//
+// What is left here is the app's: ten of these side by side *are* an
+// equaliser, and an equaliser's fader says "+4.5 dB" rather than "4.5".
 type Fader struct {
-	widget.Base
-	Min, Max, Value float32
-	// Step is one press of an arrow key, and Page one of Page Up or Down.
-	Step, Page float32
+	widgets.Slider
 	// Label is the fader's accessible name: "62 Hz", "Preamp".
-	Label    string
-	OnChange func(float32)
+	Label string
 	// Format turns the value into what a screen reader reads and what a
 	// tooltip shows ("+4.5 dB"). Nil reads the bare number.
 	Format func(float32) string
-	// Horizontal lays the fader on its side: a seek bar, a volume or a
-	// balance slider that a skin draws as a picture of its own. The
-	// toolkit's slider is horizontal already; this is for the one whose
-	// art is not the look's slider parts.
-	Horizontal bool
-	// Painter, when set, paints the fader in place of the look's slider
-	// and reports whether it did; t is the value as a fraction of the
-	// range. It is what lets a skin draw an orange volume bar beside a
-	// green balance bar, which one set of slider parts cannot say. The
-	// focus ring is drawn either way.
-	Painter func(ctx *paintengine2d.Context, b paintengine2d.Rect, t float32, st style.ControlState) bool
-	// Travel is how far in from each end the thumb's centre stops, in
-	// design pixels: half the thumb a painter draws, so the pointer and
-	// the picture agree about where the ends are. Zero keeps the default.
-	Travel float32
-
-	hovered, drag bool
+	// Step is one press of an arrow key, and Page one of Page Up or Down.
+	// Zero leaves both to the slider.
+	Step, Page float32
 }
 
-// NewFader is a fader over a range.
+// NewFader is a fader over a range: a slider stood on end, where up is more.
 func NewFader(min, max, value float32, label string, on func(float32)) *Fader {
+	f := newFader(min, max, value, label, on)
+	f.Vertical = true
+	f.SetPreferred(28, 160)
+	return f
+}
+
+// NewBar is the same control lying down: a seek bar, a volume or a balance
+// slider. It is what widgets.NewSlider makes, with the label and the reading
+// on it.
+func NewBar(min, max, value float32, label string, on func(float32)) *Fader {
+	f := newFader(min, max, value, label, on)
+	f.SetPreferred(160, 28)
+	return f
+}
+
+func newFader(min, max, value float32, label string, on func(float32)) *Fader {
 	if max <= min {
 		max = min + 1
 	}
-	f := &Fader{Min: min, Max: max, Value: value, Label: label, OnChange: on}
+	f := &Fader{Label: label}
+	f.Min, f.Max, f.Value, f.OnChange = min, max, value, on
 	f.Step = (max - min) / 24
 	f.Page = (max - min) / 4
+	// The component the tree holds is this one, so its own Describe,
+	// Tooltip and keyboard are the ones that are asked for.
 	f.Init(f)
 	f.SetWantsFocus(true)
 	f.SetFocusVisibleOnly(true)
@@ -606,26 +486,9 @@ func NewFader(min, max, value float32, label string, on func(float32)) *Fader {
 	return f
 }
 
-// SetValue moves the fader, clamped, and tells its owner.
-func (f *Fader) SetValue(v float32) {
-	if v < f.Min {
-		v = f.Min
-	}
-	if v > f.Max {
-		v = f.Max
-	}
-	if v == f.Value {
-		return
-	}
-	f.Value = v
-	f.Invalidate()
-	if f.OnChange != nil {
-		f.OnChange(v)
-	}
-}
-
-// Set moves the fader without telling its owner — for a preset that moves
-// ten of them at once and reports the change itself.
+// Set moves the fader without telling its owner — for a clock that moves a
+// seek bar, or a preset that moves ten faders at once and reports the change
+// itself.
 func (f *Fader) Set(v float32) {
 	on := f.OnChange
 	f.OnChange = nil
@@ -642,148 +505,38 @@ func (f *Fader) Tooltip() string {
 }
 
 // Dragging reports whether the pointer is moving the fader, so a model that
-// also moves it — a clock under a seek bar — can keep its hands off.
-func (f *Fader) Dragging() bool { return f.drag }
+// also moves it — a clock under a seek bar — can keep its hands off. The
+// slider says so itself, in the state it paints in.
+func (f *Fader) Dragging() bool { return f.PaintState().Pressed() }
 
 // Fraction is the value as a fraction of the range, 0 at Min.
-func (f *Fader) Fraction() float32 { return f.t() }
-
-func (f *Fader) t() float32 {
+func (f *Fader) Fraction() float32 {
 	if f.Max <= f.Min {
 		return 0
 	}
 	return (f.Value - f.Min) / (f.Max - f.Min)
 }
 
-func (f *Fader) Measure(c layout.Constraints) paintengine2d.Point {
-	lk := f.Look()
-	if f.Horizontal {
-		return c.Constrain(paintengine2d.Pt(style.Dip(lk, 64), lk.Metrics().SliderH+style.Dip(lk, 8)))
-	}
-	return c.Constrain(paintengine2d.Pt(lk.Metrics().SliderH+style.Dip(lk, 8), style.Dip(lk, 64)))
-}
-
-func (f *Fader) Arrange(r paintengine2d.Rect) { f.SetBounds(r) }
-
-// Paint asks the look for a horizontal slider inside a rotated frame, so a
-// fader is painted from the same sprites a slider is and needs no art of its
-// own. The value is turned over with the frame: up is more.
-func (f *Fader) Paint(ctx *paintengine2d.Context) {
-	lk, b := f.Look(), f.LocalBounds()
-	if b.Dx() <= 0 || b.Dy() <= 0 {
-		return
-	}
-	st := f.State()
-	if f.hovered {
-		st |= style.StateHovered
-	}
-	if f.drag {
-		st |= style.StatePressed
-	}
-	if f.Painter != nil && f.Painter(ctx, b, f.t(), st) {
-		if st.Focused() {
-			lk.DrawFocusRing(ctx, b)
-		}
-		return
-	}
-	if f.Horizontal {
-		lk.DrawSlider(ctx, b, st, f.t())
-		if f.Focused() {
-			lk.DrawFocusRing(ctx, b)
-		}
-		return
-	}
-	ctx.Save()
-	// Rotate about the box's centre, then draw the slider in the box with
-	// its width and height swapped.
-	cx, cy := (b.Min.X+b.Max.X)/2, (b.Min.Y+b.Max.Y)/2
-	ctx.Translate(cx, cy)
-	ctx.Rotate(-90 * 3.14159265 / 180)
-	ctx.Translate(-cy, -cx)
-	turned := paintengine2d.XYWH(b.Min.Y, b.Min.X, b.Dy(), b.Dx())
-	lk.DrawSlider(ctx, turned, st, f.t())
-	ctx.Restore()
-	if f.Focused() {
-		lk.DrawFocusRing(ctx, b)
-	}
-}
-
-func (f *Fader) MouseEnter() { f.hovered = true; f.Base.MouseEnter() }
-
-func (f *Fader) MouseExit() {
-	f.hovered, f.drag = false, false
-	f.Base.MouseExit()
-}
-
-func (f *Fader) MousePress(e widget.MouseEvent) bool {
-	if !f.Enabled() || e.Button != platform.ButtonLeft {
-		return false
-	}
-	f.MarkPointerFocus()
-	f.RequestFocus()
-	f.drag = true
-	f.setFrom(e.Pos)
-	return true
-}
-
-func (f *Fader) MouseMove(e widget.MouseEvent) bool {
-	if !f.drag {
-		return false
-	}
-	f.setFrom(e.Pos)
-	return true
-}
-
-func (f *Fader) MouseRelease(widget.MouseEvent) bool {
-	f.drag = false
-	f.Invalidate()
-	return true
-}
-
-// setFrom puts the value where the pointer is, with the track's ends
-// trimmed by half a thumb so the two extremes are reachable.
-func (f *Fader) setFrom(p paintengine2d.Point) {
-	b := f.LocalBounds()
-	long, at := b.Dy(), p.Y
-	if f.Horizontal {
-		long, at = b.Dx(), p.X
-	}
-	travel := f.Travel
-	if travel <= 0 {
-		travel = 8
-	}
-	pad := min(style.Dip(f.Look(), travel), long/4)
-	span := long - 2*pad
-	if span <= 0 {
-		return
-	}
-	t := clamp01((at - pad) / span)
-	if !f.Horizontal {
-		t = 1 - t
-	}
-	f.SetValue(f.Min + t*(f.Max-f.Min))
-}
-
+// KeyPress moves the fader by the app's own step and page, and takes Home
+// and End the way a control that stands on end is read: Home is the top.
+// Anything else is the slider's.
 func (f *Fader) KeyPress(e widget.KeyEvent) bool {
 	if !f.Enabled() {
 		return false
 	}
 	step, page := f.Step, f.Page
-	if step <= 0 {
-		step = (f.Max - f.Min) / 24
-	}
-	if page <= 0 {
-		page = (f.Max - f.Min) / 4
+	if step <= 0 || page <= 0 {
+		return f.Slider.KeyPress(e)
 	}
 	switch e.Key {
 	case platform.KeyUp, platform.KeyRight:
-		if e.Key == platform.KeyRight && !f.Horizontal {
+		if e.Key == platform.KeyRight && f.Vertical {
 			return false
 		}
 		f.MarkKeyboardFocus()
 		f.SetValue(f.Value + step)
 	case platform.KeyDown, platform.KeyLeft:
-		if e.Key == platform.KeyLeft && !f.Horizontal {
+		if e.Key == platform.KeyLeft && f.Vertical {
 			return false
 		}
 		f.MarkKeyboardFocus()
@@ -795,9 +548,8 @@ func (f *Fader) KeyPress(e widget.KeyEvent) bool {
 		f.MarkKeyboardFocus()
 		f.SetValue(f.Value - page)
 	case platform.KeyHome, platform.KeyEnd:
-		// Home is the top of a fader and the start of a bar on its side.
 		f.MarkKeyboardFocus()
-		if (e.Key == platform.KeyHome) != f.Horizontal {
+		if (e.Key == platform.KeyHome) == f.Vertical {
 			f.SetValue(f.Max)
 		} else {
 			f.SetValue(f.Min)
@@ -808,32 +560,32 @@ func (f *Fader) KeyPress(e widget.KeyEvent) bool {
 	return true
 }
 
-// Describe puts the fader in the tree as the vertical slider it is, with a
-// reading a screen reader can say out loud.
+// Describe is the slider's node with the app's name, reading and step on it.
 func (f *Fader) Describe(n *a11y.Node) {
-	n.Role = a11y.RoleSlider
-	if !f.Horizontal {
-		n.State |= a11y.StateVertical
-	}
+	f.Slider.Describe(n)
 	if n.Name == "" {
 		n.Name = f.Label
 	}
-	n.HasRange = true
-	n.Min, n.Max, n.Now = float64(f.Min), float64(f.Max), float64(f.Value)
-	n.Step = float64(f.Step)
+	if f.Step > 0 {
+		n.Step = float64(f.Step)
+	}
 	if f.Format != nil {
 		n.Value = f.Format(f.Value)
 	}
-	n.Actions = n.Actions.With(a11y.ActionIncrement).With(a11y.ActionDecrement)
 }
 
-// AccessibleAction moves the fader from the accessibility tree.
-func (f *Fader) AccessibleAction(a a11y.Action) bool {
+// AccessibleAction moves the fader from the accessibility tree, which the
+// slider advertises and does not yet answer.
+func (f *Fader) AccessibleAction(_ int, a a11y.Action) bool {
+	step := f.Step
+	if step <= 0 {
+		step = (f.Max - f.Min) / 20
+	}
 	switch a {
 	case a11y.ActionIncrement:
-		f.SetValue(f.Value + f.Step)
+		f.SetValue(f.Value + step)
 	case a11y.ActionDecrement:
-		f.SetValue(f.Value - f.Step)
+		f.SetValue(f.Value - step)
 	default:
 		return false
 	}

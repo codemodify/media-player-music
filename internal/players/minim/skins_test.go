@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
+	"github.com/codemodify/paintengine2d"
+	"github.com/codemodify/uitoolkit/a11y"
+	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/skingen/panel"
 	"github.com/codemodify/uitoolkit/style"
@@ -189,7 +190,7 @@ func TestTheSkinKeyCyclesEverySkinAndBack(t *testing.T) {
 	a, p := open(t, Skin, 1)
 	want := []string{SkinClassic, SkinSilver, Skin}
 	for _, id := range want {
-		p.strip.skinBtn.AccessibleAction(0)
+		p.strip.skinBtn.AccessibleAction(0, a11y.ActionDefault)
 		a.PumpOnce()
 		for _, w := range []*app.Window{p.Main, p.Eq, p.List} {
 			if got := style.LookAppearance(w.Look()).Name; got != id {

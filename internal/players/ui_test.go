@@ -46,7 +46,7 @@ func TestAGlyphButtonIsAWholeControl(t *testing.T) {
 	if !n.Actions.Has(a11y.ActionDefault) {
 		t.Error("a screen reader cannot press it")
 	}
-	if !b.AccessibleAction(a11y.ActionDefault) || hits != 3 {
+	if !b.AccessibleAction(0, a11y.ActionDefault) || hits != 3 {
 		t.Error("the accessibility action did not press it")
 	}
 
@@ -63,7 +63,7 @@ func TestAGlyphButtonIsAWholeControl(t *testing.T) {
 	b.SetEnabled(false)
 	before := hits
 	b.KeyPress(widget.KeyEvent{Key: platform.KeySpace})
-	b.AccessibleAction(a11y.ActionDefault)
+	b.AccessibleAction(0, a11y.ActionDefault)
 	if hits != before {
 		t.Error("a disabled button fired")
 	}
@@ -149,7 +149,7 @@ func TestTheFaderIsAVerticalSlider(t *testing.T) {
 	if !n.HasRange || n.Min != -EqRange || n.Max != EqRange {
 		t.Errorf("range %v..%v (has=%v)", n.Min, n.Max, n.HasRange)
 	}
-	if !f.AccessibleAction(a11y.ActionIncrement) || f.Value <= 3 {
+	if !f.AccessibleAction(0, a11y.ActionIncrement) || f.Value <= 3 {
 		t.Errorf("the accessibility action left it at %v", f.Value)
 	}
 }

@@ -3,10 +3,11 @@ package minim
 import (
 	"testing"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
+	"github.com/codemodify/paintengine2d"
+	"github.com/codemodify/uitoolkit/a11y"
+	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/uitoolkit/skingen/panel"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
@@ -190,7 +191,7 @@ func TestTheRoundKeysRefuseTheirCorners(t *testing.T) {
 		t.Error("classic: a key drawn to its corners refuses its corner")
 	}
 	// And the keyboard never looks at any of it.
-	p.strip.play.AccessibleAction(0)
+	p.strip.play.AccessibleAction(0, a11y.ActionDefault)
 	if p.Transport.State != players.Playing {
 		t.Error("the play key does not play from the accessibility tree")
 	}

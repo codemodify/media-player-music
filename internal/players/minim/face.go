@@ -4,8 +4,8 @@ import (
 	"math"
 	"strings"
 
-	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/skingen/panel"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
@@ -198,7 +198,7 @@ func paintAsThumb(f *players.Fader, name, layout, slot string) {
 		// the face under it is drawn on.
 		d := style.Dip(lk, 1)
 		var thumb paintengine2d.Rect
-		if f.Horizontal {
+		if !f.Vertical {
 			f.Travel = w / 2
 			x := snapDesign(t*(r.Dx()-tw), d)
 			thumb = paintengine2d.XYWH(r.Min.X+x, r.Min.Y+snapDesign((r.Dy()-th)/2, d), tw, th)

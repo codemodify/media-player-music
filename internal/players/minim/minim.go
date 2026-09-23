@@ -29,8 +29,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/rack"
 	"github.com/codemodify/uitoolkit/widget"
