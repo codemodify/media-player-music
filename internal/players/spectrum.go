@@ -17,7 +17,7 @@ import (
 //     can be compared with the run before it.
 //   - It has to be **frame-rate independent**. The same second of playing
 //     must look the same whether the window repainted twelve times in it or
-//     sixty, because one of the three demos runs at a different rate from
+//     sixty, because one of the three faces runs at a different rate from
 //     the others and all three run slower under a screen recorder.
 //
 // So the band values are a pure function of the track's position: a few

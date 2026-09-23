@@ -13,18 +13,18 @@ import (
 	"github.com/codemodify/uitoolkit/widgets"
 )
 
-// The pieces of interface all three players share.
+// The pieces of interface every face shares.
 //
-// There are only four, and the line between what is here and what is in each
-// app is worth stating: **anything a player of any era would have drawn the
-// same way** is here — the transport marks, the analyser, the clock that
+// The line between what is here and what is in each face is worth stating:
+// **anything a player of any era would have drawn the same way** is here — the transport marks, the analyser, the clock that
 // drives them, the keyboard. Everything about *how a particular player
 // looked* is in that player's own package, because that is the whole subject
 // of the demo and sharing it would be sharing the thing being demonstrated.
 //
-// All of it is ordinary toolkit code. A glyph button is a component with a
-// name, a keyboard route, an accessibility node and a focus ring; what the
-// skin changes is the face painted under the glyph, and nothing else.
+// All of it is ordinary toolkit code, and most of it is the toolkit's own
+// widgets: a transport key is a widgets.ToolButton with a mark on it and a
+// fader is a widgets.Slider stood on end. What a skin changes is the face
+// painted under the mark, and nothing else.
 
 // ---- the marks a transport row is made of ------------------------------------
 
@@ -34,7 +34,7 @@ import (
 // keys had before any of this was software.
 type Glyph uint8
 
-// Every glyph the three players use.
+// Every glyph the faces use.
 const (
 	GlyphNone Glyph = iota
 	GlyphPlay
@@ -935,8 +935,8 @@ func (p *Pulse) Tick() {
 
 // CommandFor maps a key press onto a transport command, or CmdNone.
 //
-// One table for all three players, because a person who learns the keys in
-// one should not have to learn them again in the next. They are the keys
+// One table for every face, because a person who learns the keys in one
+// should not have to learn them again in the next. They are the keys
 // these applications have always used: space plays and pauses, the arrows
 // seek and set the volume, Z and B step (the two keys either side of the
 // transport row on a keyboard of the era), and the single letters do the

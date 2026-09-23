@@ -1,6 +1,5 @@
-// Package minim is the compact player: a strip 275 by 116 design pixels
-// with an equaliser and a playlist that stick to its edges and travel with
-// it.
+// Package minim is the compact face: a strip 275 by 116 design pixels with
+// an equaliser and a playlist that stick to its edges and travel with it.
 //
 // It is a **visual demo**. Nothing is decoded and nothing is played; the
 // clock counts, the seek bar scrubs the clock, the analyser is a function of
@@ -10,9 +9,9 @@
 // What it is a demo *of* is three things the toolkit gained and no toolkit
 // of the era had all of:
 //
-//   - A skin is a pack. Minim wears the "minim" skin, which is a pixel sheet
-//     over win95; run it with UITK_THEME=breeze-night and it is the same app
-//     in an ordinary theme, with every control still a control. It has two
+//   - A skin is a pack. This face wears the "minim" skin, which is a pixel
+//     sheet over win95; run the application with -skin breeze-night and it
+//     is the same face in an ordinary theme, every control still a control. It has two
 //     more, "minim-classic" and "minim-silver", which are panels rather than
 //     dressings (face.go), and the skin key, Ctrl+K or a right-click
 //     switches between all three live (skins.go).

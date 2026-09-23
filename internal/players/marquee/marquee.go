@@ -7,7 +7,7 @@
 // shelf's controls move that clock and nothing else.
 //
 // What it is a demo *of* is the compact mode, and the compact mode is the
-// only place in these three players where an app sets a silhouette of its
+// only place in the three faces where an app sets a silhouette of its
 // own. A skin declares one window shape, which is the cabinet's; the flat
 // stadium the player folds into is the *app's*, set with SetShapeFunc, and
 // the toolkit's rule is that the app's wins where it set one. So the switch
