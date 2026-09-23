@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit"
 	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"

@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/a11y"
 	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/uitoolkit/layout"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/rack"
@@ -354,7 +354,7 @@ func newBody(p *Player) *body {
 
 	b.prev = players.NewGlyphButton(players.GlyphPrev, "Previous track", func() { p.Command(players.CmdPrev) })
 	b.play = players.NewGlyphButton(players.GlyphPlay, "Play", func() { p.Command(players.CmdPlayPause) })
-	b.play.Role = style.RoleButton
+	b.play.Push = true
 	b.stop = players.NewGlyphButton(players.GlyphStop, "Stop", func() { p.Command(players.CmdStop) })
 	b.next = players.NewGlyphButton(players.GlyphNext, "Next track", func() { p.Command(players.CmdNext) })
 	b.mute = players.NewGlyphButton(players.GlyphVolume, "Mute", func() { p.Command(players.CmdMute) })

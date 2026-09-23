@@ -3,9 +3,9 @@ package minim
 import (
 	"fmt"
 
+	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/uitoolkit/layout"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/style"
@@ -16,10 +16,24 @@ import (
 // and a scroll bar.
 //
 // It is a component of the player's own rather than a widgets.ListView
-// because a panel sets its rows in a size and an ink of its own — ten design
-// pixels, green on black, the playing track in white — and a list view sets
-// them in the look's body face, sixteen pixels in the look's colours, which
-// is a playlist of a different era. Everything a list view is to a keyboard
+// because a panel sets its rows in a size and an ink of its own — eleven
+// design pixels, green on black, the playing track in white, the length
+// pushed to the right of the title — and a list view sets them in the look's
+// body face, in the look's colours, which is a playlist of a different era.
+//
+// widgets.ListView.RowGeo now takes everything this needs about *where* the
+// parts are from the same skin slots used below — the rows, the groove, the
+// row height, a thumb of a fixed length — and if geometry were all of it
+// this file would be a RowGeo hook and nothing else. What a list view has no
+// hook for is what a row is *painted* in: rows go through
+// LookAndFeel.DrawListRow, a skin passes that straight to the pack
+// underneath it (style/engine_skin.go), and the panel skins are drawn over
+// win95 — so a stock list inside the panel's printed well paints win95 rows
+// in the look's font. Three things are missing to retire this file: a row
+// painter (or a row font and ink the layout can state), a second column so
+// the length can sit at the right-hand end of the row, and a scroll thumb
+// painted from the skin's own "list.thumb" sprite rather than by
+// DrawScrollBar. Everything a list view is to a keyboard
 // and a screen reader it still is: arrows, Page Up and Down, Home and End,
 // Return, a wheel, a scroll thumb to drag, and a list of named items in the
 // accessibility tree. Under a pack that is not a panel it paints the look's
