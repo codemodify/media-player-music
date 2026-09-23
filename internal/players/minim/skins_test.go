@@ -331,23 +331,30 @@ func TestEveryPanelControlIsOnTheKeyboard(t *testing.T) {
 }
 
 // A switch is written down, and read back, in the config directory the
-// test gave the player — which is where the next run looks.
+// test gave the player — which is where the next run looks. The writing is
+// the application's (players.Settings), and the face only asks for it.
 func TestTheSkinIsRememberedForTheNextRun(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	p.remember = true
-	if got := Remembered(); got != "" {
+	settings := players.Settings{Face: "minim"}
+	p.Host.Wrote = func(pack string) {
+		settings = settings.WithSkin("minim", pack)
+		if err := settings.Save(); err != nil {
+			t.Error(err)
+		}
+	}
+	if got := players.LoadSettings().SkinOf("minim"); got != "" {
 		t.Fatalf("a fresh config remembers %q", got)
 	}
 	p.NextSkin()
 	a.PumpOnce()
-	if got := Remembered(); got != SkinClassic {
+	if got := players.LoadSettings().SkinOf("minim"); got != SkinClassic {
 		t.Fatalf("remembered %q, want %q", got, SkinClassic)
 	}
 	// A file that names something this build cannot wear is not trusted.
-	if err := os.WriteFile(stateFile(), []byte(`{"skin": "no-such-pack"}`), 0o600); err != nil {
+	if err := os.WriteFile(players.SettingsPath(), []byte(`{"skins":{"minim":"no-such-pack"}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if got := Remembered(); got != "" {
+	if got := players.LoadSettings().SkinOf("minim"); got != "" {
 		t.Errorf("remembered %q from a file naming no pack", got)
 	}
 }

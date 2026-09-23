@@ -43,8 +43,10 @@ const (
 const Skin = "marquee"
 
 // Player is the window, the model under it, and which of its two shapes it
-// is in.
+// is in. The model is the application's (players.Host): this face shows it,
+// and putting on another face leaves it exactly where it was.
 type Player struct {
+	Host   *players.Host
 	App    *app.Application
 	Window *app.Window
 
@@ -52,8 +54,9 @@ type Player struct {
 	Spectrum  *players.Spectrum
 
 	body    *body
-	pulse   *players.Pulse
 	compact bool
+	// dropLook takes the look watcher off again when the face is closed.
+	dropLook func()
 }
 
 // Options is what the command line passes in.
@@ -64,16 +67,18 @@ type Options struct {
 	Compact bool
 }
 
-// New opens the player.
-func New(a *app.Application, opts Options) (*Player, error) {
+// New opens the player on the application's own model.
+func New(h *players.Host, opts Options) (*Player, error) {
+	a := h.App
 	p := &Player{
+		Host:      h,
 		App:       a,
-		Transport: players.NewTransport(players.NewLibrary()),
-		Spectrum:  players.NewSpectrum(48),
+		Transport: h.Model.Transport,
+		Spectrum:  h.Model.Spectrum,
 	}
-	w, h := FullW, FullH
+	ww, wh := FullW, FullH
 	if opts.Compact {
-		w, h = CompactW, CompactH
+		ww, wh = CompactW, CompactH
 	}
 	win, err := players.OpenSized(a, platform.WindowOptions{
 		Title:       "Marquee",
@@ -81,7 +86,7 @@ func New(a *app.Application, opts Options) (*Player, error) {
 		MinHeight:   CompactH,
 		Headless:    opts.Headless,
 		Decorations: platform.DecorationsClient,
-	}, w, h, false)
+	}, ww, wh, false)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +95,7 @@ func New(a *app.Application, opts Options) (*Player, error) {
 	win.SetContent(p.body)
 
 	p.Transport.Changed = p.refresh
-	p.pulse = players.NewPulse(60*time.Millisecond, p.advance)
+	p.dropLook = a.OnLookChange(p.refresh)
 	p.SetCompact(opts.Compact)
 	p.refresh()
 	// Something has the keyboard from the first frame. A player's keys are
@@ -135,31 +140,42 @@ func (p *Player) SetCompact(on bool) {
 	p.refresh()
 }
 
-// Start begins the clock.
-func (p *Player) Start() {
-	p.Transport.Play()
-	p.pulse.Start(p.Window)
+// Close takes the face off: the window goes, and the model it was showing
+// stays exactly as it is.
+func (p *Player) Close() {
+	if p.dropLook != nil {
+		p.dropLook()
+		p.dropLook = nil
+	}
+	if p.Window != nil {
+		p.Window.Close()
+	}
 }
 
-// Pulse is the clock, for a test that drives it by hand.
-func (p *Player) Pulse() *players.Pulse { return p.pulse }
+// Windows is the face's one window, named, for a caller taking a picture of
+// it.
+func (p *Player) Windows() []players.NamedWindow {
+	return []players.NamedWindow{{Name: "cabinet", Window: p.Window}}
+}
+
+// MainWindow is the window the application's clock wakes on.
+func (p *Player) MainWindow() *app.Window { return p.Window }
 
 // Pose puts the player at a stated position with the analyser advanced to
 // match and no clock involved, so a screenshot is the same picture every
 // time it is taken.
 func (p *Player) Pose(pos time.Duration) {
-	p.Transport.State = players.Playing
-	p.Transport.Pos = pos
-	p.Spectrum.Reset()
-	p.Spectrum.Advance(pos, true, 250*time.Millisecond)
+	p.Host.Pose(pos)
 	p.refresh()
 }
 
-func (p *Player) advance(dt time.Duration) {
-	p.Transport.Tick(dt)
-	p.Spectrum.Advance(p.Transport.Pos, p.Transport.State == players.Playing, dt)
-	p.refresh()
-}
+// Advance is what this face does on each of the application's ticks beyond
+// the model the application has already moved, which here is nothing but a
+// repaint.
+func (p *Player) Advance(time.Duration) { p.refresh() }
+
+// Refresh puts the model back into the controls.
+func (p *Player) Refresh() { p.refresh() }
 
 func (p *Player) refresh() {
 	if p.body != nil {
@@ -167,36 +183,20 @@ func (p *Player) refresh() {
 	}
 }
 
-// Command runs a shared transport command and keeps the clock going.
-func (p *Player) Command(c players.Command) {
-	p.Transport.Do(c)
-	if p.Transport.State == players.Playing {
-		p.pulse.Start(p.Window)
-	}
-}
+// Command runs a shared transport command through the application, which
+// keeps the clock going behind it.
+func (p *Player) Command(c players.Command) { p.Host.Command(c) }
 
 // Keys is the window's keyboard: the shared transport table, Escape to
 // quit, and one of its own — Ctrl+M folds the player down and back.
 func (p *Player) Keys(w *app.Window, e widget.KeyEvent) bool {
-	if e.Key == platform.KeyEscape {
-		p.App.Quit()
-		return true
-	}
 	if e.Mods.Ctrl() && e.Key == platform.KeyM {
 		p.SetCompact(!p.compact)
 		return true
 	}
-	if players.Typing(w.Focus()) {
-		// The focus is in something that takes text: its letters are its
-		// own. Nothing the transport answers to is a modifier chord, so
-		// there is nothing left to try.
-		return false
-	}
-	if c := players.CommandFor(e); c != players.CmdNone {
-		p.Command(c)
-		return true
-	}
-	return false
+	// Everything else — the transport table, the skin, the face switch,
+	// Escape — is the application's, and is the same in every face.
+	return p.Host.Keys(w, e)
 }
 
 // ---- the content -------------------------------------------------------------
@@ -504,8 +504,14 @@ func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.Keys(b.p.Window, e)
 
 // MousePress on the cabinet itself moves the window: the shell between the
 // controls is a drag handle, which is what the face of a player has always
-// been.
-func (b *body) MousePress(widget.MouseEvent) bool {
+// been. The secondary button opens the application's menu instead — the
+// faces, and the packs this one was drawn for.
+func (b *body) MousePress(e widget.MouseEvent) bool {
+	if e.Button == platform.ButtonRight {
+		o := widget.DeviceOrigin(b)
+		b.p.Host.ContextMenu(b, paintengine2d.Pt(o.X+e.Pos.X, o.Y+e.Pos.Y))
+		return true
+	}
 	b.p.Window.StartMove()
 	return true
 }

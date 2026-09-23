@@ -336,9 +336,14 @@ func newListPane(p *Player) *listPane {
 			l.list.EnsureVisible(p.Transport.List.Index())
 		}})
 	})
-	l.misc = players.NewGlyphButton(players.GlyphNone, "Miscellaneous: skins", func() {
+	// The faces go here rather than in the strip's own menu: a menu is
+	// drawn inside the window it opens from, and the strip is a hundred
+	// and sixteen design pixels tall — three more rows and a separator
+	// would have it scroll or cut its labels off. The playlist window is
+	// twice that, and the keys work in every window of every face.
+	l.misc = players.NewGlyphButton(players.GlyphNone, "Miscellaneous: faces and skins", func() {
 		o := widget.DeviceOrigin(l.misc)
-		p.skinMenu(l.misc, paintengine2d.Pt(o.X, o.Y+l.misc.Bounds().Dy()))
+		p.Host.ContextMenu(l.misc, paintengine2d.Pt(o.X, o.Y+l.misc.Bounds().Dy()))
 	})
 	l.opts = players.NewGlyphButton(players.GlyphNone, "List options", func() {
 		l.menu(l.opts,

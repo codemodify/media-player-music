@@ -47,8 +47,11 @@ const (
 	Themed = "breeze-night"
 )
 
-// Player is the two windows and the model under them.
+// Player is the two windows and the model under them. The model is the
+// application's (players.Host): this face shows it, and putting on another
+// face leaves it exactly where it was.
 type Player struct {
+	Host *players.Host
 	App  *app.Application
 	Desk *rack.Desk
 
@@ -58,10 +61,10 @@ type Player struct {
 	Main, List *app.Window
 	body       *body
 	queue      *queuePane
-	pulse      *players.Pulse
 
 	iMain, iList int
-	skinned      bool
+	// dropLook takes the look watcher off again when the face is closed.
+	dropLook func()
 	// anchored is whether the playlist has been put beside the player yet,
 	// and tries how many times settle has asked — see settle, which waits
 	// for the desktop to place them both and then for it to agree.
@@ -79,14 +82,15 @@ type Options struct {
 	Themed bool
 }
 
-// New opens the player's windows.
-func New(a *app.Application, opts Options) (*Player, error) {
+// New opens the player's windows on the application's own model.
+func New(h *players.Host, opts Options) (*Player, error) {
+	a := h.App
 	p := &Player{
+		Host:      h,
 		App:       a,
-		Transport: players.NewTransport(players.NewLibrary()),
-		Spectrum:  players.NewSpectrum(40),
+		Transport: h.Model.Transport,
+		Spectrum:  h.Model.Spectrum,
 		iList:     -1,
-		skinned:   !opts.Themed,
 	}
 	main, err := p.open(a, opts, "Lantern", MainW, MainH)
 	if err != nil {
@@ -113,7 +117,10 @@ func New(a *app.Application, opts Options) (*Player, error) {
 	}
 
 	p.Transport.Changed = p.refresh
-	p.pulse = players.NewPulse(60*time.Millisecond, p.advance)
+	// A look can change under the player from outside it — Settings, an
+	// edited look.json, the skin key in another window — and this face
+	// repaints and re-focuses whichever way it changed.
+	p.dropLook = a.OnLookChange(p.refresh)
 	p.refresh()
 	// Something has the keyboard from the first frame. A player's keys are
 	// bare letters that bubble up from whatever is focused, and a window
@@ -135,26 +142,38 @@ func (p *Player) open(a *app.Application, opts Options, title string, w, h int) 
 	}, w, h, false)
 }
 
-// Start begins the clock.
-func (p *Player) Start() {
-	p.Transport.Play()
-	p.pulse.Start(p.Main)
+// Close takes the face off: its windows go, and the model they were showing
+// stays exactly as it is.
+func (p *Player) Close() {
+	if p.dropLook != nil {
+		p.dropLook()
+		p.dropLook = nil
+	}
+	for _, w := range []*app.Window{p.List, p.Main} {
+		if w != nil {
+			w.Close()
+		}
+	}
 }
 
-// Pulse is the clock, for a test that drives it by hand.
-func (p *Player) Pulse() *players.Pulse { return p.pulse }
+// Windows are the face's windows, named, for a caller taking a picture of
+// each.
+func (p *Player) Windows() []players.NamedWindow {
+	out := []players.NamedWindow{{Name: "main", Window: p.Main}}
+	if p.List != nil {
+		out = append(out, players.NamedWindow{Name: "playlist", Window: p.List})
+	}
+	return out
+}
 
 // Pose puts the player at a stated position, with no clock involved.
 func (p *Player) Pose(pos time.Duration) {
-	p.Transport.State = players.Playing
-	p.Transport.Pos = pos
-	p.Spectrum.Reset()
-	p.Spectrum.Advance(pos, true, 250*time.Millisecond)
+	p.Host.Pose(pos)
 	p.refresh()
 }
 
 // Skinned reports whether the skin is on.
-func (p *Player) Skinned() bool { return p.skinned }
+func (p *Player) Skinned() bool { return p.Host.Worn() == Skin }
 
 // SetSkinned puts the skin on or takes it off, which is the whole argument
 // of this demo in four lines.
@@ -167,25 +186,28 @@ func (p *Player) Skinned() bool { return p.skinned }
 // buttons, the same tab order, the same accessibility nodes, painted by a
 // different engine.
 func (p *Player) SetSkinned(on bool) {
-	p.skinned = on
-	ap := style.LookAppearance(p.App.Look())
-	ap.FollowDesktop = false
 	if on {
-		ap.Name = Skin
+		p.Host.SetSkin(Skin)
 	} else {
-		ap.Name = Themed
+		p.Host.SetSkin(Themed)
 	}
-	p.App.SetLook(style.WithAppearance(p.App.Look(), ap))
 	p.refresh()
 }
 
-func (p *Player) advance(dt time.Duration) {
-	p.Transport.Tick(dt)
-	p.Spectrum.Advance(p.Transport.Pos, p.Transport.State == players.Playing, dt)
+// Advance is what this face does on each of the application's ticks, beyond
+// the model the application has already moved: it looks at where the desktop
+// has put the windows.
+func (p *Player) Advance(time.Duration) {
 	p.settle()
 	p.Desk.Follow()
 	p.refresh()
 }
+
+// Refresh puts the model back into the controls.
+func (p *Player) Refresh() { p.refresh() }
+
+// Main window, for the application's clock and its screenshots.
+func (p *Player) MainWindow() *app.Window { return p.Main }
 
 // settle anchors the playlist once the desktop has said where it put both
 // windows. It cannot be done when they are made: a window manager places a
@@ -226,13 +248,9 @@ func (p *Player) refresh() {
 	}
 }
 
-// Command runs a shared transport command and keeps the clock going.
-func (p *Player) Command(c players.Command) {
-	p.Transport.Do(c)
-	if p.Transport.State == players.Playing {
-		p.pulse.Start(p.Main)
-	}
-}
+// Command runs a shared transport command through the application, which
+// keeps the clock going behind it.
+func (p *Player) Command(c players.Command) { p.Host.Command(c) }
 
 // ShowList opens or closes the playlist window.
 func (p *Player) ShowList(on bool) {
@@ -255,41 +273,22 @@ func (p *Player) ListShown() bool {
 // the keyboard, and the answer in the playlist window is a text field while
 // the answer in the player is a transport button.
 func (p *Player) Keys(w *app.Window, e widget.KeyEvent) bool {
-	if e.Key == platform.KeyEscape {
-		p.App.Quit()
-		return true
-	}
 	if e.Mods.Ctrl() {
 		switch e.Key {
-		case platform.KeyK:
-			p.SetSkinned(!p.skinned)
-			return true
 		case platform.KeyL:
 			p.ShowList(!p.ListShown())
 			return true
-		case platform.KeyQ:
-			p.App.Quit()
-			return true
 		}
-		return false
 	}
-	if players.Typing(w.Focus()) {
-		// The focus is in something that takes text: its letters are its
-		// own. Nothing the transport answers to is a modifier chord, so
-		// there is nothing left to try.
-		return false
-	}
-	if c := players.CommandFor(e); c != players.CmdNone {
-		p.Command(c)
-		return true
-	}
-	return false
+	// Everything else — the transport table, the skin, the face switch,
+	// Escape — is the application's, and is the same in every face.
+	return p.Host.Keys(w, e)
 }
 
 // Status is the status bar's line, and what a screenshot is read against.
 func (p *Player) Status() string {
-	look := "theme " + Themed
-	if p.skinned {
+	look := "theme " + p.Host.Worn()
+	if p.Skinned() {
 		look = "skin " + Skin
 	}
 	shaped := "rectangle"
@@ -365,7 +364,7 @@ func newBody(p *Player) *body {
 	b.repeat.Toggle = true
 	b.listBtn = players.NewGlyphButton(players.GlyphList, "Playlist window", func() { p.ShowList(!p.ListShown()) })
 	b.listBtn.Toggle = true
-	b.skinBtn = players.NewGlyphButton(players.GlyphSkin, "Skin", func() { p.SetSkinned(!p.skinned) })
+	b.skinBtn = players.NewGlyphButton(players.GlyphSkin, "Skin", func() { p.SetSkinned(!p.Skinned()) })
 	b.skinBtn.Toggle = true
 
 	b.menu = widgets.NewMenuBar(
@@ -385,10 +384,11 @@ func newBody(p *Player) *body {
 			widgets.CheckItem("Sh&uffle", p.Transport.Random, func() { p.Command(players.CmdShuffle) }),
 			widgets.CheckItem("&Repeat", p.Transport.Repeat != players.RepeatOff, func() { p.Command(players.CmdRepeat) }),
 		),
-		widgets.NewMenu("&View",
+		widgets.NewMenu("&View", append([]*widgets.MenuItem{
 			widgets.ItemAccel("&Playlist", "Ctrl+L", func() { p.ShowList(!p.ListShown()) }),
-			widgets.ItemAccel("&Skin", "Ctrl+K", func() { p.SetSkinned(!p.skinned) }),
-		),
+			widgets.ItemAccel("&Skin", "Ctrl+K", func() { p.SetSkinned(!p.Skinned()) }),
+			widgets.Sep(),
+		}, p.Host.FaceItems()...)...),
 		widgets.NewMenu("&Help",
 			widgets.Item("&About Lantern", func() { b.about() }),
 		),
@@ -444,7 +444,7 @@ func (b *body) sync() {
 		b.repeat.SetGlyph(players.GlyphRepeat, t.Repeat.String())
 	}
 	b.listBtn.SetChecked(b.p.ListShown())
-	b.skinBtn.SetChecked(b.p.skinned)
+	b.skinBtn.SetChecked(b.p.Skinned())
 	if !b.scrubbing() {
 		b.seek.Value = t.Fraction()
 	}
