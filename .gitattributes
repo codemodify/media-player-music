@@ -1,0 +1,2 @@
+# Imported reference files must retain the exact bytes checked by integrity tests.
+internal/skins/sources/**/original/** -text

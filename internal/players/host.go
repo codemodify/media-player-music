@@ -1,95 +1,87 @@
 package players
 
 import (
+	"strings"
 	"time"
 
 	"github.com/codemodify/paintengine2d"
 	"github.com/codemodify/uitoolkit/app"
+	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/style"
 	"github.com/codemodify/uitoolkit/widget"
 	"github.com/codemodify/uitoolkit/widgets"
 )
 
-// The one model, and what a face is given to work against.
-//
-// The application has three faces and one of everything else. A face is a
-// way of *showing* a player — a compact strip, a cabinet that folds, a
-// window cut to its outline — and none of them owns the thing being shown:
-// the transport, the queue, the equaliser and the analyser are the
-// application's, and they are handed to whichever face is being worn. That
-// is what makes changing face a change of face rather than a restart:
-// nothing is rebuilt but the windows, and the track goes on playing from
-// where it was.
-
-// Model is the model every face shares.
+// Model holds the player state shared by the default UI and its optional skins.
+// Changing the appearance replaces windows without replacing this model.
 type Model struct {
 	Transport *Transport
 	Spectrum  *Spectrum
 	Equaliser *Equalizer
+
+	EqualizerVisible bool
+	PlaylistVisible  bool
+	// Live distinguishes actual playback from deterministic screenshot fixtures.
+	Live  bool
+	Error string
+	// Screenshot fixtures keep every control available. Live playback sets
+	// these capabilities without changing the saved EQ or balance values.
+	BackendLimited                                    bool
+	BackendEqualizer, BackendBalance, BackendSpectrum bool
 }
 
-// NewModel is the application's model at rest: the invented library, a
-// stopped transport at the head of it, an analyser and a flat equaliser.
-//
-// The analyser has as many bands as the widest face draws. A face with a
-// narrower window shows fewer of them and averages the ones it drops
-// ([AnalyserView]), so one spectrum serves all three and its peak markers
-// do not restart when the face changes.
 func NewModel() *Model {
-	s := &Model{
-		Transport: NewTransport(NewLibrary()),
-		Spectrum:  NewSpectrum(48),
-		Equaliser: NewEqualizer(),
+	return &Model{
+		Transport:        NewTransport(NewLibrary()),
+		Spectrum:         NewSpectrum(48),
+		Equaliser:        NewEqualizer(),
+		EqualizerVisible: true,
+		PlaylistVisible:  true,
 	}
-	return s
 }
 
-// Themed is the pack a skin is dropped for: an ordinary theme with no art
-// in it at all, which is the point — the same app, the same widget tree,
-// the same keyboard, in a look anybody's desktop already has.
-const Themed = "breeze-night"
+// DefaultSkin selects the ordinary UI without a skin pack.
+const DefaultSkin = "default"
 
-// Host is what a face is given: the application, the one model, and the few
-// things only the application can do — run a transport command with the
-// clock behind it, answer the keys every face shares, change the skin, and
-// change the face.
-//
-// Every hook is optional. A face handed a bare host (NewHost) is a face
-// running on its own, which is what its own tests do to it.
+// Themed is the ordinary look used by the default UI. Breeze matches the
+// former unskinned Lantern UI; a build without that engine uses dark.
+var Themed = unskinnedTheme()
+
+func unskinnedTheme() string {
+	if _, ok := style.LoadTheme("breeze-night"); ok && !style.IsSkin("breeze-night") {
+		return "breeze-night"
+	}
+	return "dark"
+}
+
+// Host gives a presentation the model and the application's actions.
+// Hooks are optional, so a presentation can also run on its own in tests.
 type Host struct {
-	App   *app.Application
-	Model *Model
+	App          *app.Application
+	Model        *Model
+	AudioBackend string
 
-	// Run is the application's transport command: the model, and the clock
-	// started again behind it. Nil runs the command on the model alone.
-	Run func(Command)
-	// Shared is the keyboard every face answers to — the transport table,
-	// the face switch, Escape — tried after the face's own keys.
+	Run    func(Command)
 	Shared func(w *app.Window, e widget.KeyEvent) bool
-	// Packs is the list of packs the face being worn was drawn for, in the
-	// order a skin key steps through them; the first is its own.
-	Packs func() []string
-	// Wrote is told about a skin the user chose, so the application can
-	// write it down for the next run. Nil remembers nothing.
-	Wrote func(pack string)
-	// Faces, Face and SetFace are the face switch: what there is, what is
-	// being worn, and putting on another one.
-	Faces   func() []string
-	Face    func() string
-	SetFace func(id string)
-	// FaceLabel is what a face is called in a menu.
-	FaceLabel func(id string) string
+	Packs  func() []string
+	// ChooseSkin lets the application switch between the ordinary UI and
+	// the panel windows. Its implementation schedules window replacement
+	// after the control or menu requesting it has finished its event.
+	ChooseSkin func(string)
+	Wrote      func(string)
+	LoadFiles  func(widget.Component, bool)
+	// DropFiles appends local files or folders supplied by a playlist drop.
+	// The application expands folders and loads the resulting music files.
+	DropFiles    func([]string)
+	DeleteTrack  func()
+	SyncPlayback func()
+	ShowSettings func()
 
-	// lastSkin is the skin DropSkin puts back.
 	lastSkin string
 }
 
-// NewHost is a host with a model of its own and no application behind it:
-// a face on its own, as a test opens one.
 func NewHost(a *app.Application) *Host { return &Host{App: a, Model: NewModel()} }
 
-// Command runs a transport command through the application, so the clock is
-// running behind whatever it started.
 func (h *Host) Command(c Command) {
 	if h.Run != nil {
 		h.Run(c)
@@ -98,7 +90,110 @@ func (h *Host) Command(c Command) {
 	h.Model.Transport.Do(c)
 }
 
-// Keys is the shared keyboard, for a face that has tried its own keys first.
+func (h *Host) Play()               { h.Command(CmdPlay) }
+func (h *Host) Seek(f float32)      { h.Model.Transport.Seek(f); h.syncPlayback() }
+func (h *Host) SetVolume(v float32) { h.Model.Transport.SetVolume(v); h.syncPlayback() }
+func (h *Host) SetPan(v float32)    { h.Model.Transport.SetPan(v); h.syncPlayback() }
+func (h *Host) SelectTrack(i int) {
+	if i < 0 || i >= h.Model.Transport.List.Len() {
+		return
+	}
+	h.Model.Transport.SelectTrack(i)
+	h.Play()
+}
+func (h *Host) OpenFiles(from widget.Component, appendToList bool) {
+	if h.LoadFiles != nil {
+		h.LoadFiles(from, appendToList)
+	}
+}
+func (h *Host) RemoveTrack() {
+	if h.DeleteTrack != nil {
+		h.DeleteTrack()
+	}
+}
+
+func (h *Host) OpenSettings() {
+	if h.ShowSettings != nil {
+		h.ShowSettings()
+	}
+}
+
+// AcceptFileDrop routes a copy of decoded local paths to the application.
+// The player loads local media; a mixed local/remote drop is rejected as a
+// whole so the user does not receive a silently incomplete queue insertion.
+func (h *Host) AcceptFileDrop(e widget.DropEvent) bool {
+	TraceFileDrop("delivered mime=%q action=%s data_bytes=%d paths=%q", e.Mime, e.Action, len(e.Data), e.Paths)
+	if h == nil || h.DropFiles == nil || e.Mime != "text/uri-list" || len(e.Paths) == 0 {
+		TraceFileDrop("rejected: missing loader, URI-list type or decoded paths")
+		return false
+	}
+	if e.Action != platform.DragNone && e.Action != platform.DragCopy {
+		TraceFileDrop("rejected: source action is %s", e.Action)
+		return false
+	}
+	if len(e.Remote) > 0 {
+		TraceFileDrop("rejected: unsupported remote URI")
+		return false
+	}
+	h.DropFiles(append([]string(nil), e.Paths...))
+	TraceFileDrop("accepted for background loading")
+	return true
+}
+func (h *Host) syncPlayback() {
+	if h.SyncPlayback != nil {
+		h.SyncPlayback()
+	}
+}
+func (h *Host) StatusText() string {
+	if h.Model.Error != "" {
+		return h.Model.Error
+	}
+	if !h.Model.Live {
+		return "Screenshot fixture · simulated playback"
+	}
+	backend := h.AudioBackend
+	if backend == "No backend" {
+		return "No audio backend available · choose one in Settings"
+	}
+	if backend == "" {
+		backend = "mpv"
+	}
+	if h.Model.Transport.List.Len() == 0 {
+		return "Open a music file to play · " + backend
+	}
+	status := "Playback through " + backend
+	if h.Model.BackendLimited {
+		var unavailable []string
+		if !h.Model.BackendEqualizer {
+			unavailable = append(unavailable, "EQ")
+		}
+		if !h.Model.BackendBalance {
+			unavailable = append(unavailable, "balance")
+		}
+		if !h.Model.BackendSpectrum {
+			unavailable = append(unavailable, "visualizer")
+		}
+		if len(unavailable) > 0 {
+			status += " · " + strings.Join(unavailable, ", ") + " unavailable"
+		}
+	}
+	return status
+}
+
+func (h *Host) EqualizerAvailable() bool { return !h.Model.BackendLimited || h.Model.BackendEqualizer }
+func (h *Host) BalanceAvailable() bool   { return !h.Model.BackendLimited || h.Model.BackendBalance }
+func (h *Host) SpectrumAvailable() bool  { return !h.Model.BackendLimited || h.Model.BackendSpectrum }
+func (h *Host) FeatureTip(feature string, available bool) string {
+	if available {
+		return ""
+	}
+	backend := h.AudioBackend
+	if backend == "" {
+		backend = "the selected backend"
+	}
+	return feature + " unavailable with " + backend + " · change the backend in Settings"
+}
+
 func (h *Host) Keys(w *app.Window, e widget.KeyEvent) bool {
 	if h.Shared != nil {
 		return h.Shared(w, e)
@@ -113,21 +208,14 @@ func (h *Host) Keys(w *app.Window, e widget.KeyEvent) bool {
 	return false
 }
 
-// Pose puts the model at a stated position with the analyser advanced to
-// match, and touches no clock at all: the same position is the same picture
-// every time, which is what makes one screenshot comparable with the last.
+// Pose produces a reproducible screenshot without running the clock.
 func (h *Host) Pose(pos time.Duration) {
 	t := h.Model.Transport
-	t.State = Playing
-	t.Pos = pos
+	t.State, t.Pos = Playing, pos
 	h.Model.Spectrum.Reset()
 	h.Model.Spectrum.Advance(pos, true, 250*time.Millisecond)
 }
 
-// ---- the skin ----------------------------------------------------------------
-
-// Skins are the packs the face being worn was drawn for, in the order the
-// skin key steps through them.
 func (h *Host) Skins() []string {
 	if h.Packs == nil {
 		return nil
@@ -135,56 +223,65 @@ func (h *Host) Skins() []string {
 	return h.Packs()
 }
 
-// Worn is the pack the application is wearing now.
-func (h *Host) Worn() string { return style.LookAppearance(h.App.Look()).Name }
-
-// Skinned reports whether what is worn is one of the face's own skins
-// rather than an ordinary theme.
+func (h *Host) Worn() string  { return style.LookAppearance(h.App.Look()).Name }
 func (h *Host) Skinned() bool { return h.IsSkin(h.Worn()) }
 
-// IsSkin reports whether a pack is one of the face's own.
 func (h *Host) IsSkin(id string) bool {
-	for _, s := range h.Skins() {
-		if s == id {
+	for _, skin := range h.Skins() {
+		if id == skin {
 			return true
 		}
 	}
 	return false
 }
 
-// SetSkin puts the application in a pack — one of the face's skins, or any
-// other — and remembers the choice for the next run.
-//
-// It is the call Settings makes for any theme: a skin is a pack, so
-// choosing one is choosing the appearance's pack id and rebuilding the
-// look. Every window follows, because that is what Application.SetLook
-// does, and nothing in any widget tree is rebuilt.
+// SetSkin asks the application to change appearance. A standalone host
+// applies the look directly instead.
 func (h *Host) SetSkin(id string) {
 	if id == "" || h.App == nil {
 		return
 	}
-	if h.IsSkin(id) {
-		h.lastSkin = id
+	if h.ChooseSkin != nil {
+		h.ChooseSkin(id)
+		return
+	}
+	h.ApplySkin(id)
+	h.RememberSkin(id)
+}
+
+// ApplySkin changes the toolkit look without calling ChooseSkin. The
+// shell uses it while replacing windows around the shared model.
+func (h *Host) ApplySkin(id string) {
+	if id == "" || h.App == nil {
+		return
+	}
+	if id == DefaultSkin {
+		id = Themed
 	}
 	ap := style.LookAppearance(h.App.Look())
-	ap.FollowDesktop = false
-	ap.Name = id
+	ap.FollowDesktop, ap.Name = false, id
 	h.App.SetLook(style.WithAppearance(h.App.Look(), ap))
 	if h.Wrote != nil {
 		h.Wrote(id)
 	}
 }
 
-// NextSkin steps to the next of the face's skins, and from anything else
-// back to the first.
+// RememberSkin records a successfully applied optional skin. The shell
+// calls it after its windows open so a failed switch cannot replace it.
+func (h *Host) RememberSkin(id string) {
+	if h.IsSkin(id) {
+		h.lastSkin = id
+	}
+}
+
+// NextSkin cycles through the optional skins and returns to the default UI.
 func (h *Host) NextSkin() {
-	skins := h.Skins()
-	if len(skins) == 0 {
+	skins := append(append([]string(nil), h.Skins()...), Themed)
+	if len(skins) < 2 {
 		return
 	}
-	cur := h.Worn()
 	for i, id := range skins {
-		if id == cur {
+		if id == h.Worn() {
 			h.SetSkin(skins[(i+1)%len(skins)])
 			return
 		}
@@ -192,117 +289,44 @@ func (h *Host) NextSkin() {
 	h.SetSkin(skins[0])
 }
 
-// DropSkin drops the skin for the themed fallback, or puts back the skin
-// that was dropped.
 func (h *Host) DropSkin() {
 	if h.Skinned() {
 		h.SetSkin(Themed)
 		return
 	}
-	last := h.lastSkin
-	if last == "" {
-		if skins := h.Skins(); len(skins) > 0 {
-			last = skins[0]
-		}
+	id := h.lastSkin
+	if id == "" && len(h.Skins()) > 0 {
+		id = h.Skins()[0]
 	}
-	h.SetSkin(last)
+	h.SetSkin(id)
 }
 
-// ---- the face ------------------------------------------------------------------
-
-// FaceIDs are the faces the application has, and FaceID the one being worn.
-func (h *Host) FaceIDs() []string {
-	if h.Faces == nil {
-		return nil
-	}
-	return h.Faces()
-}
-
-// FaceID is the face being worn, or "" for a face running on its own.
-func (h *Host) FaceID() string {
-	if h.Face == nil {
-		return ""
-	}
-	return h.Face()
-}
-
-// WearFace puts on another face. The model is untouched, so the queue, the
-// position and the equaliser's curve are the same on the other side of it.
-func (h *Host) WearFace(id string) {
-	if h.SetFace != nil {
-		h.SetFace(id)
-	}
-}
-
-// LabelOfFace is what a face is called in a menu.
-func (h *Host) LabelOfFace(id string) string {
-	if h.FaceLabel != nil {
-		return h.FaceLabel(id)
-	}
-	return id
-}
-
-// NamedWindow is one of a face's windows with the name a screenshot is
-// written under.
 type NamedWindow struct {
 	Name   string
 	Window *app.Window
 }
 
-// ---- the menus the faces open ----------------------------------------------------
-
-// PackLabel is what a pack is called in a menu: the label the pack itself
-// states, and its id where it states none.
 func (h *Host) PackLabel(id string) string {
-	if id == Themed {
-		return "No skin"
-	}
-	if sk, ok := style.LoadSkin(id); ok && sk.Label != "" {
-		return sk.Label
-	}
-	if th, ok := style.LoadTheme(id); ok && th.Label != "" {
-		return th.Label
-	}
-	return id
+	return SkinLabel(id)
 }
 
-// FaceItems are the application's faces as menu rows, the one being worn
-// ticked. Any face that opens a menu can offer them, and every face offers
-// them somewhere: a switch only the keyboard can reach is not finished.
-func (h *Host) FaceItems() []*widgets.MenuItem {
-	cur := h.FaceID()
-	var out []*widgets.MenuItem
-	for _, id := range h.FaceIDs() {
-		id := id
-		out = append(out, widgets.RadioItem(h.LabelOfFace(id), "face", id == cur, func() { h.WearFace(id) }))
-	}
-	return out
-}
-
-// SkinItems are the packs the face being worn was drawn for, and the themed
-// fallback under them, as menu rows with the one being worn ticked.
+// SkinItems is the application's complete appearance menu.
 func (h *Host) SkinItems() []*widgets.MenuItem {
 	cur := h.Worn()
-	var out []*widgets.MenuItem
-	for _, id := range append(append([]string(nil), h.Skins()...), Themed) {
+	var items []*widgets.MenuItem
+	for _, id := range append([]string{Themed}, h.Skins()...) {
 		id := id
-		out = append(out, widgets.RadioItem(h.PackLabel(id), "skin", id == cur, func() { h.SetSkin(id) }))
+		items = append(items, widgets.RadioItem(h.PackLabel(id), "skin", cur == id, func() { h.SetSkin(id) }))
 	}
-	return out
+	return items
 }
 
-// ContextMenu opens the faces over the skins at a point in a window: what a
-// right-click on the face of a player offers, wherever there is room for it.
 func (h *Host) ContextMenu(from widget.Component, at paintengine2d.Point) {
-	items := h.FaceItems()
-	if skins := h.SkinItems(); len(skins) > 0 {
-		if len(items) > 0 {
-			items = append(items, widgets.Sep())
-		}
-		items = append(items, skins...)
+	items := h.SkinItems()
+	if h.ShowSettings != nil {
+		items = append(items, widgets.Sep(), widgets.ItemAccel("Settings…", "Ctrl+,", h.OpenSettings))
 	}
-	if len(items) == 0 {
-		return
+	if len(items) > 0 {
+		widgets.ShowContextMenu(from, at, items...)
 	}
-	widgets.ShowContextMenu(from, at, items...)
 }

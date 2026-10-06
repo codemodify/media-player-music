@@ -46,12 +46,8 @@ const (
 	GlyphShuffle
 	GlyphRepeat
 	GlyphRepeatOne
-	GlyphVolume
-	GlyphMute
 	GlyphList
 	GlyphSliders
-	GlyphShrink
-	GlyphGrow
 	GlyphSkin
 )
 
@@ -144,29 +140,6 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 		if g == GlyphRepeatOne {
 			ctx.DrawRect(paintengine2d.XYWH(cx-weight/2, cy-u*0.4, weight, u*0.8), fill)
 		}
-	case GlyphVolume, GlyphMute:
-		p := paintengine2d.NewPath()
-		p.MoveTo(cx-u*0.9, cy-u*0.32)
-		p.LineTo(cx-u*0.42, cy-u*0.32)
-		p.LineTo(cx+u*0.1, cy-u*0.95)
-		p.LineTo(cx+u*0.1, cy+u*0.95)
-		p.LineTo(cx-u*0.42, cy+u*0.32)
-		p.LineTo(cx-u*0.9, cy+u*0.32)
-		p.Close()
-		ctx.DrawPath(p, fill)
-		if g == GlyphMute {
-			x := paintengine2d.NewPath()
-			x.MoveTo(cx+u*0.42, cy-u*0.45)
-			x.LineTo(cx+u*1.0, cy+u*0.45)
-			x.MoveTo(cx+u*1.0, cy-u*0.45)
-			x.LineTo(cx+u*0.42, cy+u*0.45)
-			ctx.DrawPath(x, stroke)
-			break
-		}
-		wave := paintengine2d.NewPath()
-		wave.MoveTo(cx+u*0.45, cy-u*0.45)
-		wave.QuadTo(cx+u*0.8, cy, cx+u*0.45, cy+u*0.45)
-		ctx.DrawPath(wave, stroke)
 	case GlyphList:
 		for i := float32(-1); i <= 1; i++ {
 			y := cy + i*u*0.7
@@ -182,15 +155,6 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 			ky := cy + u*0.55*[]float32{-1, 0.35, -0.2}[int(i)+1]
 			ctx.DrawRect(paintengine2d.XYWH(x-u*0.42, ky-weight, u*0.84, weight*2), fill)
 		}
-	case GlyphShrink, GlyphGrow:
-		box := paintengine2d.XYWH(cx-u, cy-u*0.8, u*2, u*1.6)
-		ctx.DrawRect(box, stroke)
-		if g == GlyphShrink {
-			ctx.DrawRect(paintengine2d.XYWH(cx-u*0.5, cy-weight/2, u, weight), fill)
-			break
-		}
-		ctx.DrawRect(paintengine2d.XYWH(cx-u*0.5, cy-weight/2, u, weight), fill)
-		ctx.DrawRect(paintengine2d.XYWH(cx-weight/2, cy-u*0.5, weight, u), fill)
 	case GlyphSkin:
 		// Two plates, one over the other: a picture laid on a control, which
 		// is all a skin is. The one underneath is an outline and the one on
@@ -428,28 +392,11 @@ func ScrollK(lk style.LookAndFeel, over float32, pos time.Duration) float64 {
 
 // ---- a fader -----------------------------------------------------------------
 
-// Fader is the toolkit's slider with the few things a player's fader has and
-// a general-purpose slider does not: a label, a reading a screen reader can
-// say out loud, and a step and a page of the app's own choosing.
-//
-// It is a [widgets.Slider] — the same component, the same track, fill and
-// thumb, the same skin parts — stood on end by widgets.Slider.Vertical, and
-// painted by a skin through widgets.SliderPainter where the art is a picture
-// of a thumb riding a printed groove. Every line of the drag, the press on
-// the track, the paint and the rotation is the toolkit's.
-//
-// What is left here is the app's: ten of these side by side *are* an
-// equaliser, and an equaliser's fader says "+4.5 dB" rather than "4.5".
+// Fader configures a toolkit slider for the player's levels and seek bars.
+// The toolkit owns dragging, keyboard steps, tooltips and accessibility;
+// the app supplies the range, label, reading, artwork and input action.
 type Fader struct {
 	widgets.Slider
-	// Label is the fader's accessible name: "62 Hz", "Preamp".
-	Label string
-	// Format turns the value into what a screen reader reads and what a
-	// tooltip shows ("+4.5 dB"). Nil reads the bare number.
-	Format func(float32) string
-	// Step is one press of an arrow key, and Page one of Page Up or Down.
-	// Zero leaves both to the slider.
-	Step, Page float32
 }
 
 // NewFader is a fader over a range: a slider stood on end, where up is more.
@@ -473,12 +420,12 @@ func newFader(min, max, value float32, label string, on func(float32)) *Fader {
 	if max <= min {
 		max = min + 1
 	}
-	f := &Fader{Label: label}
-	f.Min, f.Max, f.Value, f.OnChange = min, max, value, on
+	f := &Fader{}
+	f.Label = label
+	f.Min, f.Max, f.Value, f.OnInput = min, max, value, on
 	f.Step = (max - min) / 24
 	f.Page = (max - min) / 4
-	// The component the tree holds is this one, so its own Describe,
-	// Tooltip and keyboard are the ones that are asked for.
+	// Keep the wrapper in the component tree for its keyboard policy.
 	f.Init(f)
 	f.SetWantsFocus(true)
 	f.SetFocusVisibleOnly(true)
@@ -490,18 +437,7 @@ func newFader(min, max, value float32, label string, on func(float32)) *Fader {
 // seek bar, or a preset that moves ten faders at once and reports the change
 // itself.
 func (f *Fader) Set(v float32) {
-	on := f.OnChange
-	f.OnChange = nil
 	f.SetValue(v)
-	f.OnChange = on
-}
-
-// Tooltip is the label and the reading.
-func (f *Fader) Tooltip() string {
-	if f.Format == nil {
-		return f.Label
-	}
-	return f.Label + "  " + f.Format(f.Value)
 }
 
 // Dragging reports whether the pointer is moving the fader, so a model that
@@ -517,79 +453,13 @@ func (f *Fader) Fraction() float32 {
 	return (f.Value - f.Min) / (f.Max - f.Min)
 }
 
-// KeyPress moves the fader by the app's own step and page, and takes Home
-// and End the way a control that stands on end is read: Home is the top.
-// Anything else is the slider's.
+// KeyPress leaves horizontal arrows on vertical faders to the player's
+// seek shortcuts. All slider interaction is handled by the toolkit.
 func (f *Fader) KeyPress(e widget.KeyEvent) bool {
-	if !f.Enabled() {
+	if f.Vertical && (e.Key == platform.KeyLeft || e.Key == platform.KeyRight) {
 		return false
 	}
-	step, page := f.Step, f.Page
-	if step <= 0 || page <= 0 {
-		return f.Slider.KeyPress(e)
-	}
-	switch e.Key {
-	case platform.KeyUp, platform.KeyRight:
-		if e.Key == platform.KeyRight && f.Vertical {
-			return false
-		}
-		f.MarkKeyboardFocus()
-		f.SetValue(f.Value + step)
-	case platform.KeyDown, platform.KeyLeft:
-		if e.Key == platform.KeyLeft && f.Vertical {
-			return false
-		}
-		f.MarkKeyboardFocus()
-		f.SetValue(f.Value - step)
-	case platform.KeyPageUp:
-		f.MarkKeyboardFocus()
-		f.SetValue(f.Value + page)
-	case platform.KeyPageDown:
-		f.MarkKeyboardFocus()
-		f.SetValue(f.Value - page)
-	case platform.KeyHome, platform.KeyEnd:
-		f.MarkKeyboardFocus()
-		if (e.Key == platform.KeyHome) == f.Vertical {
-			f.SetValue(f.Max)
-		} else {
-			f.SetValue(f.Min)
-		}
-	default:
-		return false
-	}
-	return true
-}
-
-// Describe is the slider's node with the app's name, reading and step on it.
-func (f *Fader) Describe(n *a11y.Node) {
-	f.Slider.Describe(n)
-	if n.Name == "" {
-		n.Name = f.Label
-	}
-	if f.Step > 0 {
-		n.Step = float64(f.Step)
-	}
-	if f.Format != nil {
-		n.Value = f.Format(f.Value)
-	}
-}
-
-// AccessibleAction moves the fader from the accessibility tree, which the
-// slider advertises and does not yet answer.
-func (f *Fader) AccessibleAction(_ int, a a11y.Action) bool {
-	step := f.Step
-	if step <= 0 {
-		step = (f.Max - f.Min) / 20
-	}
-	switch a {
-	case a11y.ActionIncrement:
-		f.SetValue(f.Value + step)
-	case a11y.ActionDecrement:
-		f.SetValue(f.Value - step)
-	default:
-		return false
-	}
-	return true
+	return f.Slider.KeyPress(e)
 }
 
 // ---- the shell between the controls --------------------------------------------
@@ -798,7 +668,11 @@ func (a *AnalyserView) Describe(n *a11y.Node) {
 	if n.Name == "" {
 		n.Name = "Spectrum analyser"
 	}
-	n.Description = Disclaimer
+	if a.Spectrum != nil && a.Spectrum.Live {
+		n.Description = "Frequency bands measured from the playing audio"
+	} else {
+		n.Description = Disclaimer
+	}
 }
 
 func snap(v float32) float32 {
@@ -1026,8 +900,6 @@ func Typing(c widget.Component) bool {
 	return false
 }
 
-// KeyHelp is the line every face shows for its keys, so the three agree and
-// a screenshot of one explains the others. The last two are the
-// application's rather than the transport's, and work in every window of
-// every face.
-const KeyHelp = "Space play/pause · Z/B track · V stop · ←/→ seek · ↑/↓ volume · M mute · S shuffle · R repeat · Ctrl+F face · Ctrl+K skin"
+// KeyHelp lists the shared shortcuts. Focused controls handle their own
+// activation and editing keys before shortcuts bubble to the application.
+const KeyHelp = "Space play/pause · Z/B track · V stop · ←/→ seek · ↑/↓ volume · M mute · S shuffle · R repeat · Ctrl+K skin · Ctrl+Shift+K default/skin · Ctrl+E equaliser · Ctrl+L playlist · Ctrl+, Settings"

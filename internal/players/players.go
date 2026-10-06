@@ -1,32 +1,7 @@
-// Package players is the model and the shared interface under the
-// application's three faces.
-//
-// The application is a **visual** demo. Nothing here decodes, mixes or plays
-// anything: there is no audio stack, no video stack and no media dependency
-// of any kind in this repository or in the toolkit under it, and adding one
-// would make it a different project. What it demonstrates is skins, shaped
-// windows and the chrome a media player of its era was made of — so the
-// model underneath is a clock that counts, a list of invented tracks, a band
-// of numbers that look like an analyser, and an equaliser that filters
-// nothing.
-//
-// The model half of it — this file and spectrum.go — is plain data with no
-// toolkit type anywhere in it, so the parts that are easy to get wrong are
-// tested headless without opening a window at all: the transport's wrap at
-// the end of a track, the seek bar's fraction, the shuffle that is a
-// permutation beside the list rather than of it. ui.go is the other half,
-// the pieces of *interface* every face shares — the transport marks, the
-// analyser view, the clock that drives them and the one keyboard table they
-// all answer to — and host.go is what a face is handed to work against.
-//
-// The faces are in their own packages beside this one, because a player's
-// whole point is its look and no two of the three share any of it:
-//
-//	minim     the compact one, 275x116, a pixel panel
-//	marquee   the big one, with a compact mode
-//	lantern   the shaped one, with a themed switch
-//
-// Which one is being worn, and the switch between them, is internal/shell.
+// Package players holds the shared model, controls and keyboard commands
+// for the default UI and its optional skins. The shell connects this
+// model to the selected audio backend; screenshot mode uses a simulated clock.
+// Window composition and appearance switching belong to internal/shell.
 package players
 
 import (
@@ -35,9 +10,9 @@ import (
 	"time"
 )
 
-// Track is one entry in a playlist. Every one of them is invented: no real
-// recording, artist or label is named anywhere in this repository.
+// Track is one media file, or an invented screenshot fixture when Path is empty.
 type Track struct {
+	Path   string
 	Title  string
 	Artist string
 	Album  string
@@ -50,6 +25,7 @@ type Track struct {
 	// bar and its status line. They are invented too.
 	Rate     int
 	Channels int
+	Bitrate  int // bits per second, reported by the decoder
 }
 
 // Video reports whether the track is one.
@@ -192,6 +168,28 @@ func (p *Playlist) Shuffle(on bool) {
 	p.reorder(on)
 }
 
+// Append adds tracks without moving the current selection.
+func (p *Playlist) Append(tracks []Track, shuffled bool) {
+	p.Tracks = append(p.Tracks, tracks...)
+	p.reorder(shuffled)
+}
+
+// Remove deletes a track and retains the current track when it survives.
+func (p *Playlist) Remove(i int, shuffled bool) bool {
+	if i < 0 || i >= p.Len() {
+		return false
+	}
+	p.Tracks = append(p.Tracks[:i], p.Tracks[i+1:]...)
+	if p.cur > i {
+		p.cur--
+	}
+	if p.cur >= p.Len() {
+		p.cur = max(p.Len()-1, 0)
+	}
+	p.reorder(shuffled)
+	return true
+}
+
 // orderIndex is where a track index sits in the play order.
 func (p *Playlist) orderIndex(track int) int {
 	for i, t := range p.order {
@@ -261,9 +259,8 @@ func (r Repeat) String() string {
 
 // Transport is the head that moves along a track and the buttons around it.
 //
-// It plays nothing. Tick is handed however much time really passed, which
-// is what makes the same model work under a window that repaints ten times
-// a second and under a test that advances it a minute at a time.
+// The shell supplies decoder events during actual playback. Tick advances
+// only screenshot/test fixtures; it never drives the live playback clock.
 type Transport struct {
 	List   *Playlist
 	Pos    time.Duration
@@ -564,6 +561,7 @@ const (
 	CmdMute
 	CmdShuffle
 	CmdRepeat
+	CmdPlay
 )
 
 // SeekStep is how far the seek keys move the head, and VolumeStep how much
@@ -584,6 +582,8 @@ func (t *Transport) Do(c Command) {
 		return
 	}
 	switch c {
+	case CmdPlay:
+		t.Play()
 	case CmdPlayPause:
 		t.Pause()
 	case CmdStop:
@@ -666,7 +666,7 @@ func clamp01(v float32) float32 {
 
 // ---- the library ------------------------------------------------------------
 
-// Library is the invented playlist every face starts with.
+// Library is the invented playlist the player starts with.
 //
 // Every title, artist and album here was made up for this file. Naming a
 // real recording would be the one thing in a demo about *skins* that could
@@ -690,14 +690,8 @@ func Library() []Track {
 // NewLibrary is the invented library as a playlist.
 func NewLibrary() *Playlist { return NewPlaylist(Library()...) }
 
-// Disclaimer is the line every face shows, in a status
-// line or an About box, and Short is the same thing where there is no room
-// for it — a compact player's footer is two hundred and sixty design pixels
-// wide and this has to fit in it at 1x.
-//
-// They are here rather than in each face so they cannot drift, and so that
-// it is impossible to ship a face without one.
+// Shared playback requirement for About dialogs and accessibility.
 const (
-	Disclaimer = "A visual demo — nothing is decoded or played."
-	Short      = "visual demo · nothing is played"
+	Disclaimer = "Audio playback requires an installed backend; choose one in Settings."
+	Short      = "playback through the selected backend"
 )

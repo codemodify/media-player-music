@@ -1,23 +1,30 @@
-// Package playertest is what the three player demos' tests do to a window.
-//
-// It exists because all three ask a window the same four questions — is
-// every control reachable from the keyboard, does the accessibility tree
-// hold up, what does the silhouette actually look like at this scale, and
-// does any of it change when the skin is dropped — and a helper copied into
-// three test files is a helper that is right in one of them.
+// Package playertest checks the player's keyboard access, accessibility,
+// window geometry and scaling in the default UI and its optional skins.
 package playertest
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/uitoolkit/a11y"
 	"github.com/codemodify/uitoolkit/app"
 	"github.com/codemodify/uitoolkit/platform"
 	"github.com/codemodify/uitoolkit/widget"
 )
+
+// Main gives UI tests the same app-owned skin packs as the executable.
+// Registration happens before any theme is selected or window is created.
+func Main(m *testing.M) int {
+	if err := skins.Register(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return m.Run()
+}
 
 // Audit runs a11y.Check over a window's tree and fails the test with
 // everything a screen reader would stumble over. It returns the tree so a

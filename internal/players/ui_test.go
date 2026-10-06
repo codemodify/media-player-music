@@ -154,6 +154,22 @@ func TestTheFaderIsAVerticalSlider(t *testing.T) {
 	}
 }
 
+func TestFaderModelRefreshDoesNotBecomeUserInput(t *testing.T) {
+	var f *Fader
+	inputs := 0
+	f = NewBar(0, 100, 50, "Volume", func(v float32) {
+		inputs++
+		// The model normalizes the user's value and refreshes its control
+		// before the input callback returns.
+		f.Set(float32(int(v)))
+	})
+	f.Step = 0.7
+	f.KeyPress(widget.KeyEvent{Key: platform.KeyRight})
+	if inputs != 1 || f.Value != 50 {
+		t.Fatalf("model refresh produced %d inputs and value %g, want one input and 50", inputs, f.Value)
+	}
+}
+
 // ---- the keyboard table --------------------------------------------------------
 
 func TestTheKeyTableReadsKeysNotRunes(t *testing.T) {

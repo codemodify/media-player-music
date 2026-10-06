@@ -1,389 +1,710 @@
-# The three faces
+# The interface and skins
 
-One player, three ways of showing it. This is the long form: what each face
-is for, how the skins place their controls, what a desktop may refuse to do,
-how the pieces fit together and what is tested.
+The player has one default interface and twenty optional skins. The default
+uses ordinary toolkit controls in a single window. Eleven Winamp skins use
+compact panels; Headspace, Xbox and Half Life 2 reproduce separate Windows
+Media Player arrangements. Fandom adapts a supplied silver-player reference,
+and iTunes recreates the brushed-metal Mac OS X player with a MiniPlayer.
+Series 9 adapts Microsoft's original blue-and-silver Windows Media Player skin,
+with embedded drawers and a compact player.
+Classic VLC, RealPlayer 8 and Amarok 1.4 reproduce the older desktop
+arrangements in separate resizable window families.
+This document explains their layout, the app/toolkit
+boundary, and the v0.23.4 audit.
 
-Most of this began life as uitoolkit's `docs/players.md`, where the three
-faces were three separate demo applications. What was the toolkit's stayed
-there; what was the application's is here.
+## Playback and screenshot fixtures
 
-## They play nothing
+Interactive playback uses an external **mpv**, **VLC**, **MPlayer** or
+**mpg123** executable; none is bundled. Detection checks `PATH` first,
+then common Homebrew and app-bundle locations on macOS and application
+installation directories on Windows. mpv uses Unix socket IPC on Linux/macOS
+and a named pipe on Windows. VLC uses an authenticated local HTTP interface;
+MPlayer and mpg123 use their remote-control protocols.
+The app owns this playback integration; the UI toolkit does not decode
+music or drive a playback process.
 
-**Nothing here is decoded and nothing is played.** There is no audio stack,
-no video stack and no media dependency of any kind in this repository or in
-the toolkit under it, and there is not going to be one — adding PipeWire,
-ALSA or FFmpeg to make a demo honest would make the project dishonest
-instead.
+Default's gear button, player context menus and Ctrl+comma
+open the ordinary themed Settings window. Installation is shown by vector
+green checks and red crosses; the selected radio is distinct. Missing
+executables cannot be chosen, and Refresh rescans discovery. Finding a
+program does not guarantee its control interface starts successfully:
+startup errors appear separately, and the selected backend can be chosen
+again to retry. Settings opens at 600 × 470 logical pixels, with a minimum of
+560 × 440; its four rows remain usable at 1× and 1.75×. Escape closes the dialog.
+The mpg123 row is explicitly labelled MP3/MPEG only. Unsupported containers
+are rejected with a short explanation, and track failures also appear in
+Settings and the application log.
 
-So the model underneath is a clock that counts, a list of invented tracks, a
-band of numbers that move the way an analyser does, and an equaliser whose
-ten faders filter nothing. Every face says so where it cannot be missed:
-Minim in its title bar and its playlist's footer, Marquee on its display,
-Lantern in its status bar and its About box, and every menu row that would
-need a media stack if you picked it says exactly that.
+The `audio_backend` session field preserves the selected program, even if
+it is missing on a later launch. The initial default is mpv. A successful
+backend change keeps the queue, track, position, paused/playing state and
+volume; a failed replacement leaves the existing engine in place.
 
-Every title, artist and album in the invented library was made up for
-`internal/players/players.go`. No skin, bitmap, icon, font, name or mark
-belonging to any real player is in this repository, as art or as a fixture.
-The skins are uitoolkit's, generated from paths and whole pixels by its
-public `skingen` package; the transport glyphs are drawn from paths in
-`internal/players/ui.go`; the display alphabets and clock digits the panels
-print in were set by hand on their grids for the toolkit.
+mpv supports the player's balance and ten-band/preamp EQ, plus the live
+visualizer on Linux/macOS. Windows mpv playback and filters use the pipe
+adapter, but its metadata-FIFO visualizer is unavailable. VLC, MPlayer and
+mpg123 currently provide basic transport, seeking and volume only. Their
+unsupported EQ and balance controls are disabled, with explanations in
+Settings/tooltips; model values survive so returning to mpv restores them.
+VLC 3's reported duration and clock are coarse, and seeking is coarse too.
+mpg123 accepts MPEG audio (MP1/MP2/MP3), while the other programs' format
+support depends on their installed builds.
+VLC retains its native volume scale, which follows the same cubic curve as
+mpv. A separate latest-value lane prevents rapid slider motion from
+accumulating obsolete HTTP commands.
 
-## One model, three faces
+The first startup begins with an empty playlist. Later launches restore the
+saved queue, selected track and playback offset, stopped until Play.
+Positional music-file paths replace the queue and start the first file.
+Ctrl+O and Eject choose a replacement playlist; Playlist → Add appends files. The model
+tracks the real file, position, queue, volume, balance, shuffle/repeat and
+equaliser values. Seeking and volume affect real playback. With mpv,
+balance and the ten-band/preamp equaliser use its FFmpeg audio filters.
+On supported platforms, every presentation displays 48 frequency bands
+measured from that processed audio.
 
-The application owns the model: the transport, the queue, the equaliser and
-the analyser (`players.Model`). A face is handed it — never its own copy —
-through `players.Host`, which is also how a face reaches the few things only
-the application can do: run a transport command with the clock behind it,
-answer the keys every face shares, change the skin, change the face, and
-offer both in a menu.
+The analyzer splits a passive branch inside the same mpv process and
+measures RMS levels through logarithmically spaced bandpass filters from
+32 Hz to 16 kHz. The original audio branch reaches the output unchanged.
+Frame times and playback generations reject stale samples after a seek or
+track change; a bounded 20 Hz stream keeps visual updates from delaying
+playback commands. Paused, stopped or stalled levels decay to zero. The
+analyzer uses mpv's existing FFmpeg filters and a private metadata FIFO,
+with no separate decoder process or FFmpeg executable.
 
-That is what makes a face switch a change of face rather than a restart.
-`shell.Shell.SetFace` opens the new face's windows **before** closing the
-old face's, for two reasons: the application ends when its last window goes,
-and a player that blinked out of existence between two faces would not be a
-player changing its face. Nothing of the model is touched on the way
-through.
+The whole playlist accepts file-manager drops, including its empty list,
+heading and controls. For panel skins, an app-owned drop ancestor also
+routes the toolkit caption's title band and controls to that same action;
+the original caption keeps its dragging and close behavior. Drops append
+local files or folders using the Copy
+action, so the source files stay in place. Folder expansion runs off the UI
+thread and adds recognized audio files and media containers, including MP4,
+M4V, WebM and MKV, recursively in deterministic sorted
+order. Explicit files use the selected backend's format support. Requests commit in their
+arrival order. Backends play their audio with video disabled. An addition to an empty queue starts the first track; an
+addition to an existing queue leaves its current playback intact.
 
-There is **one clock for the whole application**, not one per face and not
-one per window (`players.Pulse`): three windows waking separately would
-advance the same transport three times a frame and drop the analyser's peak
-markers three times as fast. A wake delayed past a few periods is clamped,
-so a machine that was asleep does not come back to a row of bars with no
-markers on them.
+Headless screenshots and presentation tests use invented tracks and a
+synthetic clock-driven analyser. They launch no audio backend and play no sound. The
+screenshots in the README show those deterministic fixtures.
 
-## Minim — the compact face
+Winamp and Winamp Silver generate their artwork, bitmap alphabet and clock
+digits from app-owned drawing code. The nine imported skins adapt original
+Winamp bitmap artwork into the same app-defined skin and layout format.
+Their unchanged archives, credits and notices live in
+[skin sources](../internal/skins/sources/README.md). The menu prefixes Winamp
+skin names with `WinAmp -`, removes any repeated
+Winamp name, and calls the original skin `WinAmp - classic`. Skin IDs and
+source credits retain their original names. The toolkit renders the supplied
+art and controls. The Windows Media Player skins appear separately as
+`Win Media Player - Headspace`, `Win Media Player - Xbox`,
+`Win Media Player - Half Life 2`, `Win Media Player - Fandom` and
+`Win Media Player - Series 9`, with the saved
+and command-line IDs `headspace`, `xbox`, `half-life-2`, `fandom` and `series-9`. Their pack labels retain user
+overrides under the same `Win Media Player -` prefix.
+The Apple appearance is listed as `Mac OS X - iTunes`, with the saved and
+command-line ID `itunes`; user labels retain the separate `Mac OS X -` prefix.
+The classic desktop choices are `VLC - Classic`, `RealPlayer - Classic` and
+`KDE - Amarok 1.4`, with IDs `vlc`, `realplayer` and `amarok`. These names
+identify appearances; the selected audio backend remains independent.
 
-```bash
-go run . -face minim
-go run . -face minim -only strip           # the strip on its own
-go run . -face minim -skin breeze-night    # the same face, no skin
-go run . -face minim -scale 1.75
-```
+All main windows are titled **Music Player**. The adapted artwork uses the
+app’s [logo](../logo.png) in place of legacy Winamp marks, matching the native
+window, taskbar and tray icons. Original source archives remain unchanged.
 
-A strip with a phosphor display, a seek bar and a transport row, plus an
-equaliser and a playlist that **snap flush to its edges and travel with it**.
-Drag any of the three within ten pixels of another's edge and it sticks;
-drag the strip and the stack follows; drag one out of the middle and it
-takes whatever hangs from it and leaves what it hung from.
+The ten bitmap-based skins preserve their 1× artwork and author separate
+2× control and chrome images with edge-aware pixel enlargement. Speaker
+logos at 2× come from the original logo rather than the small 1× stamp.
+Small bitmap letters, digits, lamps and display patterns retain nearest
+sampling. Faces with dense ASCII or LCD artwork retain their pixel rendering.
+Silver keeps its existing independently rendered artwork.
 
-275 by 116 is what this shape was at 1×, and here it is a *design* size
-rather than a frozen one: at 1.75 the window is 481 by 203, the silhouette
-is redrawn at that size rather than stretched, and the art is the 2× sheet
-drawn at a whole multiple because the skin declares itself `pixelated`.
+## One default layout, twenty skins
 
-### Three skins, one widget tree
+| Choice | Layout | Windows |
+| --- | --- | --- |
+| `default` — Default | Ordinary themed controls, playback and equaliser on the left, playlist on the right | One resizable 920 × 560 window |
+| `winamp` — WinAmp - classic | Slate-blue chrome, gold title grooves, a black display with green segments, orange volume and green balance bars | Fixed strip and equaliser 275 × 116; resizable playlist starts at 275 × 232 |
+| `winamp-silver` — WinAmp - Silver | Silver chrome, navy title bands, blue dot-matrix display, round keys and capsule toggles | The same dimensions and playlist resizing, with rounded corners and a tab caption on the equaliser |
+| `winamp-classified` — WinAmp - Classified | Artwork adapted from Winamp3 Classified v5.5 | The same three panel windows and resizable playlist |
+| `dosamp` — WinAmp - DOSamp | Original DOSamp artwork | The same three panel windows and resizable playlist |
+| `windows-98` — WinAmp - Windows 98 | Original Windows 98 artwork | The same three panel windows and resizable playlist |
+| `winamp-amber` — WinAmp - Classic Amber | Original Classic [CM] Amber artwork | The same three panel windows and resizable playlist |
+| `calculator` — WinAmp - Calculator | Original Calculator artwork | The same three panel windows and resizable playlist |
+| `sony-cdx-mp3` — WinAmp - Sony CDX-MP3 | Original Sony CDX-MP3 artwork | The same three panel windows and resizable playlist |
+| `ti-82` — WinAmp - TI-82 | Original TI-82 v1.1 artwork | The same three panel windows and resizable playlist |
+| `radar-amp` — WinAmp - Radar Amp | Original Radar Amp artwork | The same three panel windows and resizable playlist |
+| `quake-3-arena` — WinAmp - Quake 3 Arena | Original Quake 3 Arena v2 artwork | The same three panel windows and resizable playlist |
+| `headspace` — Win Media Player - Headspace | Original Windows Media Player Headspace artwork, with equaliser and playlist wings around the central player | One shaped 760 × 394 window |
+| `xbox` — Win Media Player - Xbox | Original Windows Media Player Xbox artwork, with an equaliser inside the main display | Fixed 350 × 216 main window; resizable playlist starts at 448 × 316, minimum 438 × 316 |
+| `half-life-2` — Win Media Player - Half Life 2 | Original Windows Media Player Half Life 2 artwork, with an orange round player and separate equaliser and playlist | Fixed 339 × 300 main window; 430 × 239 equaliser; resizable 393 × 226 playlist |
+| `fandom` — Win Media Player - Fandom | Reference-adapted silver oval player, attached Settings wing and separate playlist; original skin identity and archive unverified | Fixed 490 × 330 combined main window; resizable 190 × 246 playlist |
+| `itunes` — Mac OS X - iTunes | Original iTunes 4-era brushed-metal appearance, library table and MiniPlayer | Full player starts at 800 × 560, minimum 640 × 400; MiniPlayer starts at 380 × 62, horizontally resizable from 150 to 1000 pixels; fixed 430 × 230 equaliser |
+| `series-9` — Win Media Player - Series 9 | Original Microsoft 9 Series Default (Corona) artwork, with a sliding playlist and equaliser, plus a compact mode | One resizable main window with a 346 × 344 minimum base; playlist adds 250 pixels of width and equaliser adds 124 pixels of height; fixed 346 × 103 compact player |
+| `vlc` — VLC - Classic | Original VLC 0.8.6 wxWidgets transport icons and classic gray beveled desktop chrome | One resizable 500 × 430 window, minimum 440 × 300, with embedded playlist and equalizer |
+| `realplayer` — RealPlayer - Classic | RealPlayer 8 gray-and-blue desktop arrangement with original Windows transport sprites | One resizable 720 × 520 window, minimum 606 × 500, with embedded playlist and equalizer |
+| `amarok` — KDE - Amarok 1.4 | Original KDE 3-era blue transport icons, silver chrome, track context and searchable playlist table | One resizable 920 × 620 window, minimum 740 × 480, with embedded equalizer |
 
-```bash
-go run . -skin minim-classic   # the base-skin look of the era
-go run . -skin minim-silver    # the rounded silver-and-blue one
-```
+Dimensions are logical design pixels. Display scale changes their physical
+size; artwork, window outlines and hit testing follow that scale. The
+Winamp playlist keeps its footer controls on the bottom edge and expands its row
+viewport. Its minimum is 275 × 232; the saved size survives skin changes
+and restarts.
 
-- **`minim`**, its own: a pixel front panel dressing ordinary widgets.
-- **`minim-classic`**: slate-blue bevelled chrome, title bands with a gold
-  groove either side of the words, a black display with thin green segments
-  and a small green analyser, an orange volume bar and a green balance bar,
-  grey transport keys, and an equaliser of eleven yellow faders. A pixel
-  skin, exact at 1× and 2×.
-- **`minim-silver`**: silver chrome under a navy title band, a blue
-  dot-matrix display with big pixel digits, glossy round keys that brighten
-  under the pointer, capsule toggles beside blue lamps, an equaliser whose
-  header is a tab with its name on it and no title band at all, and windows
-  whose four corners are round with the desktop showing beyond them. Drawn
-  from paths, exact from 1 to 2.
+Default contains all three sections in its one window, with no menu bar.
+Buttons, shortcuts and context menus provide its actions, and its status
+line uses the ordinary theme. Equaliser and Playlist controls show
+or hide the corresponding sections. Winamp skins provide those sections as
+separate windows. Headspace opens and closes its wings within its one window.
+Xbox keeps its equaliser in the main display and opens a separate playlist.
+Half Life 2 uses a round main window with two utility panels.
+Fandom embeds its Settings wing and equaliser in the main window and opens a
+separate utility playlist. Its artwork is a project adaptation of the supplied
+reference, rather than an import of a verified original archive.
+iTunes embeds the library table in its full player and switches that same
+native main window into the MiniPlayer. Its floating equaliser is an owned
+utility window, so only the main player appears in the taskbar.
+Ctrl+Shift+M switches full/MiniPlayer mode; Ctrl+F returns to the full player
+and focuses library search. The MiniPlayer keeps its 62-pixel height while its
+width can change; widths below 300 hide the LCD and seek control while keeping
+transport and volume available. Each mode remembers its own size and retains the current
+main-window position.
+Series 9 embeds both drawers in its one native main window. Full/compact changes
+keep that window and its current position. Compact mode temporarily suspends the
+drawers while preserving their requested visibility, and the full player retains
+its resized base dimensions independently of the drawer dimensions.
+Ctrl+Shift+M switches full/compact mode; opening a drawer returns to the full
+player. Ctrl+E and Ctrl+L toggle the equaliser and playlist.
+All appearances retain the same model and commands.
 
-The last two are *panels*: pictures of each whole window with holes where
-the keys go, which is how a player of this shape was built. **Each skin says
-where its holes are.** It states three fixed layouts — `minim.strip`,
-`minim.equaliser`, `minim.playlist` — whose named slots the player binds its
-controls to with `widget.Slots`. The face carries no rect of its own for
-either panel; it reads every one it uses from the skin it is wearing,
-including the ones it prints into: the clock's digits, the lamps, the
-scrolling title, the playlist's rows. The rects are generated from
-uitoolkit's `skingen/panel`, the same numbers the art is drawn round, so the
-art and the layout cannot disagree about where a key is — and a panel
-somebody else draws for this face puts its keys wherever its own art has
-them.
+Default and Winamp provide six transport controls — Previous, Play, Pause,
+Stop, Next and Eject — with seeking, volume, balance, shuffle, repeat,
+Equaliser, Playlist and Skin controls. Their equaliser has On, Auto and
+Presets, a preamp and ten frequency-band faders. The Winamp playlist has
+Add, Remove, Select, Miscellaneous and List options, plus six small transport controls.
 
-A key's look in every state is its slot's art (`style.DrawSkinSlot`); the
-digits, lamps, thumbs and bitmap capitals are sprites the face paints by
-name (`style.DrawSkinSprite`). Each window is given a role — the name of its
-layout, `app.Window.SetFrameRole` — and that is how Minim Silver's equaliser
-gets its tab: the skin states a caption for the `minim.equaliser` role and
-the other two windows keep the navy band. The windows keep the player's
-titles in every skin; the panels print them in capitals because their
-caption text roles say `"case": "upper"`.
+Headspace keeps its four original transport buttons: Previous, combined
+Play/Pause, Stop and Next. Its display provides seeking; the equaliser wing
+contains volume, balance and ten bands. The equaliser menu adds On, Auto,
+Presets, Preamp and Reset. The playlist header opens its menu for opening or
+adding music, removing the current track, shuffle and repeat. The lower app
+logo opens appearances and Settings. Wing buttons and their handles open or
+close the equaliser and playlist without creating separate windows.
 
-The widget tree is the **same one in every skin**. A switch moves and
-repaints the controls and hides the few one face has and another does not:
-the panels have their own pause key, an eject key and a balance slider, and
-no mute key. The focus, the tab order and the accessibility tree carry
-across a switch, and a control that disappears hands the keyboard to the
-obvious next one rather than to nothing.
+Xbox retains its original Previous, combined Play/Pause, Stop, Open and Next
+controls, curved seek and volume sliders, and visualization selector. The
+equaliser replaces the visualizer within the main display; its preset menu
+provides On, Auto, Preamp and Reset. Its playlist has shuffle and repeat
+controls, closes without exiting the player, and resizes from its original
+grip. The app logo and menu key provide appearances and Settings.
 
-The switch is reachable every way a control should be:
+Half Life 2 has separate Play and Pause buttons, curved seek and volume
+controls, mute, a spectrum toggle and its original inner and outer shutters. Its
+equaliser has ten bands, balance, On, preset cycling and reset; the preset
+menu adds Auto and Preamp. Original crossfade and SRS/WOW controls remain
+visible with disabled actions because the supported playback programs do
+not provide those effects. Its playlist has a Now Playing dropdown, Title,
+Artist, Album, Type and Length columns, and selected/total duration status.
+The dropdown, headers and context menus offer Open, Add, Remove,
+shuffle, repeat, appearances and Settings. Closing either satellite hides
+it, and only the main window appears in the taskbar. The spectrum appears
+within the circular display; original separate visualization, video and web
+views are retained as source material. The original glass overlay paints once
+above the dynamic inner controls and passes pointer events through.
 
-| | |
+iTunes has Previous, combined Play/Pause and Next controls, seeking, volume,
+shuffle, repeat and a floating equaliser. The full player's Name, Time, Artist
+and Album columns can sort the displayed rows; Search Library filters title,
+artist and album without changing the playback queue. The sidebar opens the
+library, playing track, file picker, backend Settings and appearances. The
+original Music Store entry remains disabled because this app does not provide
+that service. The MiniPlayer keeps the shared transport controls and can
+return to the full library without reopening the main window.
+
+Play starts or resumes the chosen track; Pause toggles pause/resume; Stop
+returns to its beginning. Ctrl+O and Eject open the file picker. Auto chooses
+a preset when the track changes. Select shows the playing track. Add appends
+music files and Remove removes the current playback track. A single
+playlist click selects a row without changing the playing track or clock.
+Double-click, Enter and the accessibility default action play the selected
+row. Arrow keys browse without starting playback, and the highlighted row
+survives ordinary UI refreshes. Explicit activation can resume a selected
+paused track.
+
+## Changing skins preserves player state
+
+The shell owns a single `players.Model`, playback backend and `players.Pulse`.
+Presentation code receives that model through `players.Host`; it does not
+make its own transport, queue, analyser, equaliser or playback process. Controls
+call Host playback/file actions; the shell synchronizes the model with the
+backend and supplies status/error text.
+
+The shell uses `playback.Engine` commands and events. Each executable adapter
+owns its native protocol, and discovery lives in `internal/playback`. Load
+generations and engine identities reject updates from replaced tracks or
+processes. Backend switching starts a candidate before closing the active
+engine, retains it on startup failure, and joins process cleanup on exit.
+
+Changing skin preserves track, position, queue order, volume, balance,
+shuffle, repeat and equaliser values. A change between Default, Headspace, Xbox,
+Half Life 2, Fandom, iTunes, Series 9 and the Winamp family replaces the window composition around that model.
+Switching between Winamp skins keeps their controls and updates their layout and paint.
+The active main window hosts the application's update timer. Changing skin
+does not restart the external audio process.
+
+Closing the main window hides all player panels to the tray while music
+and UI timers continue. Tray activation restores the main window and the
+panels that were visible; temporary hiding does not change saved panel
+preferences. Tray Quit, Escape and Ctrl+Q exit and release the audio backend.
+Close exits normally if there is no shown tray host. If the host disappears
+while the player is hidden, the windows return to the desktop.
+
+Ctrl+K cycles Default and the optional skins in the table’s order.
+Ctrl+Shift+K switches between Default and the last optional skin. The Skin
+control, a context menu and Shift+F10 provide named choices. The compact
+skin menu lists all eighteen appearances. When a compact host constrains the
+menu height, the toolkit scrolls the choices with arrow keys or the wheel,
+including its in-window fallback. A toolkit
+[Home/End focus-scrolling bug](../uitoolkit-gaps.md#25-popup-homeend-and-initial-up-focus-rows-outside-the-viewport)
+remains recorded; ordinary arrow and wheel scrolling reach every choice.
+No separate layout-selection command is needed.
+
+The app saves its session in
+`$XDG_CONFIG_HOME/uitoolkit/media-player-music.json`: queue order, selected
+track and playback offset, audio backend, skin, equaliser/playlist visibility, and window
+placement with snap relationships. Default stores its size and position
+independently; all Winamp skins share their panel arrangement. Headspace
+stores its own position. Xbox, Half Life 2, Fandom, iTunes, Series 9, VLC,
+RealPlayer and Amarok store their window arrangements
+separately from the other families. The saved
+queue resumes only after Play, and entries whose files no longer exist are
+skipped. Known positions restore where the desktop supports them; an
+unsupported backend preserves previously saved coordinates for a future
+session. Resizable window sizes are clamped to their layout's minimum;
+the Winamp main strip/equaliser, Headspace, Xbox main, Half Life 2 main and Fandom main
+retain their fixed dimensions.
+iTunes also remembers its full/MiniPlayer mode and each mode's size. Switching
+modes keeps the main window, playback backend and tray item alive; opening
+the library from the MiniPlayer returns to the full player.
+Series 9 also stores its full/compact mode and full base size in its own family;
+drawer visibility remains a shared model preference, including while compact or
+temporarily hidden to the tray. Saved mode restores before window placement.
+
+The restorers clamp saved sizes to each layout's minimum and wait for a
+ready window before applying bounded placement requests. The toolkit now
+keeps initial frame positions stable and updates layout after exact native
+resizes; the explicit resize-layout compensation has been removed. A
+window-manager refusal or later user move remains the new placement.
+
+With no preference the app starts in Default. Legacy classic and silver
+preferences are translated to `winamp` and `winamp-silver`; an obsolete or
+unknown choice falls back to Default. Screenshot runs neither restore nor
+save the live session.
+
+## The app and toolkit boundary
+
+The application supplies the design. uitoolkit supplies reusable UI
+machinery without knowing what a music player, playlist or equaliser is.
+
+| Application owns | Toolkit owns |
 | --- | --- |
-| the skin key | in the strip's own chrome: the column of option letters in the panels (it reads SKIN), the last toggle in Minim's own row. It steps to the next skin, and its accessible name says which one it is on |
-| **Ctrl+K** | from any of the three windows: minim → minim-classic → minim-silver → minim |
-| **Ctrl+Shift+K** | drops the skin for `breeze-night` and puts back the one it dropped |
-| a menu | a right-click anywhere on the face of any window, or the menu key (Shift+F10), lists the skins by name with the one being worn ticked, and "No skin" |
+| Model, backend discovery and playback, Settings, file commands, folder scanning, session data, keyboard policy and window composition | Event dispatch, drag/drop negotiation, widgets, focus and accessibility infrastructure |
+| Layout algorithms and control-to-slot bindings | Layout primitives and named slot placement |
+| Skin manifests, artwork, sprites and design generators | Skin parsing, state resolution, scaling and painting |
+| Custom readouts, transport glyphs and playlist row paint | Drawing APIs, clipping, hit shapes and platform windows |
 
-The panels' extra keys do what is true in a player that plays nothing.
-Eject stops and goes back to the first track. AUTO chooses a preset for each
-track as it comes up. PRESETS lists the presets. MISC opens the application
-menu — the faces, and this face's skins. SEL shows the playing track. ADD
-and REM say plainly that there is nothing to add or remove. LIST OPTS jumps
-to the first track or closes the list.
+The app should declare its main anchor, member panes, relative layout and
+snap/detach behavior. The toolkit should handle platform capabilities and
+the physical windows or host surfaces that realize that declaration,
+including a portable unsupported-case strategy. The current X11 preference
+below is a temporary workaround for a missing toolkit feature.
 
-## Marquee — the face that folds
+The skinned equaliser and playlist hide their minimize buttons through the
+caption API and declare `RoleUtility` with Main as `Owner`. The toolkit
+handles platform role, ownership and taskbar/pager policy. The app's former
+C/X11 adapter and utility policy polling have been removed. Main's native
+recreation still leaves existing children pointing to the old owner, so a
+small public `SetOwner` refresh remains until
+[the ownership lifetime defect](../uitoolkit-gaps.md#30-parent-recreation-leaves-utility-children-owned-by-a-destroyed-window)
+is fixed. Native Wayland advertises ownership without explicit taskbar
+control; the toolkit exposes that capability limit.
+
+The playlists use toolkit URI-list drop dispatch and negotiate Copy, then
+pass local paths to the background folder/file loader. Remote targets remain
+separate in `DropEvent.Remote`. The shared host rejects remote-only and
+mixed local/remote requests without reparsing toolkit data.
+
+The toolkit's automatic compact chooser now creates an owned window with
+visible listing and action buttons. The app keeps a separately tracked
+chooser across skin changes and tray hiding, prevents duplicate opens and
+transfers its owner to the new main window before closing the old one.
+This independent dialog lifetime is application policy.
+
+`internal/skins/packs` contains fifteen generated packs. They are
+embedded in the executable. `skins.Register` passes each embedded filesystem directly to
+`style.RegisterSkinFS` before preferences or looks are resolved. Registration
+retains the filesystem; no extracted directory or shutdown cleanup is needed.
+The binary therefore works outside this checkout. The user's own skin
+packs take precedence, and the app never installs its packs into the
+user's toolkit skin directory.
+
+`internal/skins/plans` contains generated and imported bitmap plans; the app's
+`internal/skins/panel` defines their design geometry. The toolkit's public
+`skingen` types, renderer and manifest writer generate the packs:
 
 ```bash
-go run . -face marquee
-go run . -face marquee -compact            # open folded
+go generate ./internal/skins
 ```
 
-A cabinet with a display, a queue and a curved transport shelf. Ctrl+M, or
-the button at the right-hand end of the shelf, folds it into a flat stadium
-and back.
+### Layouts belong to the app
 
-The fold is the only place in the application where an **app** sets a
-silhouette of its own. A skin declares one window shape — here the brow
-across the top and the dome under the cabinet — and the stadium is the
-app's, set with `SetShapeFunc`; the toolkit gives the app's shape precedence
-over the look's exactly so that a window which knows it is a different shape
-can say so. Passing `nil` hands the window back to its look.
+The default interface implements `Measure` and `Arrange` in its own
+components. Other applications can use those same APIs for responsive,
+overlapping, radial or other layouts; a skin manifest is not a general
+constraint language.
 
-It keeps **one widget tree** for both shapes rather than swapping two. That
-is the behaviour and not a saving: the focus stays where it was, the
-accessibility nodes keep their ids, and a control the keyboard was on is
-still the control the keyboard is on after the window has changed size and
-outline. Folding hides what does not fit, which takes those controls out of
-the tab order and out of the accessibility tree — which is what "not in this
-mode" has to mean.
+The panel skins declare fixed `winamp.strip` and `winamp.equaliser`
+layouts, and a responsive `winamp.playlist` layout. Named slots describe
+the positions of controls and readouts. The player binds components with `widget.Slots`
+and reads rectangles through `style.SkinSlotRect`. The app's generators use
+the same geometry to draw the wells and grooves and to write their slots,
+so artwork and control placement share one design. Playlist slots use the
+runtime's stretching and edge anchors. v0.23.4's `SlotSpec` authors those
+fields directly, so the app's JSON anchor rewrite has been removed. Shape
+edge pins also round-trip through the generator. Font family preferences
+still require a small manifest adapter because `skingen.Plan` lacks the
+runtime's font preference schema; this remaining authoring request is in
+[item 17](../uitoolkit-gaps.md#17-skin-generator-cannot-emit-supported-responsive-slot-anchors).
 
-A right-click anywhere on the cabinet's face opens the application menu.
+Headspace declares its separate `headspace.main` layout. Its central controls,
+equaliser and playlist wings belong to that presentation rather than the
+Winamp window arrangement. Xbox declares `xbox.main` and `xbox.playlist` for
+its player display and responsive satellite. Half Life 2 declares
+`halflife2.main`, `halflife2.equalizer` and `halflife2.playlist` for its
+separate window family. The shell validates each family's required layouts
+before changing the active skin. Fandom declares `fandom.main` and
+`fandom.playlist` for its combined Settings/main window and responsive satellite.
+iTunes declares `itunes.main`, `itunes.mini` and `itunes.equalizer`; full and
+compact views swap the main window's content and native size limits, leaving
+its identity, playback, tray ownership and utility parent unchanged.
+Series 9 declares `series9.main`, `series9.transport`, `series9.equalizer`,
+`series9.playlist` and `series9.compact`. The app places the original embedded
+subviews in one native window and remembers the full base size without counting
+drawer extensions twice. Its original transparent animation reservation is not
+included in the application's desktop bounds.
+The classic desktop appearances declare `vlc.main`, `realplayer.main`,
+`realplayer.playlist`, `realplayer.equalizer` and `amarok.main`. They use
+app-owned responsive layouts and source control artwork, with their sections
+inside one main window. A shared `players.QueueView` composes the stock list
+with queue-index mapping, browsing and activation policy, interrupted gesture
+guards and copy-only local file drops. Each skin supplies its own row geometry
+and paint; Amarok's search and sorting leave the underlying queue unchanged.
 
-## Lantern — the face that drops its skin
+Imported skins place their resizable playlist backgrounds on a nonpixelated
+sheet. This avoids the
+toolkit’s [fractional panel-slice scaling defect](../uitoolkit-gaps.md#24-resized-pixelated-panel-slices-lose-fractional-display-scaling);
+the original background is retained in the 1× artwork. The manifest
+adapter also writes explicit smooth-sheet overrides to avoid the generator’s
+[mixed-sheet policy loss](../uitoolkit-gaps.md#26-skin-generator-loses-nonpixelated-overrides-in-mixed-sheet-plans).
+
+The app separately chooses the sampling policy for each type of artwork.
+The bitmap skins provide higher-detail 2× chrome on smooth sheets and keep
+small glyphs and digits on nearest-sampled sheets. Optional `backdrop.*`
+slots restore the original display patterns before live readouts are painted;
+their geometry and art belong to the skin. Packs without these slots need
+no change. Scale-specific drawing uses the public authoring context's scale,
+so the generated manifests and images remain reproducible through `skingen`.
+
+A compatible external panel can rearrange controls using those slot names,
+including edge anchoring and stretching. The app still decides which
+components exist, what they do, their keyboard order and their accessible
+names. A missing slot is reported to the app; every required control needs
+a slot in a compatible pack.
+
+The equaliser's window receives the `winamp.equaliser` frame role. Winamp
+Silver uses that role for its tab caption while the other two windows keep
+title bands. Window titles come from the app. Named sprites provide digits,
+letters, lamps and thumbs through `style.DrawSkinSprite`; slot art supplies
+a key's state through `style.DrawSkinSlot`. Named `player.*` text roles
+supply row, selection, readout, equaliser and analyser colors, so imported
+packs can define those colors without adding another app palette. Imported
+main readouts retain their source bitmap glyph colors; optional `info.font.*`
+masks let the playlist readouts use its own original foreground and background
+colors. Printed EQ labels are adapted to the app’s actual ISO frequencies
+and ±12 dB range. Imported playlist font preferences retain the original
+family names with installed-font fallback; the app does not bundle those
+fonts. Source archives remain unchanged.
+
+### Appearance hooks retain widget behavior
+
+`players.GlyphButton` configures `widgets.ToolButton`: the app supplies a
+label, action, glyph and optional skin art. `Painter`, `ContentPainter` and
+`Shaper` let it customize appearance while the widget handles focus,
+presses, keyboard activation and the focus ring.
+
+`players.Fader` configures `widgets.Slider` with range, formatted reading,
+step, page and action. `Vertical`, `Painter` and `Travel` support a fader
+whose thumb rides a printed groove. Imported packs can provide optional
+`volume.frame.N`, `balance.frame.N` and `eq.frame.N` sprite sequences.
+The app selects a frame from the current value before painting the thumb;
+packs without frames retain their printed backgrounds. The toolkit owns dragging, keyboard
+steps and accessible increment/decrement actions. Model refreshes inside
+`OnInput` or `OnChange` no longer produce nested user-input callbacks;
+the app's callback-suppression guard has been removed.
+
+The panel playlist configures `widgets.ListView`. `RowGeo` supplies its
+viewport, groove, row height and thumb size. `RowPaint` supplies its font,
+colors and right-aligned track duration. `ScrollPaint` supplies thumb art.
+Selection, keyboard navigation, scrolling, outer-component focus and
+accessible viewport bounds use the toolkit. `OnActivate` commits keyboard
+and accessibility actions; the app supplies playback and context-menu actions.
+Only the interrupted pointer-gesture safeguard remains app-owned until
+the toolkit fixes its click history.
+
+## Desktop positioning
+
+The panel windows use the toolkit's public `rack` package to snap and move
+as a group. X11, including XWayland, and the headless backend expose
+positions and allow windows to be placed. The app adopts the desktop's
+actual boxes after mapping, then attaches the equaliser and playlist to
+the strip. Moving a window is a request; the rack waits for the desktop's
+response.
+
+Dragging the main strip carries its snapped group. Dragging a satellite
+away detaches it from Main; panes attached to that satellite travel with
+it. Bringing it back near an edge rejoins the group. Moving Main to a loose
+satellite also rejoins it. The toolkit's old path-reversal hang is fixed,
+but rejoining a longer foreign chain still drops intermediate links and a
+small snap gap moves stationary foreign panes. The app retains a guarded
+public Rack pass to preserve the component and snap Main to it. It also
+retains a final reentrant movement notification. Group following uses
+movement events while playback is playing, paused or stopped.
+
+The toolkit now uses a 250 ms acknowledgement deadline. Its callbacks still
+run a pass per event rather than coalescing a complete batch, and no expiry
+wake-up follows a final move ignored within that interval. The ordinary
+70 ms app pulse therefore still checks unresolved geometry until the
+request is acknowledged or its deadline expires. Settled event-capable
+windows need no position polling. Native event-driven movement, detachment
+and rejoining pass once startup placement is settled; these programmatic
+checks do not establish continuous-drag visual smoothness.
+
+The executable currently prefers available X11 at Linux startup, including
+XWayland, even when it starts in Default. This is a temporary workaround to
+retain group movement after switching to a skin. It should be removed when
+the toolkit supplies portable logical-window grouping and its fallback
+strategy; choosing X11/XWayland is not a permanent application responsibility.
+Explicit `UITK_BACKEND` choices are honored, headless screenshots use
+offscreen, and the native toolkit fallback remains available without X11.
+On a Wayland-only system the skins still render and their controls work;
+their separate native windows cannot move as a snapped group. There is no
+mandatory XWayland dependency.
+
+Native Wayland ordinary toplevels expose no global position and cannot be
+placed by the client. That protocol/capability restriction prevents this
+grouped positioning; it is not a toolkit defect. Layer-shell placement and
+interactive toplevel dragging are separate capabilities and do not provide
+arbitrary positioning of these ordinary application windows. The model and
+panel controls still work. Default's single-window layout needs no satellite
+positioning.
+
+The missing feature is a higher-level grouping abstraction, rather than a
+different implementation of Wayland `Move`. The toolkit already provides
+`rack` for separate windows and `dock` for panes within a host, but does not
+choose or migrate between representations for a declared skin-window group.
+A portable strategy might keep docked logical panes in one physical host,
+or use suitable compositor cooperation where available, while retaining the
+app's artwork, geometry and behavior. That strategy belongs in the toolkit.
+
+Native popup surfaces already existed in v0.23.1 and remain available in
+v0.23.4. A general menu is not universally confined to its parent window.
+Where a popup is unavailable, disabled or refused, the toolkit uses an
+in-window layer. The player’s skin menu uses the toolkit’s constrained, scrollable choice
+list on either path.
+
+## Build, keyboard and screenshots
 
 ```bash
-go run . -face lantern
-go run . -face lantern -skin breeze-night  # start with the skin dropped
+go build .
+./media-player-music
+./media-player-music track.mp3 album.flac
+./media-player-music -skin default
+./media-player-music -skin winamp
+./media-player-music -skin winamp-silver
+./media-player-music -skin dosamp
+./media-player-music -skin windows-98
+./media-player-music -skin itunes
+./media-player-music -skin winamp -scale 1.75 -shot /tmp/winamp-175 -at 1m37s
 ```
 
-A main window cut to its skin's outline, with a playlist window anchored to
-its right-hand edge. **Ctrl+K drops the skin**, and that is the argument of
-the whole feature in four lines:
+The command accepts `./media-player-music [flags] file1.mp3 file2.flac` and
+auto-plays the first provided file. Without files, use Eject/Open/Add from
+the restored queue or drop music files/folders onto the playlist. A first
+launch has an empty queue. The public options are `-skin` with any ID in the table above,
+`-scale`, `-audio-backend`, `-shot` and `-at`. Run `./media-player-music -help` for all choices. A plain build uses an ordinary dark fallback where an era
+base is unavailable. Era engines are a toolkit build configuration:
 
-```go
-ap := style.LookAppearance(app.Look())
-ap.Name = "breeze-night"          // or "lantern"
-app.SetLook(style.WithAppearance(app.Look(), ap))
+```bash
+go build -tags theme_engine_all .
+# Or only the bases used by these layouts:
+go build -tags 'theme_engine_win95,theme_engine_luna,theme_engine_breeze' .
 ```
 
-It is the call Settings makes for any theme. What comes back is the same
-widget tree in another look — the same tab order, the same accessibility
-tree, the same keyboard — and a window that is a rectangle again, because
-the outline belonged to the skin and never to the app.
-`TestDroppingTheSkinKeepsTheApp` pins exactly that: the tab order compared
-as a cycle, the tree compared by role and by every control's name, and the
-one thing that is *supposed* to differ — the status line, which names the
-pack — asserted separately.
+All skin packs are embedded with either configuration. Engine tags select
+which ordinary base themes are compiled in; they are not a packaging defect.
 
-Its skin is deliberately partial. It binds seventeen parts and leaves tabs,
-splitters, switches and tree disclosures to `breeze-night`, because a skin
-is always a partial override and a demo that only ever showed a complete one
-would be hiding the common case.
-
-## The keyboard
-
-One table for every face, so learning the keys in one is learning them in
-all (`players.CommandFor`):
-
-```
-Space  play / pause          ←  →   seek five seconds
-Z  B   previous / next       ↑  ↓   volume
-V      stop                  M      mute
-S      shuffle               R      repeat: off → all → one
-Escape quit                  Ctrl+Q quit
+```text
+Space         play / pause     Z / B          previous / next
+V             stop             M              mute
+Left / Right  seek             Up / Down      volume
+S             shuffle          R              repeat: off → all → one
+Ctrl+O        open music files
+Ctrl+,        audio backend settings
+Ctrl+K        next skin         Ctrl+Shift+K   Default / last optional skin
+Ctrl+E        show/hide equaliser    Ctrl+L    show/hide playlist
+Shift+F10     skin menu         Escape / Ctrl+Q  quit
 ```
 
-The application adds Ctrl+F (next face), Ctrl+Shift+F (the face before),
-Ctrl+K (next skin) and Ctrl+Shift+K (drop the skin). Each face adds its own:
-Minim the menu key, Marquee Ctrl+M, Lantern Ctrl+L.
+Focused controls also consume their own navigation keys. The app's
+transport shortcuts bubble from controls to the shared keyboard handler.
 
-Bare letters as shortcuts are safe here because no face hands one to a text
-field. There is exactly one field in the three — Lantern's playlist filter —
-and `players.Typing` asks the focused component what role it gives the
-accessibility tree before any letter is dispatched. Typing "Beacon" into the
-filter does not skip six tracks.
+Screenshot mode creates headless windows with synthetic tracks and poses
+the model at `-at`, which defaults to 97 seconds. It writes one PNG per open
+window and exits without starting an audio backend. The synthetic analyser is a pure
+function of the fixture's clock position, so the same skin, scale and
+position produce the same picture. Posing resets its peak markers
+consistently; it is not a visualisation of live audio.
 
-Every control is on the keyboard, including the ones drawn as glyphs:
-`players.GlyphButton` is a `widgets.ToolButton` — a name, a focus ring, an
-accessibility node, Return and Space — that happens to be painted with a
-mark on it, or with a skin's art.
-
-## The one thing a desktop may refuse
-
-The snapping is not this application's: it is uitoolkit's `rack` package,
-which any application can use for satellite windows of its own.
-
-Windows that stick to one another need two things of a desktop: being told
-where a window is, and being able to put one somewhere. **X11 has both** —
-clients place their own windows — and so does the offscreen backend, which
-is why every snapping test runs without a compositor.
-
-**A Wayland toplevel has no position.** A client is never told where its
-windows are and cannot ask for one; that is the protocol, not an omission in
-the toolkit. So on Wayland the arithmetic still runs — the rack snaps, the
-model is the same — and the windows simply cannot follow. The faces say
-which of the two they got rather than pretending: Minim in its strip,
-Lantern in its status line ("playlist not placeable here").
-
-Two more things only real hardware showed, both about *when* rather than
-*what*:
-
-- **A window manager places a window when it maps it**, and the application
-  is told afterwards — so a rack built when its windows are made is built
-  around windows that are all still at the origin. `rack.Desk.Adopt` takes
-  the real boxes in first, and each face attaches its panes once that
-  answers yes.
-- **A move is a request.** X11 answers one a frame or two later, so reading
-  the position straight back says the window is where it was and looks
-  exactly like a drag. `rack.Desk` waits for a move it asked for to arrive
-  and gives up after a few looks, so a window manager that refuses one —
-  KWin clamps a window that would hang off the screen — is not argued with
-  forever.
-
-## How it is put together
-
-```
-main.go                      the one command: -face, -skin, -only, -compact, -scale, -shot
-internal/shell/              the application: the Face abstraction, the switch, the clock
-  face.go                    what a face is, and the three that are
-  shell.go                   one model, one clock, the shared keyboard, what is remembered
-internal/players/            the model, and the pieces of interface every face shares
-  players.go  spectrum.go    the transport, the playlist, the analyser, the equaliser
-  host.go                    what a face is given, and the skin and face switching
-  settings.go                the face and the skins, remembered between runs
-  ui.go                      the glyphs, the transport key, the fader, the pulse, the keys
-  minim/  marquee/  lantern/ one package per face: its look and its layout, and no more
-  playertest/                what the faces' tests do to a window
-```
-
-The line between the shared package and each face is worth stating:
-**anything a player of any era would have drawn the same way** is shared —
-the transport marks, the analyser, the clock that drives them, the keyboard
-— and everything about *how a particular player looked* is its own, because
-that is the subject of the demo and sharing it would be sharing the thing
-being demonstrated.
-
-Three pieces are worth knowing about.
-
-**`players.GlyphButton`** is a `widgets.ToolButton` with a mark painted on
-its face, a label, and a way in for a skin that draws the key as a picture
-of its own. It used to be a component of its own — two hundred and forty
-lines of presses, keys, focus, hover and accessibility that a button already
-had — because a button could not be painted by its app.
-`widgets.ButtonPainter` and `widgets.ButtonShaper` are what it was waiting
-for.
-
-**`players.Fader`** is a `widgets.Slider`, stood on end by `Vertical` and
-painted by a skin through `SliderPainter` where the art is a thumb riding a
-printed groove. What is left on top of it is what is genuinely the app's:
-the label, the reading a screen reader says out loud ("+4.5 dB", not "4.5"),
-a step and a page of the app's choosing, Home meaning the top of a control
-that stands on end, and the increment and decrement a screen reader can ask
-for, which the slider advertises and does not itself answer.
-
-**`internal/players/minim/tracks.go`** is the one component here that is not
-a stock widget, and it says why in its own comment.
-`widgets.ListView.RowGeo` takes everything it needs about *where* the parts
-are from the same skin slots it uses, and if geometry were all of it that
-file would be a hook and nothing else. What a list view has no hook for is
-what a row is *painted* in: rows go through `LookAndFeel.DrawListRow`, a
-skin passes that to the pack underneath it, and the panel skins are drawn
-over `win95` — so a stock list inside the panel's printed well paints win95
-rows in the look's font instead of eleven-pixel green on black. Three things
-would retire the file: a row painter (or a row font and ink a layout can
-state), a second column so a track's length can sit at the right-hand end of
-its row, and a scroll thumb painted from the skin's own `list.thumb` sprite.
-
-## The analyser, and why a screenshot is reproducible
-
-The bars are a pure function of the transport's position: a few sines at
-incommensurable rates per band under a falling tilt, and nothing else. Two
-consequences, both deliberate.
-
-A screenshot of the player posed at 1:37 (`-shot`) is the *same picture*
-every time it is taken, so one run can be compared with the one before it.
-And the same second of playing looks the same whether the window repainted
-twelve times in it or sixty, which matters because the faces run at
-different rates and all of them run slower under a screen recorder.
-
-Only the peak markers and the fall to silence have memory. The scrolling
-title takes its phase from the same position and slides back and forth with
-a rest at each end rather than looping: a loop is what this era did and is
-one line of arithmetic, but two thirds of every still frame of one is a
-title cut in half with the next copy beside it.
-
-## Tests
+## Verification
 
 ```bash
 tools/testenv.sh go test ./...
+tools/testenv.sh go test -race ./...
+tools/testenv.sh go test -tags theme_engine_all ./...
+tools/testenv.sh go test -race -tags theme_engine_all ./...
 ```
 
-The model is tested without opening a window at all — the transport's wrap
-at the end of a track, the seek bar's fraction, the shuffle that is a
-permutation beside the list rather than of it.
+The helper removes the Wayland and X11 display and supplies a private
+D-Bus session and private XDG directories. The default and all-engine
+configurations exercise different base-theme availability. Presentation
+fixtures retain the invented library; playback/file hooks verify action routing
+without decoding audio or launching a playback process.
 
-Each face is then tested headless for the four things a skinned app has to
-keep: every control on the keyboard, `a11y.Check` clean in the skin *and*
-with the skin dropped, the silhouette at 1, 1.25, 1.5, 1.75 and 2, and a
-themed fallback that is a whole app. Minim's switch is tested at every stop:
-each skin paints all three windows at the five scales with the display where
-the layout says, the silver windows are round at their corners and nowhere
-else, the skin key and Ctrl+K go all the way round, the menu lists the skins
-by name, every panel control is on Tab, and the choice is remembered.
+Engine and controller integration tests start the installed mpv with
+`--ao=null`, so decoding, transport and filter checks are silent. Controller
+tests inject that real engine into a headless shell; this differs from the
+synthetic presentation fixtures. These integration tests skip when mpv is
+missing, and Unix IPC tests also skip on unsupported platforms. The shell
+integration checks accepted balance, preamp and band filters through mpv's
+audio-filter property, along with the running clock and playback state.
+Measured spectrum tests distinguish low and high tones, reject stale
+seek/track packets, check pause and silence, and preserve visualization
+across all appearances. Backend tests verify channel preservation and
+byte-identical decoded output with and without analysis. Protocol tests
+exercise all four backend adapters; installed VLC, MPlayer and mpg123 have
+silent playback checks too. Settings regressions use actual toolkit input
+and accessibility actions for selecting, refreshing and retrying programs,
+test availability marks, persistence and retained DSP values, and verify
+the preferred and minimum layout at 1× and 1.75×.
 
-The silhouette is checked as **fractions of the window** rather than as
-pixels or as a golden image. That is exactly what a shape stated in design
-pixels and resolved against the window buys — the same numbers at every
-scale, which a bitmap stretched to fit would not give — and a failure names
-the row that is wrong instead of handing back two pictures.
+Live backend checks were run on Linux. The Windows application and macOS
+audio package cross-compile; native playback still needs validation on those
+systems. MPV tests use v0.41.0. Older IPC versions that omit returned playlist
+entry IDs cannot always distinguish failed loads during rapid replacement;
+the adapter avoids attributing an old failure to the new track.
 
-The application itself is tested for the thing the faces cannot test: that
-changing face keeps the player exactly as it was. The transport, the queue,
-the position, the volume, the shuffle and the equaliser's curve are compared
-across three switches; the old face's windows are checked closed and the new
-face's open; the clock is checked still running and still moving the head;
-the face key is checked in every window of the face it starts in; and the
-face and the skin are checked to survive into what the next run would read.
+The skin tests parse and lint the bundled packs, decode their artwork, and
+regenerate manifests and PNGs for comparison with the embedded bundle.
+Registration tests cover direct embedded and unrelated in-memory packs,
+user overrides, replacement with a fresh look, and startup without a writable
+temporary directory. The panel tests exercise placement, paint, hit shapes,
+keyboard order and accessibility at fractional scales. An external panel
+fixture rearranges real controls with anchored and stretched slots.
 
-## What still stands
+Shared-model tests cover transport wrapping, seeking, shuffle and repeat.
+Presentation-switch tests check state preservation and window composition.
+Playlist tests exercise selection, scrolling, inset accessible rows,
+outer-component focus, single-click selection, double-click activation and
+repeated accessibility activation. A recording-backend regression proves
+selection sends no playback commands and double-click loads exactly one
+track in stopped, paused and playing states across all appearances.
+Headless URI-drop tests negotiate
+URI Copy delivery across the playlist, including empty lists, reject remote
+file authorities and incompatible offers, and route decoded paths to the
+app's loader. Folder tests cover recursive sorted expansion and background
+request ordering. Caption-drop tests cover the two original skins and resized playlists,
+preserve dragging and pointer/accessibility Close, and exercise the normal
+shell timer after caption replacement. Session tests cover queue/offset restoration without
+autoplay, missing files, independent default placement, shared skin placement
+and retained detached or hidden panels. Structural accessibility checks are supplemented by actual menu action
+dispatch tests for both in-window and simulated native popup surfaces.
 
-Things this application wanted and the toolkit could not do, kept because
-they are the useful output of writing one. Most of the original list has
-been fixed in uitoolkit — `widgets.Button`/`ToolButton` gained `Painter` and
-`Shaper`, `widgets.Slider` gained `Vertical`, `Painter` and `Travel`,
-`widgets.ListView` gained `RowGeo`, window snapping became the public `rack`
-package, a press bubbles, a window opens with something focused, key events
-carry the character as well as the key, `SizingFixed` means a window whose
-size is its design. These are what is left:
+The optional `TestNativeXDNDPlaylistFolderDrop` uses a separate Xlib sender
+to transfer an actual `text/uri-list` selection to Default, Winamp and
+Winamp Silver on X11 at 1.75x. It checks the native drop advertisement after
+frame recreation and finds a viewable target through the root window tree.
+It verifies Copy negotiation, including a source
+that prefers Move, and recursive queue additions with a recording backend
+that plays no audio. Enable it with `MUSIC_PLAYER_NATIVE_XDND_TEST=1` and an
+X11 display; `MUSIC_PLAYER_NATIVE_DROP_FOLDER` chooses an existing folder.
+The README includes the command. A locked desktop can leave these windows
+unmapped; the test then skips visible target discovery. Direct messages to
+a known unmapped XID can test protocol transfer and loading but do not
+establish that a file manager can discover that target. Regular tests keep
+native windows disabled.
 
-- **A menu is drawn inside the window it opens from.** The strip is 116
-  design pixels tall, so its skin menu is four rows and nothing else — no
-  separator, no shortcut column — and the face switch has to live in the
-  playlist window's menu instead. A menu that could leave its window (a
-  Wayland `xdg_popup`, an X11 override-redirect window) would lift that
-  limit for every compact app.
-- **A list view's rows cannot be painted by the app.** See `tracks.go`
-  above: `RowGeo` places them, nothing colours them.
-- **`widgets.Slider` has no step or page of the app's**, no tooltip, no
-  formatted reading for a screen reader, and no `AccessibleAction` for the
-  increment and decrement it advertises. `players.Fader` adds all four in
-  about eighty lines, which is the right size for the gap but not a gap an
-  app should have to fill.
+The optional utility-window test also verifies taskbar policy through KWin's
+own window state when its read-only scripting verifier is available. It
+covers Main retaining its taskbar entry, both panels remaining excluded,
+child and parent recreation, public mapped-state setters and hide/re-show.
+The verifier inspects only its test windows and unloads its own script.
+
+The optional `TestNativePlaylistResizeAndSavedSize` opens owned X11 windows
+at 1.75x and checks both skins' native minimum-size hints, enlarged row
+viewport, footer artwork, utility-window state and restored playlist size.
+Enable it with `MEDIA_PLAYER_NATIVE_WINDOW_TEST=1` and an X11 display;
+it also requires `xprop` for read-only inspection of those test windows.
+These checks exposed a separate native
+[SHAPE ordering defect](../uitoolkit-gaps.md#18-x11-shaped-resize-bands-violate-the-declared-rectangle-ordering)
+in resizable rounded windows; v0.23.4 fixes it and the native recheck passes.
+
+A screenshot check should cover Default and all optional skins at 1x and
+1.75x, with every separate player window included. The README links the
+current default window and each skin's main-window illustration.
+
+## Toolkit review at v0.23.4
+
+The [report for the toolkit owner](../uitoolkit-gaps.md) records all thirty-three
+items with per-item status, independent public probes, expected and actual
+behavior, severity and release source references. App safeguards are not
+counted as proof of a toolkit fix.
+
+Verified fixes cover slider normalization, hidden grid spans, wrapped-list
+focus/accessibility, popup accessibility actions, compact chooser hosting,
+remote URI classification, utility-window policy, child role preservation,
+initial X11 frame positioning, resize geometry, SHAPE ordering and move
+coordinates. Registered skin enumeration and live artwork replacement now
+work. Generated slot anchors and shape pins round-trip directly. The
+toolkit-only upgrade left all 51 bundled manifest/art files unchanged;
+subsequent application branding changes regenerated the packs with the
+speaker logo and **Music Player** captions.
+
+Both playlists adopt explicit activation and context APIs. The app removes
+its disabled-input guard, duplicate raw-URI parser, native utility code and
+post-generation anchor rewrite. It retains only the verified pointer
+interruption guard, guarded group rejoining, owner identity refresh,
+background/sheet/font adapters and unique tray icon name.
+
+The remaining defects include longer rack path reversal, stationary snap
+geometry, incomplete event batching/deadline wake-up, stale ownership after
+parent recreation, list horizontal hit testing and interrupted double-click
+history. Fractional resized pixelated backgrounds, mixed sheet serialization,
+font preference authoring, tray raster priority and popup focus jumps also
+remain open. The release notes additionally confirm macOS requested moves
+reverting; that platform was not locally tested in this Linux review.
+
+Portable logical-window grouping remains a declined design requirement.
+Ordinary native Wayland windows render without XWayland, but separate windows
+cannot follow as a group and taskbar requests are unavailable. The temporary
+X11 preference remains. Continuous native drag smoothness needs visual
+confirmation from the rebuilt player.

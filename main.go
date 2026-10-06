@@ -1,32 +1,5 @@
-// Command media-player-music is a music player's *interface*, with three
-// faces over one player.
-//
-// It is a **visual demo**. Nothing is decoded and nothing is played: the
-// clock counts, the seek bar scrubs the clock, the analyser is drawn from
-// the clock, and the equaliser's faders move and filter nothing. There is no
-// audio stack anywhere in it and there is not going to be one — what it
-// demonstrates is the interface, the skins and the windows.
-//
-// The three faces are three ways of showing the same player, and switching
-// between them does not restart it: the queue, the position, the volume and
-// the equaliser's curve are the application's and survive the change.
-//
-//	media-player-music                      # the face last used, in the skin last used
-//	media-player-music -face minim          # the compact strip
-//	media-player-music -face marquee        # the cabinet that folds
-//	media-player-music -face lantern        # the window cut to its outline
-//	media-player-music -skin minim-classic  # in a skin of that face's
-//	media-player-music -skin breeze-night   # with the skin dropped, in an ordinary theme
-//	media-player-music -only strip          # the compact face's strip on its own
-//	media-player-music -compact             # the cabinet, folded down
-//	media-player-music -scale 1.75          # at a fractional scale
-//	media-player-music -shot out/           # paint one frame of each window, write, exit
-//
-// Ctrl+F steps to the next face and Ctrl+Shift+F back; Ctrl+K steps through
-// the skins the face was drawn for and Ctrl+Shift+K drops the skin for an
-// ordinary theme. Space plays and pauses, Z and B change track, V stops, the
-// arrows seek and set the volume, M mutes, S shuffles and R repeats. Escape
-// quits.
+// Command media-player-music presents one player in an ordinary default UI
+// or in its optional Winamp and Windows Media Player skins. Audio uses installed executables.
 package main
 
 import (
@@ -34,90 +7,95 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/appicon"
+	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/shell"
+	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/icons"
 	"github.com/codemodify/uitoolkit/style"
 )
 
 func main() {
-	face := flag.String("face", "", "the face to wear: minim, marquee or lantern (default: the last one used)")
-	skin := flag.String("skin", "", "the pack to wear: one of the face's skins, or any other theme (default: the last one used)")
-	only := flag.String("only", "", "strip | strip+eq | strip+list — which of a face's windows to open")
-	compact := flag.Bool("compact", false, "open the marquee face folded down")
-	scale := flag.Float64("scale", 0, "display scale (0: the desktop's, or $UITK_SCALE)")
-	shot := flag.String("shot", "", "paint one frame of each window into this directory and exit")
-	at := flag.Duration("at", 97*time.Second, "where the head is in -shot mode")
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	skin := flag.String("skin", "", "appearance: "+players.SkinChoices()+" (default: last used, or no skin)")
+	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $UITK_SCALE)")
+	shot := flag.String("shot", "", "paint posed screenshots into this directory and exit")
+	at := flag.Duration("at", 97*time.Second, "playback position in screenshot mode")
+	audioBackend := flag.String("audio-backend", "", "installed playback program: mpv, vlc, mplayer, mpg123 (default: last used, or mpv)")
 	flag.Parse()
 	log.SetFlags(0)
 	log.SetPrefix("media-player-music: ")
 
+	if err := skins.Register(); err != nil {
+		return err
+	}
 	headless := *shot != ""
-	opts := shell.Options{
-		Face:     *face,
-		Skin:     *skin,
-		Compact:  *compact,
-		Scale:    float32(*scale),
-		Headless: headless,
-		// A shot is posed rather than used, so it is never remembered.
-		Remember: !headless,
+	opts := shell.Options{Skin: *skin, Scale: float32(*scale), Headless: headless, Remember: !headless, AudioBackend: *audioBackend}
+	selected, ok := players.NormalizeSkin(shell.SkinFor(opts))
+	if !ok {
+		return fmt.Errorf("unknown skin %q; choose %s", *skin, players.SkinChoices())
 	}
-	switch *only {
-	case "strip":
-		opts.NoEq, opts.NoList = true, true
-	case "strip+eq":
-		opts.NoList = true
-	case "strip+list":
-		opts.NoEq = true
+	opts.Skin = selected
+	os.Setenv(style.ThemeEnv, shell.LookFor(selected))
+	iconImages, err := appicon.Images(appicon.LogoPNG())
+	if err != nil {
+		return err
 	}
-
-	// The look is built with the application, so the pack the face wants
-	// has to be chosen first. It is the same override UITK_THEME=<pack>
-	// gives any toolkit app.
-	id := shell.FaceFor(opts)
-	pack := shell.SkinFor(id, opts)
-	os.Setenv(style.ThemeEnv, pack)
-
-	a := uitoolkit.New(uitoolkit.Options{Headless: headless, Scale: float32(*scale)})
-	// The window icon the desktop shows in its title bar, task bar and
-	// switcher.
-	a.SetIcon(icons.AppIconRGB("list", 0x3a, 0x9a, 0x4a)...)
-
+	a := uitoolkit.New(uitoolkit.Options{Headless: headless, Scale: float32(*scale), Backend: playerBackend(headless)})
+	a.SetIcon(iconImages...)
 	s, err := shell.New(a, opts)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
+	defer s.Close()
 	if headless {
+		// Window following runs even without playback. Screenshots stay
+		// posed, so stop that UI timer before setting the requested time.
+		s.Pulse().Stop()
 		if err := os.MkdirAll(*shot, 0o755); err != nil {
-			log.Fatal(err)
+			return err
 		}
-		// Posed rather than run: the same position gives the same picture
-		// every time, which is what makes one shot comparable with the one
-		// before it.
 		s.Pose(*at)
 		a.PumpOnce()
 		for _, w := range s.Windows() {
-			if w.Window == nil {
-				continue
-			}
-			path := filepath.Join(*shot, s.FaceID()+"-"+w.Name+".png")
+			path := filepath.Join(*shot, selected+"-"+w.Name+".png")
 			if err := w.Window.WritePNG(path); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			fmt.Println("wrote", path)
 		}
-		return
+		return nil
 	}
-
+	if err := s.LoadFiles(flag.Args(), false); err != nil {
+		return err
+	}
 	s.Start()
+	// Let a desktop launcher or terminal stop the player through the same
+	// cleanup path as its close button, including the saved session.
+	stop := make(chan os.Signal, 1)
+	done := make(chan struct{})
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(stop)
+	defer close(done)
+	go func() {
+		select {
+		case <-stop:
+			a.Quit()
+		case <-done:
+		}
+	}()
 	a.Post(func() {
-		log.Printf("backend=%s %s scale=%.2f", a.BackendName(), s.Status(), s.Face().MainWindow().Scale())
+		log.Printf("backend=%s %s scale=%.2f", a.BackendName(), s.Status(), s.MainWindow().Scale())
 	})
-	if err := a.Run(); err != nil {
-		log.Fatal(err)
-	}
+	return a.Run()
 }

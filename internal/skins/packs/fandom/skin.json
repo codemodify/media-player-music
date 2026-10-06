@@ -1,0 +1,612 @@
+{
+  "base": "win95",
+  "colors": {
+    "focus": "#75C847"
+  },
+  "family": "fandom",
+  "label": "Win Media Player - Fandom",
+  "layouts": {
+    "fandom.main": {
+      "size": [
+        490,
+        330
+      ],
+      "slots": {
+        "analyser": {
+          "at": [
+            170,
+            82,
+            258,
+            121
+          ]
+        },
+        "close": {
+          "at": [
+            452,
+            8,
+            16,
+            13
+          ]
+        },
+        "eq": {
+          "at": [
+            399,
+            228,
+            15,
+            14
+          ]
+        },
+        "eq.0": {
+          "at": [
+            194,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.1": {
+          "at": [
+            217,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.2": {
+          "at": [
+            240,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.3": {
+          "at": [
+            263,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.4": {
+          "at": [
+            286,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.5": {
+          "at": [
+            309,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.6": {
+          "at": [
+            332,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.7": {
+          "at": [
+            355,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.8": {
+          "at": [
+            378,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.9": {
+          "at": [
+            401,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.auto": {
+          "at": [
+            370,
+            211,
+            29,
+            14
+          ]
+        },
+        "eq.balance": {
+          "at": [
+            210,
+            212,
+            120,
+            13
+          ]
+        },
+        "eq.balance.label": {
+          "at": [
+            170,
+            212,
+            39,
+            13
+          ]
+        },
+        "eq.on": {
+          "at": [
+            339,
+            211,
+            27,
+            14
+          ]
+        },
+        "eq.preamp": {
+          "at": [
+            170,
+            100,
+            17,
+            93
+          ]
+        },
+        "eq.preset": {
+          "at": [
+            170,
+            77,
+            258,
+            18
+          ]
+        },
+        "header": {
+          "at": [
+            240,
+            7,
+            190,
+            21
+          ]
+        },
+        "logo": {
+          "at": [
+            255,
+            306,
+            101,
+            23
+          ]
+        },
+        "metadata": {
+          "at": [
+            170,
+            42,
+            258,
+            30
+          ]
+        },
+        "minimize": {
+          "at": [
+            434,
+            8,
+            16,
+            13
+          ]
+        },
+        "mute": {
+          "at": [
+            170,
+            228,
+            15,
+            14
+          ]
+        },
+        "next": {
+          "at": [
+            423,
+            279,
+            10,
+            21
+          ]
+        },
+        "open": {
+          "at": [
+            227,
+            249,
+            26,
+            16
+          ]
+        },
+        "pause": {
+          "at": [
+            167,
+            249,
+            49,
+            50
+          ]
+        },
+        "pl": {
+          "at": [
+            415,
+            228,
+            15,
+            14
+          ]
+        },
+        "play": {
+          "at": [
+            167,
+            249,
+            49,
+            50
+          ]
+        },
+        "prev": {
+          "at": [
+            266,
+            279,
+            10,
+            21
+          ]
+        },
+        "seek": {
+          "at": [
+            266,
+            257,
+            167,
+            19
+          ]
+        },
+        "settings": {
+          "at": [
+            187,
+            228,
+            15,
+            14
+          ]
+        },
+        "settings.about": {
+          "at": [
+            11,
+            212,
+            102,
+            19
+          ]
+        },
+        "settings.backends": {
+          "at": [
+            11,
+            174,
+            102,
+            19
+          ]
+        },
+        "settings.close": {
+          "at": [
+            96,
+            54,
+            16,
+            14
+          ]
+        },
+        "settings.equalizer": {
+          "at": [
+            11,
+            155,
+            102,
+            19
+          ]
+        },
+        "settings.general": {
+          "at": [
+            11,
+            79,
+            102,
+            19
+          ]
+        },
+        "settings.library": {
+          "at": [
+            11,
+            117,
+            102,
+            19
+          ]
+        },
+        "settings.nowplaying": {
+          "at": [
+            11,
+            193,
+            102,
+            19
+          ]
+        },
+        "settings.playback": {
+          "at": [
+            11,
+            98,
+            102,
+            19
+          ]
+        },
+        "settings.skins": {
+          "at": [
+            11,
+            136,
+            102,
+            19
+          ]
+        },
+        "settings.title": {
+          "at": [
+            10,
+            54,
+            82,
+            16
+          ]
+        },
+        "shape.main": {
+          "art": "face.main",
+          "at": [
+            132,
+            0,
+            338,
+            330
+          ]
+        },
+        "shape.settings": {
+          "art": "face.settings",
+          "at": [
+            0,
+            46,
+            122,
+            228
+          ]
+        },
+        "skin": {
+          "at": [
+            255,
+            306,
+            101,
+            23
+          ]
+        },
+        "status": {
+          "at": [
+            170,
+            210,
+            258,
+            15
+          ]
+        },
+        "status.eq": {
+          "at": [
+            225,
+            228,
+            168,
+            14
+          ]
+        },
+        "stop": {
+          "at": [
+            227,
+            269,
+            26,
+            26
+          ]
+        },
+        "volume": {
+          "at": [
+            282,
+            280,
+            137,
+            19
+          ]
+        }
+      }
+    },
+    "fandom.playlist": {
+      "art": "face.playlist",
+      "size": [
+        190,
+        246
+      ],
+      "slots": {
+        "close": {
+          "at": [
+            6,
+            12,
+            10,
+            14
+          ],
+          "fromRight": true
+        },
+        "list": {
+          "at": [
+            13,
+            29,
+            15,
+            27
+          ],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "open": {
+          "at": [
+            13,
+            4,
+            16,
+            14
+          ],
+          "fromBottom": true
+        },
+        "repeat": {
+          "at": [
+            55,
+            4,
+            16,
+            14
+          ],
+          "fromBottom": true
+        },
+        "resize": {
+          "at": [
+            2,
+            2,
+            14,
+            15
+          ],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "rows": {
+          "at": [
+            15,
+            31,
+            28,
+            29
+          ],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "scroll": {
+          "at": [
+            18,
+            31,
+            9,
+            29
+          ],
+          "fromRight": true,
+          "stretchY": true
+        },
+        "shape.playlist": {
+          "art": "face.playlist",
+          "at": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "shuffle": {
+          "at": [
+            34,
+            4,
+            16,
+            14
+          ],
+          "fromBottom": true
+        },
+        "status": {
+          "at": [
+            77,
+            4,
+            20,
+            14
+          ],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "title": {
+          "at": [
+            13,
+            12,
+            32,
+            15
+          ],
+          "stretchX": true
+        }
+      }
+    }
+  },
+  "lineage": "Project reference adaptation · original skin identity unverified",
+  "metrics": {
+    "menuItemH": 20
+  },
+  "parts": {},
+  "sheets": {
+    "fandom": {
+      "1x": "art/fandom.png",
+      "2x": "art/fandom@2x.png",
+      "pixelated": false
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "app.icon": {
+      "at": [
+        0,
+        810,
+        24,
+        24
+      ],
+      "sheet": "fandom"
+    },
+    "face.main": {
+      "at": [
+        0,
+        0,
+        338,
+        330
+      ],
+      "sheet": "fandom"
+    },
+    "face.playlist": {
+      "at": [
+        0,
+        562,
+        190,
+        246
+      ],
+      "sheet": "fandom",
+      "slice": [
+        29,
+        15,
+        27,
+        13
+      ]
+    },
+    "face.settings": {
+      "at": [
+        0,
+        332,
+        122,
+        228
+      ],
+      "sheet": "fandom"
+    }
+  },
+  "summary": "Silver tablet, Settings wing and separate playlist adapted from the supplied reference, with project-generated artwork.",
+  "text": {
+    "player.current": {
+      "color": "#ACF175"
+    },
+    "player.info": {
+      "color": "#20262A",
+      "size": 10
+    },
+    "player.row": {
+      "color": "#E2EAE2",
+      "size": 10
+    },
+    "player.selected": {
+      "color": "#243B27"
+    },
+    "player.selectedText": {
+      "color": "#FFFFFF"
+    },
+    "player.text": {
+      "color": "#A5E975",
+      "size": 11
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

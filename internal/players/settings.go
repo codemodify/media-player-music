@@ -4,80 +4,144 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/codemodify/uitoolkit/style"
 )
 
-// What the player remembers between runs, which is two things: the face it
-// was last wearing, and the pack each face was last switched to.
-//
-// It is kept beside the toolkit's own settings, in
-// $XDG_CONFIG_HOME/uitoolkit/media-player-music.json, and it is read before
-// the application is built — the look is chosen when the application is, so
-// the skin has to be known first.
-
-// Settings is that file.
+// Settings remembers the audio backend, appearance and desktop session. Window
+// positions are logical desktop pixels and are grouped by presentation family.
 type Settings struct {
-	// Face is the face to wear, by id.
-	Face string `json:"face,omitempty"`
-	// Skins is the pack each face was last switched to, by face id.
-	Skins map[string]string `json:"skins,omitempty"`
+	Skin          string                                `json:"skin"`
+	AudioBackend  string                                `json:"audio_backend,omitempty"`
+	Playlist      *SavedPlaylist                        `json:"playlist,omitempty"`
+	Panels        *SavedPanels                          `json:"panels,omitempty"`
+	Windows       map[string]map[string]WindowPlacement `json:"windows,omitempty"`
+	Presentations map[string]PresentationState          `json:"presentations,omitempty"`
 }
 
-// SettingsPath is where the file is.
+// NormalizeAudioBackend resolves old preferences to the default backend.
+// Availability is checked separately; an installed program may disappear
+// without changing the user's saved choice.
+func NormalizeAudioBackend(id string) (string, bool) {
+	switch id {
+	case "", "mpv":
+		return "mpv", true
+	case "vlc", "mplayer", "mpg123":
+		return id, true
+	default:
+		return "mpv", false
+	}
+}
+
+type SavedPlaylist struct {
+	Tracks   []Track       `json:"tracks"`
+	Index    int           `json:"index"`
+	Position time.Duration `json:"position_ns,omitempty"`
+}
+
+type SavedPanels struct {
+	Equaliser bool `json:"equaliser"`
+	Playlist  bool `json:"playlist"`
+}
+
+// A nil Dock means the window is detached. Positioned distinguishes a known
+// origin at (0,0) from a desktop which cannot report window positions.
+type WindowPlacement struct {
+	X          int         `json:"x"`
+	Y          int         `json:"y"`
+	Width      int         `json:"width,omitempty"`
+	Height     int         `json:"height,omitempty"`
+	Positioned bool        `json:"positioned"`
+	Dock       *WindowDock `json:"dock,omitempty"`
+}
+
+type WindowDock struct {
+	Parent string `json:"parent"`
+	Side   string `json:"side"`
+	Along  int    `json:"along"`
+}
+
+// PresentationState keeps local view modes and their window sizes separate
+// from the shared playback model and the native window's desktop placement.
+// Each presentation validates its own modes and size limits when restoring.
+type PresentationState struct {
+	Mode  string                      `json:"mode,omitempty"`
+	Sizes map[string]PresentationSize `json:"sizes,omitempty"`
+}
+
+type PresentationSize struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
 func SettingsPath() string {
 	return filepath.Join(style.ConfigDir(), "media-player-music.json")
 }
 
-// LoadSettings reads what was remembered. A missing or unreadable file is
-// the zero Settings, which is "no preference" and not an error: a player
-// that refused to start because its preferences were malformed would be a
-// player with its priorities the wrong way round.
+// NormalizeSkin also accepts names written by older versions of the app.
+func NormalizeSkin(id string) (string, bool) {
+	switch id {
+	case "", DefaultSkin, Themed, "dark", "breeze-night":
+		return DefaultSkin, true
+	case "minim-classic":
+		return WinampSkin, true
+	case "minim-silver":
+		return WinampSilverSkin, true
+	}
+	if IsSkinned(id) {
+		return id, true
+	}
+	return "", false
+}
+
+// LoadSettings migrates the old per-face preference when possible. Removed
+// faces, malformed files and unknown packs fall back to the default UI.
 func LoadSettings() Settings {
-	var s Settings
-	b, err := os.ReadFile(SettingsPath())
-	if err != nil || json.Unmarshal(b, &s) != nil {
-		return Settings{}
+	var saved struct {
+		Settings
+		Face  string            `json:"face"`
+		Skins map[string]string `json:"skins"`
 	}
-	return s
+	data, err := os.ReadFile(SettingsPath())
+	if err != nil || json.Unmarshal(data, &saved) != nil {
+		return Settings{Skin: DefaultSkin}
+	}
+	id := saved.Skin
+	if saved.AudioBackend != "" {
+		saved.AudioBackend, _ = NormalizeAudioBackend(saved.AudioBackend)
+	}
+	if id == "" && saved.Face == "minim" {
+		id = saved.Skins[saved.Face]
+	}
+	if skin, ok := NormalizeSkin(id); ok {
+		saved.Skin = skin
+		return saved.Settings
+	}
+	saved.Skin = DefaultSkin
+	return saved.Settings
 }
 
-// SkinOf is the pack a face was last switched to, or "" for one it never
-// was — or one the file names and this build cannot wear.
-func (s Settings) SkinOf(face string) string {
-	id := s.Skins[face]
-	if id == "" {
-		return ""
-	}
-	if _, ok := style.LoadTheme(id); !ok && !style.IsSkin(id) {
-		return ""
-	}
-	return id
-}
-
-// WithSkin is the settings with a face's pack remembered.
-func (s Settings) WithSkin(face, pack string) Settings {
-	if s.Skins == nil {
-		s.Skins = map[string]string{}
-	}
-	s.Skins[face] = pack
-	return s
-}
-
-// Save writes the file, through a temporary one so a run that is killed
-// half way through writing leaves the last good answer behind.
 func (s Settings) Save() error {
 	path := SettingsPath()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	b, err := json.MarshalIndent(s, "", "  ")
+	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, append(b, '\n'), 0o600); err != nil {
+	f, err := os.CreateTemp(filepath.Dir(path), ".media-player-music-*.tmp")
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, path)
+	defer os.Remove(f.Name())
+	if _, err := f.Write(append(data, '\n')); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(f.Name(), path)
 }

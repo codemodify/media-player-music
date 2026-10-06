@@ -5,29 +5,13 @@ import (
 	"time"
 )
 
-// The analyser.
-//
-// There is no signal to analyse, so this is the other half of the honest
-// answer: a band of numbers that moves the way a spectrum does, generated
-// from the transport's own clock. It is worth saying why it is not a random
-// number generator called once a frame.
-//
-//   - It has to be **deterministic**. Two screenshots of the same app at
-//     the same position must be the same picture, or nothing about the art
-//     can be compared with the run before it.
-//   - It has to be **frame-rate independent**. The same second of playing
-//     must look the same whether the window repainted twelve times in it or
-//     sixty, because one of the three faces runs at a different rate from
-//     the others and all three run slower under a screen recorder.
-//
-// So the band values are a pure function of the track's position: a few
-// sine waves at incommensurable rates per band, shaped by a falling curve
-// so the bass end is loud and the top end is not. The peak markers are the
-// one part with memory, because a peak that fell instantly would not be a
-// peak marker.
+// Live playback supplies measured frequency-band levels through SetLevels.
+// Advance provides deterministic synthetic values only for screenshot fixtures.
 
 // Spectrum is a bar analyser with falling peak markers.
 type Spectrum struct {
+	// Live distinguishes measured playback from screenshot fixtures.
+	Live bool
 	// Bars is the reading of each band, 0..1.
 	Bars []float32
 	// Peaks is the marker over each band, 0..1, and never below its bar.
@@ -40,6 +24,8 @@ type Spectrum struct {
 	// seed offsets the whole pattern, so two analysers side by side in the
 	// same app do not move in lockstep.
 	seed float32
+	// age detects a stalled measurement stream without keeping stale bars lit.
+	age time.Duration
 }
 
 // NewSpectrum is an analyser of n bands, all at rest.
@@ -104,8 +90,48 @@ func (s *Spectrum) Advance(pos time.Duration, playing bool, dt time.Duration) {
 	}
 }
 
+// SetLevels consumes normalized measured bands, interpolating when the
+// producer's band count differs from the view's. Peak markers fall on UI ticks.
+func (s *Spectrum) SetLevels(levels []float32) {
+	if s == nil || len(levels) == 0 || len(s.Bars) == 0 {
+		return
+	}
+	clean := func(v float32) float32 {
+		if math.IsNaN(float64(v)) || math.IsInf(float64(v), 0) {
+			return 0
+		}
+		return clamp01(v)
+	}
+	for i := range s.Bars {
+		at := float64(i) * float64(len(levels)-1) / float64(maxInt(len(s.Bars)-1, 1))
+		lo := int(at)
+		hi := min(lo+1, len(levels)-1)
+		fraction := float32(at - float64(lo))
+		s.Bars[i] = clean(levels[lo])*(1-fraction) + clean(levels[hi])*fraction
+		s.Peaks[i] = max(s.Peaks[i], s.Bars[i])
+	}
+	s.age = 0
+}
+
+// AdvanceLive animates only decay and peaks; it never invents signal data.
+func (s *Spectrum) AdvanceLive(playing bool, dt time.Duration) {
+	if s == nil {
+		return
+	}
+	dt = max(dt, 0)
+	s.age += dt
+	step := float32(dt.Seconds())
+	for i := range s.Bars {
+		if !playing || s.age > 300*time.Millisecond {
+			s.Bars[i] = max(s.Bars[i]-s.Decay*step, 0)
+		}
+		s.Peaks[i] = max(s.Peaks[i]-s.Fall*step, s.Bars[i])
+	}
+}
+
 // Reset takes every band and marker back to nothing.
 func (s *Spectrum) Reset() {
+	s.age = 0
 	for i := range s.Bars {
 		s.Bars[i], s.Peaks[i] = 0, 0
 	}
@@ -143,15 +169,18 @@ func maxInt(a, b int) int {
 
 // ---- the equaliser ----------------------------------------------------------
 
-// Equalizer is a preamp and a row of band gains. It filters nothing; the
-// sliders move, the curve under them redraws, and that is the whole of it.
+// Equalizer holds the preamp and band gains applied by the shell's audio backend.
 type Equalizer struct {
 	On     bool
+	Auto   bool
 	Preamp float32   // dB
 	Gains  []float32 // dB, one per band
 	Preset string
 	// Changed runs after any of the above moves.
 	Changed func()
+	// autoTrack prevents a refresh from overwriting manual adjustments on
+	// the current track. It belongs to the model so skin changes keep it.
+	autoTrack int
 }
 
 // EqRange is how far a band goes either way, in dB. Twelve is what the
@@ -166,7 +195,39 @@ var EqBands = []string{"31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", 
 
 // NewEqualizer is a flat equaliser with as many bands as EqBands.
 func NewEqualizer() *Equalizer {
-	return &Equalizer{Gains: make([]float32, len(EqBands)), Preset: "Flat"}
+	return &Equalizer{Gains: make([]float32, len(EqBands)), Preset: "Flat", autoTrack: -1}
+}
+
+// SetOn enables or bypasses the audio equalizer and notifies the shell.
+func (e *Equalizer) SetOn(on bool) {
+	if e == nil || e.On == on {
+		return
+	}
+	e.On = on
+	e.changed()
+}
+
+// SetAuto changes whether selecting a track applies a demo preset.
+func (e *Equalizer) SetAuto(on bool, track int) {
+	if e == nil || e.Auto == on {
+		return
+	}
+	e.Auto = on
+	e.autoTrack = -1
+	if on {
+		e.AutoForTrack(track)
+	}
+	e.changed()
+}
+
+// AutoForTrack applies a preset once for each track while Auto is enabled.
+func (e *Equalizer) AutoForTrack(track int) {
+	if e == nil || !e.Auto || track < 0 || e.autoTrack == track {
+		return
+	}
+	e.autoTrack = track
+	presets := EqPresets()
+	e.Apply(presets[track%len(presets)].Name)
 }
 
 // EqPreset is one named curve.
