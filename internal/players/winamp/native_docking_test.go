@@ -9,6 +9,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
 )
 
@@ -20,7 +21,7 @@ func TestNativeDesktopMovesFollowAndRejoinWithoutPlaybackTicks(t *testing.T) {
 	}
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
+			t.Setenv(platform.EnvBackend, "x11")
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
 			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})

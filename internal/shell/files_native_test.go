@@ -18,6 +18,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
 )
 
@@ -58,7 +59,7 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 	if len(want.tracks) == 0 {
 		t.Fatal("native test folder has no playable entries")
 	}
-	t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
+	t.Setenv(platform.EnvBackend, "x11")
 	for _, skin := range []string{players.DefaultSkin, winamp.Skin, winamp.SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())

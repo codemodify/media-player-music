@@ -47,7 +47,7 @@ func TestNativeUtilityWindowsStayOffTaskbarAfterFrameRecreation(t *testing.T) {
 	}
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
+			t.Setenv(platform.EnvBackend, "x11")
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
 			a := ui.New(ui.Options{Scale: 1, DisableLookWatch: true})
@@ -110,7 +110,7 @@ func TestNativeUtilitySetterRestoresMappedPolicyWithoutIdentityChange(t *testing
 	}
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
+			t.Setenv(platform.EnvBackend, "x11")
 			t.Setenv(style.ThemeEnv, skin)
 			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})
 			p, err := New(players.NewHost(a), Options{Scale: 1.75})

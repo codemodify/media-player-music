@@ -1,6 +1,7 @@
 package winamp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -8,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/godbus/dbus/v5"
+	dbus "goframework.io/system-dbus"
 )
 
 type nativeTaskbarReport struct{ reports chan string }
@@ -30,25 +31,21 @@ func assertKWinTaskbarPolicy(t *testing.T, p *Player) {
 	if address == "" {
 		return
 	}
-	conn, err := dbus.Dial(address)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	conn, err := dbus.Connect(ctx, address) // authenticated, and Hello said
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer conn.Close()
-	if err := conn.Auth(nil); err != nil {
-		t.Fatal(err)
-	}
-	if err := conn.Hello(); err != nil {
-		t.Fatal(err)
-	}
 	service := fmt.Sprintf("org.codemodify.MediaPlayerUtilityProbe.p%d", os.Getpid())
 	const path dbus.ObjectPath = "/UtilityProbe"
 	const iface = "org.codemodify.MediaPlayerUtilityProbe"
 	report := &nativeTaskbarReport{reports: make(chan string, 1)}
-	if err := conn.Export(report, path, iface); err != nil {
+	if err := conn.Export(path, dbus.Interface{Name: iface, Methods: dbus.MethodTable(report)}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := conn.RequestName(service, dbus.NameFlagDoNotQueue); err != nil {
+	if _, err := conn.RequestName(ctx, service, dbus.NameDoNotQueue); err != nil {
 		t.Fatal(err)
 	}
 	scriptPath := filepath.Join(t.TempDir(), "read-taskbar.js")
@@ -64,11 +61,15 @@ callDBus(%q, %q, %q, "Report", JSON.stringify(rows));
 	plugin := fmt.Sprintf("media-player-utility-probe-%d", os.Getpid())
 	scripting := conn.Object("org.kde.KWin", "/Scripting")
 	var id int32
-	if err := scripting.Call("org.kde.kwin.Scripting.loadScript", 0, scriptPath, plugin).Store(&id); err != nil {
+	if err := scripting.Call(ctx, "org.kde.kwin.Scripting.loadScript", scriptPath, plugin).Store(&id); err != nil {
 		t.Fatal(err)
 	}
-	defer scripting.Call("org.kde.kwin.Scripting.unloadScript", 0, plugin)
-	if err := conn.Object("org.kde.KWin", dbus.ObjectPath(fmt.Sprintf("/Scripting/Script%d", id))).Call("org.kde.kwin.Script.run", 0).Err; err != nil {
+	defer func() {
+		unload, done := context.WithTimeout(context.Background(), time.Second)
+		defer done()
+		scripting.Call(unload, "org.kde.kwin.Scripting.unloadScript", plugin)
+	}()
+	if err := conn.Object("org.kde.KWin", dbus.ObjectPath(fmt.Sprintf("/Scripting/Script%d", id))).Call(ctx, "org.kde.kwin.Script.run").Err; err != nil {
 		t.Fatal(err)
 	}
 	var text string

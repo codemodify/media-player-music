@@ -135,7 +135,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	p.Transport.Changed = p.refresh
 	p.Equaliser.Changed = p.refresh
 	// A look can change under the player from outside it too — Settings,
-	// an edited look.json, GOFRAMEWORK_DESKTOP_UI_THEME on a watcher — and the titles and the
+	// an edited look.json, style.ThemeEnv on a watcher — and the titles and the
 	// focus follow the face whichever way it changed.
 	p.dropLook = a.OnLookChange(p.restyle)
 	p.restyle()

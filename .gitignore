@@ -17,3 +17,7 @@ coverage.*
 .vscode/
 *~
 .DS_Store
+
+# the local go.work for the goframework.io workspace (machine-specific)
+/go.work
+/go.work.sum

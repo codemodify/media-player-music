@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"image/color"
@@ -12,9 +13,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/godbus/dbus/v5"
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/graphics-paint2d"
+	dbus "goframework.io/system-dbus"
 )
 
 func main() {
@@ -25,7 +26,8 @@ func main() {
 		panic(err)
 	}
 	defer item.Close()
-	conn, err := dbus.ConnectSessionBus()
+	ctx := context.Background()
+	conn, err := dbus.ConnectSessionBus(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -33,15 +35,15 @@ func main() {
 	name := fmt.Sprintf("org.freedesktop.StatusNotifierItem-%d-1", os.Getpid())
 	obj := conn.Object(name, "/StatusNotifierItem")
 	read := func(stage string) {
-		var props map[string]dbus.Variant
-		if err := obj.Call("org.freedesktop.DBus.Properties.GetAll", 0, "org.kde.StatusNotifierItem").Store(&props); err != nil {
+		props, err := obj.GetAllProperties(ctx, "org.kde.StatusNotifierItem")
+		if err != nil {
 			panic(err)
 		}
 		var pix []struct {
 			W, H int32
 			Data []byte
 		}
-		if err := dbus.Store([]any{props["IconPixmap"].Value()}, &pix); err != nil {
+		if err := props["IconPixmap"].Store(&pix); err != nil {
 			panic(err)
 		}
 		fmt.Printf("%s backend=%s shown=%t IconName=%q", stage, item.Backend(), item.Shown(), props["IconName"].Value())
@@ -90,8 +92,8 @@ func main() {
 	if err := item.Close(); err != nil {
 		panic(err)
 	}
-	var owner bool
-	if err := conn.BusObject().Call("org.freedesktop.DBus.NameHasOwner", 0, name).Store(&owner); err != nil {
+	owner, err := conn.NameHasOwner(ctx, name)
+	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("after Close service-owned=%t\n", owner)

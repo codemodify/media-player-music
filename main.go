@@ -17,6 +17,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/shell"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
 )
 
@@ -28,7 +29,7 @@ func main() {
 
 func run() error {
 	skin := flag.String("skin", "", "appearance: "+players.SkinChoices()+" (default: last used, or no skin)")
-	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $GOFRAMEWORK_DESKTOP_UI_SCALE)")
+	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $"+platform.EnvScale+")")
 	shot := flag.String("shot", "", "paint posed screenshots into this directory and exit")
 	at := flag.Duration("at", 97*time.Second, "playback position in screenshot mode")
 	audioBackend := flag.String("audio-backend", "", "installed playback program: mpv, vlc, mplayer, mpg123 (default: last used, or mpv)")

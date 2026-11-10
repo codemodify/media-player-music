@@ -1,16 +1,22 @@
-# Handover: media-player-music (as of 2026-11-09, commit e55ef1e plus uncommitted work)
+# Handover: media-player-music (as of 2026-11-09, commit 1da0430 plus the rewiring, uncommitted)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
 stands, and what comes next. Read this first, then
 [README.md](README.md) (what the player does, the skins, the keys),
 [docs/faces.md](docs/faces.md) (the layout, the app/framework boundary,
-how it was verified) and [goframework-gaps.md](goframework-gaps.md).
+how it was verified), then this app's rows in
+`~/go/src/goframework.io/app-requests.md` (R21, R33, R34).
 
-**The build is broken right now** (see "next steps", step 1). And
-another session is probably still working in this tree: about 300 files
-are changed and not committed. Treat the tree as read-only until that
-work is committed.
+> **Since 2026-11-09 goframework-gaps.md is retired** (its last version is at
+> 1da0430; a "goframework-gaps.md G<n>" or a link to it in the code or the docs,
+> docs/faces.md's included, means that file). What media-player-music needs
+> from the framework, and what it still has to adopt, is in the framework's
+> one ledger, `/home/user/go/src/goframework.io/app-requests.md` (G1-G5 are
+> R21 there). New needs go by message to the framework session, with a row
+> added there (../CLAUDE.md, "The loop"), and each workaround is tagged in
+> code with its ledger id (`// R21`). Read every "log a gap in
+> goframework-gaps.md" below that way.
 
 ## What it is
 
@@ -47,37 +53,70 @@ goframework desktop-ui (see "where it stands").
    desktop-ui.md, the module folders and their `readme`). If it is
    there, use it. If it falls short, keep the smallest workaround and
    log a gap.
-5. **Gaps go in goframework-gaps.md**: what we need and why, what the
-   framework does today, how to reproduce it, the workaround we keep
-   (and its file), and an API to suggest. New gaps go under **Open**. An
-   entry moves to **Fixed** only once the fix holds in our own use, with
-   a line on how that was checked. **Numbers are never reused.** This
-   file numbers them G1, G2, …, so the next one is G6.
+5. **Gaps go to the framework's ledger** (app-requests.md, see the note
+   at the top): what we need and why, a repro or file:line, the
+   workaround we keep (file:line, tagged `// R<n>` in code), and an API
+   to suggest. A row closes only once the fix holds in our own use, with
+   a line on how that was checked.
+6. **Heavy Go commands run capped**: through
+   `~/go/src/goframework.io/tools/capped.sh` (the owner, 2026-11-09), and
+   with `free -g` showing at least 16G available first. An exit 137 means
+   the cap was hit: run less at once, never raise the cap.
 
-## Build, test, vet (to verify once the wiring is fixed)
+## Build, test, vet (checked 2026-11-09)
 
-None of these work today: the build stops with "updates to go.mod
-needed". Run Go only in a clean environment that cannot reach the
-desktop bus. Never launch the player for real, and never play audio.
+go.mod names no goframework module and has no `replace` block: the
+go.work that `app-workspace.py` writes wires every workspace module
+(`/go.work` and `/go.work.sum` are in .gitignore). Run it again whenever
+the framework gains a module. Never run `go mod tidy` (it ignores
+go.work). Run Go only in a clean environment that cannot reach the
+display or the desktop bus, and heavy commands through capped.sh (GOOS,
+GOMEMLIMIT and GOFLAGS go **inside** the `env -i`, which drops anything
+set before it). Never launch the player for real, and never play audio.
 
 ```sh
-E="env -i HOME=$HOME PATH=$PATH GOPROXY=off DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent"
+C=~/go/src/goframework.io/tools/capped.sh
+E="env -i HOME=$HOME PATH=$PATH GOPROXY=off DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent GOMEMLIMIT=2GiB GOFLAGS=-p=4"
 python3 ~/go/src/goframework.io/tools/app-workspace.py .     # writes go.work (not in git)
-$E go build -o /dev/null ./...
-$E go vet ./...
-for os in linux windows darwin; do $E GOOS=$os CGO_ENABLED=0 go vet ./...; done
-$E go vet -tags font_complex ./... ; $E go vet -tags font_emoji ./...
-$E tools/testenv.sh go test ./...                            # no display, private D-Bus and XDG folders
-$E tools/testenv.sh go test -race ./...
-$E tools/testenv.sh go test -tags font_complex ./...
-$E tools/testenv.sh go test -tags font_emoji ./...
+$C $E go build ./...
+for os in linux windows darwin freebsd; do $C $E GOOS=$os go vet ./...; done
+$C $E go vet -tags font_complex ./... ; $C $E go vet -tags font_emoji ./...
+# the packages that start no audio engine, no tray and no native window
+# (XDG_* pointed at a scratch folder keeps the settings tests off ~/.config):
+$C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XDG_RUNTIME_DIR=$T/run \
+  go test -race -timeout 40m . ./internal/appicon ./internal/players ./internal/players/playertest ./internal/skins/...
+$C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XDG_RUNTIME_DIR=$T/run \
+  go test -race ./internal/players/{amarok,fancy,fandom,halflife2,headspace,itunes,realplayer,series9,standard,vlc,xbox}
+# the rest only with the owner's agreement (see the audio warning):
+$E tools/testenv.sh go test ./internal/playback ./internal/shell ./internal/players/winamp
 $E go generate ./internal/skins                              # after changing a skin plan: rewrites internal/skins/packs
 $E go run . -skin default -shot "$(mktemp -d)" -at 1m37s     # headless pictures, no audio backend
 ```
 
+Results on 2026-11-09 (linux/amd64, go 1.27.3, workspace d445be2):
+- `go build ./...`, and `go vet ./...` for linux, windows, darwin and
+  freebsd, and with `-tags font_complex` and `-tags font_emoji`: pass.
+  All 54 probes vet.
+- `go test -race`: pass for the root package, internal/appicon,
+  internal/players, the eleven faces other than winamp, internal/skins
+  and its subpackages (internal/skins takes about 8 minutes under -race,
+  past go test's default 10-minute timeout when it shares the cap with
+  other packages, hence `-timeout 40m`).
+- Not run (see the audio warning): internal/playback, internal/shell,
+  internal/players/winamp.
+- internal/skins' TestGeneratedPacksMatchBundle found
+  packs/winamp-silver/art/chrome.png and chrome@2x.png out of date with
+  their plan: 22 and 40 pixels on anti-aliased edges, largest channel
+  difference 9 and 11 of 255, from the framework's rasteriser since
+  a5ebdc8. They were regenerated (the generator's output into a scratch
+  folder matches every other pack byte for byte). Re-shooting the
+  pictures (next steps) would show it.
+
 - **Audio warning:** some playback and spectrum tests in internal/shell
   and internal/playback start the installed mpv (and VLC, MPlayer,
-  mpg123) with null audio output. They skip when the program is
+  mpg123) with null audio output; internal/players/winamp's tests run
+  the shell (`shell.Start` plays the queue), and shell's tray tests and
+  tools/testenv.sh use a session bus (a private one). They skip when the program is
   missing. Under the "never play audio" rule, run only the packages you
   need, or `-run` around those tests, unless the owner agrees to them.
 - The native opt-in tests (`MUSIC_PLAYER_NATIVE_XDND_TEST`,
@@ -106,61 +145,49 @@ and shot output, ignored by git.
 
 ## Where it stands
 
-**Committed** (on `dev`, latest first): e55ef1e (2026-10-05) "unify the
+**Committed** (on `dev`, latest first): 1da0430 (2026-11-09) "the port
+from uitoolkit to goframework, as it stood" (it did not build: go.mod's
+244-module replace block was stale); e55ef1e (2026-10-05) "unify the
 music player with classic skins and swappable backends"; before it,
-September's commits: the face switcher, one model behind three faces, the
-Winamp strip ("minim"), "marquee" and "lantern" faces, and the headless
-test environment. All of that is on uitoolkit.
+September's commits on uitoolkit. 1da0430 holds the port: imports renamed
+in about 266 files by desktop-ui-porting.md's checklist, `UITK_*`
+variables made `GOFRAMEWORK_DESKTOP_UI_*`, `style.SetFallback(true)` and
+`style.SetFollowDesktopMotion(true)` in main, settings through
+`style.ConfigSource("media-player-music.json")`, the skin packs
+regenerated by desktop-ui-skingen, the new Fancy face, new tests and 24
+new probes, and goframework-gaps.md in place of uitoolkit-gaps.md.
 
-**Uncommitted** (302 entries in `git status` before this handover.md was added; 249 tracked files changed,
-+9,778 / −37,941 lines). It is mostly the port to goframework:
-
-- **uitoolkit → desktop-ui**, by desktop-ui-porting.md's checklist:
-  imports renamed in about 266 files (`ui.Application`, `ui.Window`,
-  `skins.SkinLayoutOf`, …); `UITK_*` variables now
-  `GOFRAMEWORK_DESKTOP_UI_*`; `style.SetFallback(true)` and
-  `style.SetFollowDesktopMotion(true)` in main; settings read through
-  `style.ConfigSource("media-player-music.json")`.
-- **go.mod**: +307 lines, the framework requirements and a 244-line
-  `replace` block written by `app-workspace.py --go-mod` (the stale
-  wiring, below).
-- **Skin packs regenerated** by desktop-ui-skingen: every
-  `internal/skins/packs/*/skin.json` is much shorter (the old `design`
-  keys are gone, and the arrays are compact).
-- **A new face, Fancy**: `internal/players/fancy/`,
-  `internal/skins/fancy/`, `internal/skins/packs/fancy/`,
-  `internal/skins/plans/fancy*.go`, `docs/screenshots/fancy-*.png`, and
-  README and docs/faces.md sections.
-- **New tests and probes**: desk tests for fandom, halflife2 and winamp;
-  font fallback, complex-text and emoji tests in itunes, playertest and
-  shell; 24 new probes in tools/probes.
-- `uitoolkit-gaps.md` deleted, replaced by the new (untracked)
-  `goframework-gaps.md`. `internal/players/vlc/menu.go` deleted.
-
-**The wiring is stale.** go.mod's `replace` block (relative
-`../../../goframework.io/…`) was written before the framework added
-modules that desktop-ui now pulls in: graphics-svg, system-xkb,
-codecs-text-unicode, codecs-text-markdown and maybe others. So
-`GOPROXY=off go build ./...` fails with "go: updates to go.mod needed".
-Nothing has been built or tested since. The last good run is the one
-goframework-gaps.md records, at framework commit a5ebdc8 (2026-10-23).
-
-**Gaps** (goframework-gaps.md was checked against a5ebdc8; the
-workspace is now at 6227181, 2026-11-09, 637 commits later):
-
-- Open in our file: G1 (desktop-ui-platform-win32 requires
-  system-native-windows v0.0.3, which cannot build it), G2 (`--go-mod`
-  then tidy leaves two placeholder versions), G3 (the porting checklist
-  does not say to tidy again after step 6), G4 (no exported constants
-  for `…_BACKEND`, `…_SCALE`, `…_TRAY`, `…_XDND_DEBUG`), G5 (no portable
-  fallback for grouping windows; carried over from uitoolkit item 9).
-- The framework's notes (desktop-ui.md, "# media-player-music's gaps")
-  say G1–G4 were fixed on 2026-10-23/24 and G5 is now built:
-  `rack.Group` in desktop-ui-rack, with one window for each part on
-  Wayland. It was probed on KWin and sway on 2026-11-04. None of this is
-  in use here yet, so all five stay Open until checked here.
-- The 55 uitoolkit items are summarised in the file: all are resolved
-  except item 9, which became G5.
+**Uncommitted, for the coordinator to commit** (2026-11-09): the
+rewiring, and the framework's answers adopted.
+- **Wiring:** go.mod's replace block and every goframework.io require
+  are gone; go.work alone wires the framework, as comms-mail bb1c695
+  does. `/go.work` and `/go.work.sum` are in .gitignore. The third-party
+  requires that stay are all used: go-winio (internal/playback's Windows
+  pipe), golang.org/x/image (internal/appicon, internal/skins/plans),
+  and go-text/typesetting, x/sys and x/text (indirect, and the probes).
+  The build needed no change for the framework's API since a5ebdc8.
+- **godbus gone:** v5.1.0 does not build for FreeBSD (`*unixTransport`
+  lacks `SendNullByte`), so `GOOS=freebsd go vet` failed. Its two users
+  (internal/players/winamp/native_kwin_test.go and
+  tools/probes/status_icon_priority.go) are on system-dbus now, and
+  godbus is out of go.mod and go.sum. The KWin test is opt-in
+  (`MEDIA_PLAYER_KWIN_AUDIT_BUS`) and was vetted, not run.
+- **R33 (G4):** `platform.EnvBackend` and `platform.EnvTray` in backend.go,
+  backend_test.go, the four native tests and tray_test.go;
+  `platform.EnvScale` in `-scale`'s help. No spelled
+  `GOFRAMEWORK_DESKTOP_UI_*` is left in Go code; the probes' headers and
+  the README keep them in shell commands, where a name is what one types.
+- **G1-G3:** hold here. desktop-ui-platform-win32 now requires
+  system-native-windows v0.0.5 and release.py's prepare sets every
+  requirement to the release (G1); with go.work and no goframework
+  requirement in go.mod, the two placeholders and the second tidy (G2,
+  G3) no longer arise here. A release uses `app-workspace.py --remove`,
+  then requires the published version.
+- **G5 (R21) still open:** desktop-ui-rack's `Group` exists but cannot
+  take the racked faces as they are (see "next steps" and the R21
+  comment on `playerBackend` in backend.go). The X11 preference stays,
+  tagged `// R21`.
+- All 54 probes under tools/probes vet with the tags their headers name.
 
 ## goframework modules
 
@@ -168,7 +195,8 @@ workspace is now at 6227181, 2026-11-09, 637 commits later):
 `widget`, `a11y`, `layout` packages), desktop-ui-widgets,
 desktop-ui-skins, desktop-ui-skingen, desktop-ui-rack,
 desktop-ui-text-complex (behind tags), desktop-ui-platform-all,
-desktop-ui-themes-all, graphics-paint2d, graphics-paint2d-gpu-gles.
+desktop-ui-themes-all, graphics-paint2d, graphics-paint2d-gpu-gles;
+system-dbus in the KWin audit test and the tray probe.
 
 **Could use but does not yet:**
 
@@ -179,7 +207,7 @@ desktop-ui-themes-all, graphics-paint2d, graphics-paint2d-gpu-gles.
 | `codecs-audio-*` | flac, vorbis, opus, alac, g711 (and the spec). There is no mp3 or aac module yet (media.md lists mp3 next; aac is the owner's decision). mpg123 and MP3 files need the external engine until then |
 | `codecs-container-*` | ogg, mp4 (M4A), matroska, wav, aiff, au: opening the files, and their tags for the playlist and library |
 | `system-audio-*` | the sound output (pulse, alsa, oss, sndio, macos, windows; `-all`), behind audio-playback |
-| `system-dbus` | MPRIS (media keys, desktop "now playing"); it would also replace `github.com/godbus/dbus/v5`, which only the tests and probes use now (`internal/players/winamp/native_kwin_test.go`, `tools/probes/status_icon_priority.go`) |
+| `system-dbus` | MPRIS (media keys, desktop "now playing"); it already replaced godbus in the tests and probes |
 | `system-process-*` | starting and watching the external engines, while they stay (`internal/playback/process.go`, `command_*.go` use os/exec) |
 | `vfs-watch`, `vfs` | watching music folders for the iTunes library and dropped folders |
 | `config-*` / `vfs-statefile` | the saved session and settings, now a JSON file through `style.ConfigSource` |
@@ -188,29 +216,32 @@ desktop-ui-themes-all, graphics-paint2d, graphics-paint2d-gpu-gles.
 
 ## Next steps, in order
 
-1. **Fix the wiring, once the in-flight work is committed** (ask the
-   owner first; do not touch go.mod while another session is working).
-   Run `python3 ~/go/src/goframework.io/tools/app-workspace.py .` to
-   write a go.work, add `/go.work` and `/go.work.sum` to .gitignore, then
-   remove go.mod's `replace` block (lines 68–318, from the comment
-   "Replacements written by goframework.io's tools/app-workspace.py
-   --go-mod" to "End of the replacements…"; the tool's `--remove
-   --go-mod` takes it out), as
-   commander, comms-pbx and office-calculator already do. Then build,
-   vet and test with the commands above. Update goframework-gaps.md's
-   first paragraph, which says the app builds through the replace block.
-   G2 and G3 are about that path, so note whether they still matter to
-   us.
-2. **Check for framework changes** since a5ebdc8: `git log` in
-   `~/go/src/goframework.io` and in each module folder (each is its own
-   repo), and grep the notes for "media-player-music" (desktop-ui.md,
-   desktop-ui-porting.md, media.md, todo.md). Rebuild, then confirm the
-   G1–G4 fixes here and move them to Fixed, with how each was checked.
-   Update the "checked against" commit.
-3. **Adopt G5's `rack.Group`**: declare each skin's windows as a group
-   and drop `playerBackend`'s X11 preference (`backend.go`, the README's
-   "prefers X11" paragraph). Check headless and on the offscreen
-   backend; native Wayland only with the owner.
+1. **Commit the rewiring** (the coordinator), then update this app's
+   rows in app-requests.md: R33 adopted here (no spelled name left in
+   Go code), R21's G1-G4 adopted, G5 still open with the two needs below.
+2. **G5 / R21, `rack.Group`.** Group realises a group on Wayland as one
+   window per part, which is what G5 asked for, but two things keep the
+   four racked faces (winamp, fancy, fandom, halflife2) on `rack.Desk`:
+   - Group opens every member with `DecorationsNone`, and a hosted part
+     shares one window among its members, so the Winamp panels, which
+     each get their skin frame from `Window.SetFrameRole` ("strip",
+     "equaliser", "playlist") on client decorations, would lose it.
+     Asked for: a member's frame role (say `Member.FrameRole`), each
+     member's pane dressed in the look's frame for its role, hosted or
+     not.
+   - Group's settle puts back only the declared bonds; a saved, undocked
+     panel is left where the window manager mapped it, where the faces'
+     own settle retries their saved placement. Asked for: declared
+     positions kept like bonds (say `Group.Place(i, x, y)` before
+     Realise, or the member's `Window.X/Y` honoured through settle).
+   Once both are in, move the faces to Group (fancy, fandom and
+   halflife2 draw their own frames already, so they need only the
+   second), drop `playerBackend` and the README's "prefers X11"
+   paragraph, check headless and on the offscreen backend, and native
+   Wayland only with the owner.
+3. **Run the skipped tests** with the owner's agreement: internal/playback,
+   internal/shell and internal/players/winamp (audio engines, the shell's
+   playback, the tray on a private bus).
 4. **Re-shoot the pictures** with `-shot` for every skin at 1× and 1.75×
    and compare them with the uitoolkit pictures, as was done at a5ebdc8.
 5. **Move playback into the framework** (ask the owner: it changes what
@@ -219,7 +250,7 @@ desktop-ui-themes-all, graphics-paint2d, graphics-paint2d-gpu-gles.
    audio-dsp for the equaliser and analyser, and codecs-container-* for
    tags. Keep mpv and the others for MP3 and AAC until the codecs exist,
    and log what is missing (MP3 first) as gaps.
-6. **MPRIS on system-dbus**, and port the godbus tests and probes to it.
+6. **MPRIS on system-dbus.**
 7. **Smaller uses**: system-process for the external engines,
    vfs-watch for library folders, logging, config.
 

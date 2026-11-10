@@ -179,8 +179,9 @@ workspace until its v0.0.4 release; see [setup](#building-against-goframeworkio)
 provides the widgets, skin interpretation, rendering, input, focus,
 accessibility, and platform windows through its public API. The
 [architecture documentation](docs/faces.md) explains that boundary and the
-remaining toolkit integration gaps. The [goframework gap report](goframework-gaps.md)
-contains reproducible findings and requests for the framework owner.
+remaining toolkit integration gaps. What the player still needs from the
+framework is in goframework's one ledger, `app-requests.md` in the workspace
+(this app's rows are R21, R33 and R34).
 
 ## Build and run
 
@@ -236,7 +237,8 @@ if the tray host disappears while hidden, the player returns to the desktop.
 The executable currently prefers available X11 on Linux, including
 XWayland, as a temporary workaround for the toolkit's missing portable
 window-group fallback. Platform selection should return entirely to the
-toolkit once it supplies that feature. Explicit `GOFRAMEWORK_DESKTOP_UI_BACKEND` choices are
+toolkit once the skins can move to desktop-ui-rack's `Group` (ledger R21;
+`backend.go` says what is still missing). Explicit `GOFRAMEWORK_DESKTOP_UI_BACKEND` choices are
 honored and screenshots remain headless. Without X11/XWayland, native
 Wayland still renders the skins as separate windows, but group motion is
 unavailable. XWayland is not a required dependency.
@@ -246,7 +248,8 @@ owned utility windows through the toolkit; on X11 they have no taskbar or
 pager entries. The app refreshes ownership through the public API if Main's
 native window is recreated. Native Wayland exposes ownership but no explicit
 taskbar policy. These limits are documented in the
-uitoolkit gap report's item 12 (see the [goframework gap report](goframework-gaps.md#carried-over-from-uitoolkit)).
+uitoolkit gap report's item 12 (in this repository's history: `uitoolkit-gaps.md`,
+and `goframework-gaps.md` as of 1da0430).
 
 The app remembers the audio backend, queue, selected track, playback offset, skin, panel
 visibility and window placement in
@@ -286,13 +289,21 @@ go build -tags font_emoji .
 
 ### Building against goframework.io
 
-Until desktop-ui v0.0.4 is published, go.mod replaces every goframework
-module with the local workspace at `~/go/src/goframework.io` (the block
-written by its `tools/app-workspace.py --go-mod`). Build with
-`GOPROXY=off` so a module missing from the workspace fails instead of
-being fetched. Once it is published, `python3
-~/go/src/goframework.io/tools/app-workspace.py --remove --go-mod .` takes
-the block out; see the workspace's `desktop-ui-porting.md`.
+The player builds against the local goframework workspace at
+`~/go/src/goframework.io`, wired by a `go.work` alone: go.mod names no
+goframework module and has no `replace` block. Write the go.work (it names
+this machine's folders, so it is not committed), and write it again
+whenever the workspace gains a module:
+
+```bash
+python3 ~/go/src/goframework.io/tools/app-workspace.py .
+GOPROXY=off go build ./...
+```
+
+Build with `GOPROXY=off` so a module missing from the workspace fails
+instead of being fetched as an old published copy. A release of the player
+is built against a published goframework release instead: `app-workspace.py
+--remove`, then require that version, and build with `GOWORK=off`.
 
 The app embeds all twenty-one skin packs in every build. To regenerate their
 manifests and artwork from the app's Go design sources:

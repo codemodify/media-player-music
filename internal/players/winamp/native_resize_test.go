@@ -25,7 +25,7 @@ func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
 	const scale = 1.75
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
+			t.Setenv(platform.EnvBackend, "x11")
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
 			a := ui.New(ui.Options{Scale: scale, DisableLookWatch: true})

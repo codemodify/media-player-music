@@ -11,7 +11,7 @@ func TestBackendSupportsSkinSwitchingAndRespectsExplicitChoices(t *testing.T) {
 	// Selecting a backend does not connect to the display or open windows.
 	// The fixture covers an available XWayland display without touching it.
 	t.Setenv("DISPLAY", ":12345")
-	t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "")
+	t.Setenv(platform.EnvBackend, "")
 	want := ""
 	if runtime.GOOS == "linux" && platform.Select("x11", false).Name() == "x11" {
 		want = "x11"
@@ -23,12 +23,12 @@ func TestBackendSupportsSkinSwitchingAndRespectsExplicitChoices(t *testing.T) {
 		t.Fatalf("headless run requested desktop backend %q", got)
 	}
 	for _, override := range []string{"wayland", "x11", "offscreen", "auto"} {
-		t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", override)
+		t.Setenv(platform.EnvBackend, override)
 		if got := playerBackend(false); got != "" {
-			t.Fatalf("overrode GOFRAMEWORK_DESKTOP_UI_BACKEND=%s with %s", override, got)
+			t.Fatalf("overrode %s=%s with %s", platform.EnvBackend, override, got)
 		}
 	}
-	t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "")
+	t.Setenv(platform.EnvBackend, "")
 	t.Setenv("DISPLAY", "")
 	if got := playerBackend(false); got != "" {
 		t.Fatalf("missing X11 display requested backend %q", got)

@@ -15,7 +15,7 @@ import (
 )
 
 func TestHeadlessScreenshotShellDoesNotCreateTray(t *testing.T) {
-	t.Setenv("GOFRAMEWORK_DESKTOP_UI_TRAY", "fake")
+	t.Setenv(platform.EnvTray, "fake")
 	for _, skin := range Appearances {
 		t.Run(skin, func(t *testing.T) {
 			a, s := open(t, skin)
@@ -28,7 +28,7 @@ func TestHeadlessScreenshotShellDoesNotCreateTray(t *testing.T) {
 
 func openFakeTray(t *testing.T, skin string) (*ui.Application, *Shell, *platform.FakeStatusItem, *recordingBackend) {
 	t.Helper()
-	t.Setenv("GOFRAMEWORK_DESKTOP_UI_TRAY", "fake")
+	t.Setenv(platform.EnvTray, "fake")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(skin))
 	// The shell follows the live path, while the toolkit's public fake tray
