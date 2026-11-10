@@ -7,49 +7,25 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-rack"
 	"goframework.io/desktop-ui/platform"
-	"goframework.io/desktop-ui/style"
 )
 
-// The real desk and native event dispatcher can be exercised before a skin is
-// painted. This fixture owns no playback engine and never touches the desktop.
+// groupFixture is the face with its panels settled where the group put them.
+// It owns no playback engine and never touches the desktop.
 func groupFixture(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	t.Setenv(style.ThemeEnv, "dark")
-	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
-	h := players.NewHost(a)
-	p := &Player{App: a, Host: h, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
-	var err error
-	p.Main, err = players.OpenSized(a, platform.WindowOptions{Headless: true, Decorations: platform.DecorationsNone}, MainW, MainH, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	p.Eq, err = players.OpenSized(a, platform.WindowOptions{Headless: true, Decorations: platform.DecorationsNone, Role: platform.RoleUtility, Owner: p.Main.Surface()}, EqW, EqH, true)
-	if err != nil {
-		p.Main.Close()
-		t.Fatal(err)
-	}
-	p.List, err = players.OpenSized(a, platform.WindowOptions{Headless: true, Decorations: platform.DecorationsNone, Role: platform.RoleUtility, Owner: p.Main.Surface(), MinWidth: MinListW, MinHeight: MinListH}, ListW, ListH, false)
-	if err != nil {
-		p.Eq.Close()
-		p.Main.Close()
-		t.Fatal(err)
-	}
-	t.Cleanup(p.Close)
-	p.initGroup()
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	p.AdvanceGeometry(0)
+	a, p := open(t, scale)
+	playertest.SettleGroup(t, a, p.g)
 	return a, p
 }
 
 func assertGroupPositions(t *testing.T, p *Player) {
 	t.Helper()
-	for i := 0; i < p.Desk.Rack.Len(); i++ {
-		pane, w := p.Desk.Rack.Pane(i), p.Desk.Window(i)
+	for i := 0; i < p.g.Rack.Len(); i++ {
+		pane, w := p.g.Rack.Pane(i), p.g.Window(i)
 		if !pane.Shown {
 			continue
 		}
@@ -64,21 +40,20 @@ func TestSourceArrangementAndDesktopMoveFollowAtEveryScale(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := groupFixture(t, scale)
-			main, eq, list := p.Desk.Rack.Pane(p.iMain), p.Desk.Rack.Pane(p.iEq), p.Desk.Rack.Pane(p.iList)
+			main, eq, list := p.g.Rack.Pane(p.iMain), p.g.Rack.Pane(p.iEq), p.g.Rack.Pane(p.iList)
 			if eq.To != p.iMain || eq.Bond != (rack.Bond{Side: rack.SideRight, Along: -80}) ||
 				eq.Box.X != main.Box.Right() || eq.Box.Y != main.Box.Y-80 ||
 				list.To != p.iEq || list.Box.X != eq.Box.X || list.Box.Y != eq.Box.Bottom() {
-				t.Fatalf("original main/EQ/playlist arrangement changed: %+v", p.Desk.Rack.Boxes())
+				t.Fatalf("original main/EQ/playlist arrangement changed: %+v", p.g.Rack.Boxes())
 			}
 			p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
-			before := p.Desk.Rack.Boxes()
+			before := p.g.Rack.Boxes()
 			for step := 0; step < 40; step++ {
-				p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420+step, 250+step)
+				p.Main().Surface().(*platform.Offscreen).SimulateDesktopMove(420+step, 250+step)
 			}
-			a.PumpOnce()
-			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
+			playertest.Follow(a)
 			for i, old := range before {
-				if got := p.Desk.Rack.Pane(i).Box; got != old.Moved(459-before[p.iMain].X, 289-before[p.iMain].Y) {
+				if got := p.g.Rack.Pane(i).Box; got != old.Moved(459-before[p.iMain].X, 289-before[p.iMain].Y) {
 					t.Fatalf("pane %d did not follow the final native move: %+v", i, got)
 				}
 			}
@@ -92,18 +67,14 @@ func TestSourceArrangementAndDesktopMoveFollowAtEveryScale(t *testing.T) {
 
 func TestDetachedPlaylistResizeAndHiddenDockRestore(t *testing.T) {
 	a, p := groupFixture(t, 1.75)
-	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420, 250)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1500, 900)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	p.List.SetSize(620, 420)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	p.AdvanceGeometry(70 * time.Millisecond)
+	p.Main().Surface().(*platform.Offscreen).SimulateDesktopMove(420, 250)
+	playertest.Follow(a)
+	p.List().Surface().(*platform.Offscreen).SimulateDesktopMove(1500, 900)
+	playertest.Follow(a)
+	p.List().SetSize(620, 420)
+	playertest.Follow(a)
 	p.ShowEqualiser(false)
-	before := p.Desk.Rack.Boxes()
+	before := p.g.Rack.Boxes()
 	saved := p.CapturePlacement()
 	if saved["playlist"].Dock != nil || saved["playlist"].Width != 620 || saved["playlist"].Height != 420 {
 		t.Fatalf("detached resized playlist not preserved: %+v", saved["playlist"])
@@ -114,22 +85,19 @@ func TestDetachedPlaylistResizeAndHiddenDockRestore(t *testing.T) {
 	// Hiding belongs to the shared model; placement should preserve it while
 	// applying the saved desk before the first post-restore pump.
 	p.Close()
-	a, reopened := groupFixture(t, 1.75)
+	a, reopened := open(t, 1.75)
 	reopened.ShowEqualiser(false)
 	reopened.RestorePlacement(saved)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	reopened.AdvanceGeometry(0)
-	if got := reopened.Desk.Rack.Boxes(); !reflect.DeepEqual(got, before) {
+	playertest.SettleGroup(t, a, reopened.g)
+	if got := reopened.g.Rack.Boxes(); !reflect.DeepEqual(got, before) {
 		t.Fatalf("restore replaced saved arrangement: got %+v want %+v", got, before)
 	}
-	if reopened.Eq.Visible() || reopened.Desk.Rack.Pane(reopened.iEq).Shown {
+	if reopened.Eq().Visible() || reopened.g.Rack.Pane(reopened.iEq).Shown {
 		t.Fatal("placement restore showed the hidden EQ")
 	}
-	reopened.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(490, 295)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	if reopened.Desk.Rack.Pane(reopened.iEq).Box != before[p.iEq].Moved(70, 45) || reopened.Desk.Rack.Pane(reopened.iList).Box != before[p.iList] {
+	reopened.Main().Surface().(*platform.Offscreen).SimulateDesktopMove(490, 295)
+	playertest.Follow(a)
+	if reopened.g.Rack.Pane(reopened.iEq).Box != before[p.iEq].Moved(70, 45) || reopened.g.Rack.Pane(reopened.iList).Box != before[p.iList] {
 		t.Fatal("restored Main carried a detached playlist or lost its hidden EQ")
 	}
 	reopened.ShowEqualiser(true)
@@ -138,57 +106,54 @@ func TestDetachedPlaylistResizeAndHiddenDockRestore(t *testing.T) {
 
 func TestMainRejoiningAStationaryForeignPathPreservesGeometry(t *testing.T) {
 	a, p := groupFixture(t, 1.75)
-	p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1400, 800)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	list := p.Desk.Rack.Pane(p.iList).Box
-	p.Eq.Surface().(*platform.Offscreen).SimulateDesktopMove(list.X-37, list.Bottom()+3)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	if p.Desk.Rack.Pane(p.iEq).To != p.iList {
+	p.List().Surface().(*platform.Offscreen).SimulateDesktopMove(1400, 800)
+	playertest.Follow(a)
+	list := p.g.Rack.Pane(p.iList).Box
+	p.Eq().Surface().(*platform.Offscreen).SimulateDesktopMove(list.X-37, list.Bottom()+3)
+	playertest.Follow(a)
+	if p.g.Rack.Pane(p.iEq).To != p.iList {
 		t.Fatal("loose EQ did not join the playlist")
 	}
-	before := p.Desk.Rack.Boxes()
+	before := p.g.Rack.Boxes()
 	want := (rack.Bond{Side: rack.SideRight, Along: 23}).Place(before[p.iEq], MainW, MainH)
-	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(want.X+2, want.Y)
-	a.PumpOnce()
-	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
-	if p.Desk.Rack.Pane(p.iMain).Box != want || p.Desk.Rack.Pane(p.iEq).To != p.iMain || p.Desk.Rack.Pane(p.iList).To != p.iEq {
-		t.Fatalf("Main rejoin dropped the foreign path: %+v", p.Desk.Rack.Boxes())
+	p.Main().Surface().(*platform.Offscreen).SimulateDesktopMove(want.X+2, want.Y)
+	playertest.Follow(a)
+	if p.g.Rack.Pane(p.iMain).Box != want || p.g.Rack.Pane(p.iEq).To != p.iMain || p.g.Rack.Pane(p.iList).To != p.iEq {
+		t.Fatalf("Main rejoin dropped the foreign path: %+v", p.g.Rack.Boxes())
 	}
-	if p.Desk.Rack.Pane(p.iEq).Box != before[p.iEq] || p.Desk.Rack.Pane(p.iList).Box != before[p.iList] {
+	if p.g.Rack.Pane(p.iEq).Box != before[p.iEq] || p.g.Rack.Pane(p.iList).Box != before[p.iList] {
 		t.Fatal("Main rejoin moved stationary panels")
 	}
 	assertGroupPositions(t, p)
 }
 
 func TestMalformedSavedGroupCannotCreateACycleOrResizeFixedWindows(t *testing.T) {
-	_, p := groupFixture(t, 1)
+	a, p := open(t, 1)
 	p.RestorePlacement(map[string]players.WindowPlacement{
 		"main":      {Positioned: true, X: 0, Y: 0, Width: 900, Height: 700, Dock: &players.WindowDock{Parent: "playlist", Side: "left"}},
 		"equaliser": {Positioned: true, Width: 900, Height: 700, Dock: &players.WindowDock{Parent: "playlist", Side: "bottom"}},
 		"playlist":  {Positioned: true, X: -600, Y: 800, Width: 620, Height: 420, Dock: &players.WindowDock{Parent: "equaliser", Side: "right"}},
 	})
-	p.AdvanceGeometry(0)
-	for i := 0; i < p.Desk.Rack.Len(); i++ {
+	playertest.SettleGroup(t, a, p.g)
+	for i := 0; i < p.g.Rack.Len(); i++ {
 		seen := make(map[int]bool)
-		for at := i; at >= 0; at = p.Desk.Rack.Pane(at).To {
+		for at := i; at >= 0; at = p.g.Rack.Pane(at).To {
 			if seen[at] {
 				t.Fatal("malformed session created a docking cycle")
 			}
 			seen[at] = true
 		}
 	}
-	if p.Desk.Rack.Pane(p.iMain).To != -1 {
+	if p.g.Rack.Pane(p.iMain).To != -1 {
 		t.Fatal("saved satellite became Main's parent")
 	}
-	if w, h := p.Main.Size(); w != MainW || h != MainH {
+	if w, h := p.Main().Size(); w != MainW || h != MainH {
 		t.Fatalf("fixed Main resized to %dx%d", w, h)
 	}
-	if w, h := p.Eq.Size(); w != EqW || h != EqH {
+	if w, h := p.Eq().Size(); w != EqW || h != EqH {
 		t.Fatalf("fixed EQ resized to %dx%d", w, h)
 	}
-	if x, y, known := p.Main.Position(); !known || x != 0 || y != 0 {
+	if x, y, known := p.Main().Position(); !known || x != 0 || y != 0 {
 		t.Fatal("known origin was discarded")
 	}
 	assertGroupPositions(t, p)

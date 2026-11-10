@@ -203,13 +203,12 @@ func (b *equalizerPane) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.restoredPlacement = nil
-		b.p.Eq.StartMove()
+		b.p.g.StartMove(b.p.iEq)
 		return true
 	}
 	return false
 }
-func (b *equalizerPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Eq, e) }
+func (b *equalizerPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Eq(), e) }
 func (b *equalizerPane) Describe(n *a11y.Node) {
 	n.Role, n.Name = a11y.RoleGroup, "Half Life 2 equalizer"
 }

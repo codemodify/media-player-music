@@ -58,7 +58,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	a := ui.New(ui.Options{Headless: headless, Scale: float32(*scale), Backend: playerBackend(headless)})
+	a := ui.New(ui.Options{Headless: headless, Scale: float32(*scale)})
 	a.SetIcon(iconImages...)
 	s, err := shell.New(a, opts)
 	if err != nil {

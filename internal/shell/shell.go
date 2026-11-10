@@ -314,7 +314,11 @@ func (s *Shell) SetSkin(id string) error {
 	}
 	// Programmatic Close during a skin change bypasses this user-close
 	// handler. A shown tray keeps the player recoverable after hiding.
-	next.MainWindow().SetOnCloseRequest(s.closePlayerWindow)
+	if racked, ok := next.(RackedPresentation); ok {
+		racked.SetOnClose(s.closePlayerWindow)
+	} else {
+		next.MainWindow().SetOnCloseRequest(s.closePlayerWindow)
+	}
 	if s.fileWindow != nil && !s.fileWindow.Closed() {
 		s.fileWindow.SetOwner(next.MainWindow())
 	}

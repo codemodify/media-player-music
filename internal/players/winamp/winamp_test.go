@@ -32,6 +32,7 @@ func open(t *testing.T, pack string, scale float32) (*ui.Application, *Player) {
 	}
 	t.Cleanup(p.Close)
 	a.PumpOnce()
+	playertest.SettleGroup(t, a, p.g)
 	return a, p
 }
 
@@ -41,7 +42,7 @@ func TestEveryWindowIsAccessible(t *testing.T) {
 		t.Run(pack, func(t *testing.T) {
 			a, p := open(t, pack, 1)
 			for name, w := range map[string]*ui.Window{
-				"strip": p.Main, "equaliser": p.Eq, "playlist": p.List,
+				"strip": p.Main(), "equaliser": p.Eq(), "playlist": p.List(),
 			} {
 				tree := playertest.Audit(t, name, w)
 				if playertest.Count(tree, a11y.RoleWindow) == 0 {
@@ -51,15 +52,15 @@ func TestEveryWindowIsAccessible(t *testing.T) {
 			// The strip's controls are all named: a transport row is
 			// glyphs, so an unnamed one is a button a screen reader calls
 			// "button" and nothing else.
-			tree := p.Main.AccessibleTree()
+			tree := p.Main().AccessibleTree()
 			for _, want := range []string{"Play", "Stop", "Next track", "Previous track", "Seek", "Volume"} {
 				if !hasNamed(tree, want) {
 					t.Errorf("the strip has no node named %q", want)
 				}
 			}
-			if playertest.Count(p.Eq.AccessibleTree(), a11y.RoleSlider) < len(players.EqBands)+1 {
+			if playertest.Count(p.Eq().AccessibleTree(), a11y.RoleSlider) < len(players.EqBands)+1 {
 				t.Errorf("the equaliser has %d sliders, want %d",
-					playertest.Count(p.Eq.AccessibleTree(), a11y.RoleSlider), len(players.EqBands)+1)
+					playertest.Count(p.Eq().AccessibleTree(), a11y.RoleSlider), len(players.EqBands)+1)
 			}
 			_ = a
 		})
@@ -69,7 +70,7 @@ func TestEveryWindowIsAccessible(t *testing.T) {
 // Everything the pointer can work, the keyboard can reach.
 func TestEveryControlIsOnTheKeyboard(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	ring := playertest.FocusRing(t, a, p.Main)
+	ring := playertest.FocusRing(t, a, p.Main())
 	if len(ring) == 0 {
 		t.Fatal("nothing in the strip takes the focus")
 	}
@@ -79,11 +80,11 @@ func TestEveryControlIsOnTheKeyboard(t *testing.T) {
 		p.strip.shuffle, p.strip.repeat, p.strip.eqBtn, p.strip.listBtn, p.strip.skinBtn,
 	} {
 		if !playertest.Reaches(ring, c) {
-			t.Errorf("Tab never reaches %v (%q)", c.Name(), nameOf(p.Main, c))
+			t.Errorf("Tab never reaches %v (%q)", c.Name(), nameOf(p.Main(), c))
 		}
 	}
 	// And the equaliser's eleven faders.
-	eqRing := playertest.FocusRing(t, a, p.Eq)
+	eqRing := playertest.FocusRing(t, a, p.Eq())
 	if len(eqRing) < len(players.EqBands)+1 {
 		t.Errorf("the equaliser's focus ring has %d stops, want at least %d",
 			len(eqRing), len(players.EqBands)+1)
@@ -93,7 +94,7 @@ func TestEveryControlIsOnTheKeyboard(t *testing.T) {
 // The shared transport keys work wherever the focus is, in every window.
 func TestTheTransportKeysWorkInEveryWindow(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	for _, w := range []*ui.Window{p.Main, p.Eq, p.List} {
+	for _, w := range []*ui.Window{p.Main(), p.Eq(), p.List()} {
 		p.Transport.State = players.Stopped
 		a.PumpOnce()
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
@@ -104,12 +105,12 @@ func TestTheTransportKeysWorkInEveryWindow(t *testing.T) {
 	}
 	// And the keys that are letters.
 	before := p.Transport.List.Index()
-	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyB})
+	p.Main().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyB})
 	a.PumpOnce()
 	if p.Transport.List.Index() == before {
 		t.Error("B did not move to the next track")
 	}
-	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyM})
+	p.Main().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyM})
 	a.PumpOnce()
 	if !p.Transport.Muted() {
 		t.Error("M did not mute")
@@ -119,11 +120,11 @@ func TestTheTransportKeysWorkInEveryWindow(t *testing.T) {
 // Moving the main window carries its attached equaliser and playlist.
 func TestTheStackTravelsWithTheStrip(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	if !p.Desk.Places() {
+	if p.g.Mode() != rack.GroupWindows {
 		t.Skip("this backend does not place windows")
 	}
-	eq := p.Desk.Rack.Pane(p.iEq)
-	list := p.Desk.Rack.Pane(p.iList)
+	eq := p.g.Rack.Pane(p.iEq)
+	list := p.g.Rack.Pane(p.iList)
 	if eq.To != p.iMain || eq.Bond.Side != rack.SideBottom {
 		t.Fatalf("the equaliser is bonded to %d on the %v", eq.To, eq.Bond.Side)
 	}
@@ -131,14 +132,11 @@ func TestTheStackTravelsWithTheStrip(t *testing.T) {
 		t.Fatalf("the playlist is bonded to %d, want the equaliser (%d)", list.To, p.iEq)
 	}
 
-	// Move the strip the way a window manager would, and let the desk
-	// notice on its next look.
-	p.Main.Move(400, 260)
-	a.PumpOnce()
-	p.Desk.Follow()
-	a.PumpOnce()
+	// Move the strip the way a window manager would, and let the group
+	// follow the desktop's word.
+	desktopMove(a, p.Main(), 400, 260)
 
-	main := p.Desk.Rack.Pane(p.iMain).Box
+	main := p.g.Rack.Pane(p.iMain).Box
 	if main.X != 400 || main.Y != 260 {
 		t.Fatalf("the strip is at %+v", main)
 	}
@@ -149,7 +147,7 @@ func TestTheStackTravelsWithTheStrip(t *testing.T) {
 		t.Errorf("the playlist is at %+v, want flush under %+v", list.Box, eq.Box)
 	}
 	// And the desktop was actually told.
-	if x, y, ok := p.Eq.Position(); !ok || x != eq.Box.X || y != eq.Box.Y {
+	if x, y, ok := p.Eq().Position(); !ok || x != eq.Box.X || y != eq.Box.Y {
 		t.Errorf("the equaliser's window is at %d,%d, the rack says %+v", x, y, eq.Box)
 	}
 }
@@ -158,21 +156,17 @@ func TestTheStackTravelsWithTheStrip(t *testing.T) {
 // an edge again.
 func TestAWindowComesLooseAndSnapsBack(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	if !p.Desk.Places() {
+	if p.g.Mode() != rack.GroupWindows {
 		t.Skip("this backend does not place windows")
 	}
-	p.List.Move(900, 700)
-	a.PumpOnce()
-	p.Desk.Follow()
-	if pane := p.Desk.Rack.Pane(p.iList); pane.To != -1 {
+	desktopMove(a, p.List(), 900, 700)
+	if pane := p.g.Rack.Pane(p.iList); pane.To != -1 {
 		t.Fatalf("the playlist stayed bonded to %d after being dragged away", pane.To)
 	}
 	// Let it go four pixels off flush under the equaliser.
-	eq := p.Desk.Rack.Pane(p.iEq).Box
-	p.List.Move(eq.X+4, eq.Bottom()+3)
-	a.PumpOnce()
-	p.Desk.Follow()
-	pane := p.Desk.Rack.Pane(p.iList)
+	eq := p.g.Rack.Pane(p.iEq).Box
+	desktopMove(a, p.List(), eq.X+4, eq.Bottom()+3)
+	pane := p.g.Rack.Pane(p.iList)
 	if pane.To != p.iEq || pane.Bond.Side != rack.SideBottom {
 		t.Fatalf("the playlist did not snap back: bonded to %d on the %v", pane.To, pane.Bond.Side)
 	}
@@ -198,7 +192,7 @@ func TestTheDisplayFollowsTheTransport(t *testing.T) {
 	if !loud {
 		t.Error("the analyser is flat while the player is posed as playing")
 	}
-	tree := p.Main.AccessibleTree()
+	tree := p.Main().AccessibleTree()
 	if !hasNamedContaining(tree, "1:37") {
 		t.Error("the display does not read the time out to a screen reader")
 	}
@@ -296,17 +290,17 @@ func TestThePlayAndPauseKeysKeepTheirSeparateActions(t *testing.T) {
 
 func TestSatelliteVisibilitySurvivesReopeningThePresentation(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	p.Eq.Inject(platform.Event{Kind: platform.EventClose})
-	p.List.Inject(platform.Event{Kind: platform.EventClose})
+	p.Eq().Inject(platform.Event{Kind: platform.EventClose})
+	p.List().Inject(platform.Event{Kind: platform.EventClose})
 	a.PumpOnce()
 	if p.Host.Model.EqualizerVisible || p.Host.Model.PlaylistVisible {
 		t.Fatal("closing satellites did not update the shared visibility settings")
 	}
-	if p.Eq.Closed() || p.List.Closed() {
+	if p.Eq().Closed() || p.List().Closed() {
 		t.Fatal("closing a satellite destroyed its window instead of hiding it")
 	}
 	p.strip.eqBtn.AccessibleAction(0, a11y.ActionDefault)
-	if !p.Host.Model.EqualizerVisible || !p.Desk.Rack.Pane(p.iEq).Shown {
+	if !p.Host.Model.EqualizerVisible || !p.g.Rack.Pane(p.iEq).Shown {
 		t.Fatal("the equaliser toggle did not reopen its window")
 	}
 	p.Close()
@@ -316,7 +310,7 @@ func TestSatelliteVisibilitySurvivesReopeningThePresentation(t *testing.T) {
 	}
 	t.Cleanup(next.Close)
 	a.PumpOnce()
-	if !next.Desk.Rack.Pane(next.iEq).Shown || next.Desk.Rack.Pane(next.iList).Shown {
+	if !next.g.Rack.Pane(next.iEq).Shown || next.g.Rack.Pane(next.iList).Shown {
 		t.Fatal("reopening the presentation lost satellite visibility")
 	}
 }
@@ -334,4 +328,11 @@ func TestAutoKeepsManualAdjustmentsWhenTheSkinChanges(t *testing.T) {
 	if !p.eqPane.auto.Checked {
 		t.Fatal("the new skin lost the Auto button state")
 	}
+}
+
+// desktopMove moves w the way a window manager would, and lets the group
+// follow the desktop's word.
+func desktopMove(a *ui.Application, w *ui.Window, x, y int) {
+	w.Surface().(*platform.Offscreen).SimulateDesktopMove(x, y)
+	playertest.Follow(a)
 }

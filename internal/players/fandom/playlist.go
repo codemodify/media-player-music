@@ -81,8 +81,7 @@ func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.userMoved("playlist")
-		b.p.List.StartMove()
+		b.p.g.StartMove(b.p.iList)
 		return true
 	}
 	return false
@@ -106,7 +105,7 @@ func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 	}
 	widgets.ShowContextMenu(from, at, items...)
 }
-func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List, e) }
+func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List(), e) }
 func (b *playlistPane) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Fandom playlist" }
 func (b *playlistPane) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *playlistPane) DropActionFor(offered platform.DragAction) platform.DragAction {
@@ -124,6 +123,6 @@ func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false
 	}
-	g.p.userMoved("playlist")
-	return g.p.List.StartResize(platform.EdgeBottom | platform.EdgeRight)
+	g.p.listSize.Release()
+	return g.p.g.StartResize(g.p.iList, platform.EdgeBottom|platform.EdgeRight)
 }

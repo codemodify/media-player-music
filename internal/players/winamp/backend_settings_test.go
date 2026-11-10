@@ -29,9 +29,9 @@ func TestLimitedBackendDisablesSkinnedDSPWithoutLosingSavedAdjustments(t *testin
 				if c.Enabled() {
 					t.Errorf("unsupported %T enabled", c)
 				}
-				w := p.Eq
+				w := p.Eq()
 				if c == p.strip.balance {
-					w = p.Main
+					w = p.Main()
 				}
 				if w.AccessibleAction(c.ID(), a11y.ActionDefault) || w.AccessibleAction(c.ID(), a11y.ActionIncrement) {
 					t.Fatal("unsupported DSP accepted user input")

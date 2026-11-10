@@ -60,10 +60,10 @@ func TestModelRefreshPaintsTheCorrespondingSliderTrackFrames(t *testing.T) {
 				p.Equaliser.Set(0, v.gain)
 				p.Refresh()
 				a.PumpOnce()
-				check("Volume", p.Main, p.strip.volume, 0, v.volumeFrame)
-				check("Balance", p.Main, p.strip.balance, 1, v.balanceFrame)
-				check("Preamp", p.Eq, p.eqPane.preamp, 2, v.eqFrame)
-				check("First EQ band", p.Eq, p.eqPane.bands[0], 2, v.eqFrame)
+				check("Volume", p.Main(), p.strip.volume, 0, v.volumeFrame)
+				check("Balance", p.Main(), p.strip.balance, 1, v.balanceFrame)
+				check("Preamp", p.Eq(), p.eqPane.preamp, 2, v.eqFrame)
+				check("First EQ band", p.Eq(), p.eqPane.bands[0], 2, v.eqFrame)
 			}
 		})
 	}

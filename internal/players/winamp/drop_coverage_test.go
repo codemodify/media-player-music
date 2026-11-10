@@ -19,8 +19,8 @@ func TestPlaylistFolderDropCoverageAtFractionalScale(t *testing.T) {
 				a, p := open(t, skin, scale)
 				p.Transport.List = players.NewPlaylist(players.Track{Title: "Silent drop fixture"})
 				p.Refresh()
-				p.List.SetSize(size[0], size[1])
-				p.List.RequestLayout()
+				p.List().SetSize(size[0], size[1])
+				p.List().RequestLayout()
 				a.PumpOnce()
 				var paths []string
 				calls := 0
@@ -55,7 +55,7 @@ func TestPlaylistFolderDropCoverageAtFractionalScale(t *testing.T) {
 						at   paint2d.Point
 					}{fmt.Sprintf("mini transport %d", i), widget.DeviceBounds(control).Center()})
 				}
-				off := p.List.Surface().(*platform.Offscreen)
+				off := p.List().Surface().(*platform.Offscreen)
 				for _, target := range targets {
 					before := calls
 					off.SimulateDropAction(target.at, map[string][]byte{
@@ -69,7 +69,7 @@ func TestPlaylistFolderDropCoverageAtFractionalScale(t *testing.T) {
 					}
 					t.Logf("accepted folder at %s device=(%.1f,%.1f)", target.name, target.at.X, target.at.Y)
 				}
-				at := widget.DeviceBounds(p.List.Caption()).Center()
+				at := widget.DeviceBounds(p.List().Caption()).Center()
 				before := calls
 				off.SimulateDrop(at, map[string][]byte{"text/uri-list": []byte("file:///home/user/Music/net\r\n")})
 				a.PumpOnce()

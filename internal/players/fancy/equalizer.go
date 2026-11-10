@@ -83,8 +83,8 @@ func (b *equalizerPane) sync() {
 		s.SetEnabled(available)
 		s.Tip = b.p.Host.FeatureTip("EQ", available)
 	}
-	if c := b.p.Eq.Focus(); c != nil && !c.Enabled() {
-		b.p.Eq.RequestFocus(b.buttons["close"])
+	if w := b.p.Eq(); w != nil && w.Focus() != nil && !w.Focus().Enabled() {
+		w.RequestFocus(b.buttons["close"])
 	}
 	b.Invalidate()
 }
@@ -98,7 +98,7 @@ func (b *equalizerPane) Arrange(r paint2d.Rect) {
 }
 func (b *equalizerPane) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	paintLayout(ctx, lk, box, LayoutEqualizer, b.p.Eq)
+	paintLayout(ctx, lk, box, LayoutEqualizer, b.p.Eq())
 	textSlot(ctx, lk, box, LayoutEqualizer, "header", "Equalizer", 9, ink(), style.AlignStart)
 	for i, name := range append([]string{"PRE"}, players.EqBands...) {
 		slot := "preamp"
@@ -125,11 +125,10 @@ func (b *equalizerPane) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.restoredPlacement = nil
-		return b.p.Eq.StartMove()
+		return b.p.g.StartMove(b.p.iEq)
 	}
 	return false
 }
 func (b *equalizerPane) CaptionAt(paint2d.Point) bool    { return true }
-func (b *equalizerPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Eq, e) }
+func (b *equalizerPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Eq(), e) }
 func (b *equalizerPane) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Fancy equalizer" }

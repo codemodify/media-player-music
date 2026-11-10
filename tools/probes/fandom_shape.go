@@ -123,10 +123,10 @@ func probe(scale float32) {
 		panic(err)
 	}
 	defer p.Close()
-	p.Main.Hide()
-	p.List.Hide()
-	p.Main.SetTitle("Fandom native shape probe (main)")
-	p.List.SetTitle("Fandom native shape probe (playlist)")
+	p.Main().Hide()
+	p.List().Hide()
+	p.Main().SetTitle("Fandom native shape probe (main)")
+	p.List().SetTitle("Fandom native shape probe (playlist)")
 	pump := func() {
 		until := time.Now().Add(250 * time.Millisecond)
 		for time.Now().Before(until) {
@@ -139,23 +139,23 @@ func probe(scale float32) {
 	for _, visible := range []bool{true, false, true} {
 		p.ShowSettingsPanel(visible)
 		pump()
-		verify(p.Main, nil, scale, 490, 330, 300, 110, 61, 110, visible)
-		verify(p.List, p.Main, scale, 190, 246, 95, 130, 110, 200, true)
+		verify(p.Main(), nil, scale, 490, 330, 300, 110, 61, 110, visible)
+		verify(p.List(), p.Main(), scale, 190, 246, 95, 130, 110, 200, true)
 		px := func(v int) int { return int(math.Round(float64(v) * float64(scale))) }
-		frame := platform.FrameOf(p.Main.Surface()).Frame()
+		frame := platform.FrameOf(p.Main().Surface()).Frame()
 		wanted := make([]C.XRectangle, len(frame.Shape))
 		for i, r := range frame.Shape {
 			wanted[i] = C.XRectangle{x: C.short(r.X), y: C.short(r.Y), width: C.ushort(r.W), height: C.ushort(r.H)}
 		}
-		n := C.read_window(C.ulong(nativeID(p.Main)), C.int(px(300)), C.int(px(110)), C.int(px(126)), C.int(px(110)), &wanted[0], C.int(len(wanted)))
-		if n.bounding.outside_old != 0 || n.input.outside_old != 0 || p.Main.CaptureSurface().NRGBAAt(px(126), px(110)).A != 0 {
+		n := C.read_window(C.ulong(nativeID(p.Main())), C.int(px(300)), C.int(px(110)), C.int(px(126)), C.int(px(110)), &wanted[0], C.int(len(wanted)))
+		if n.bounding.outside_old != 0 || n.input.outside_old != 0 || p.Main().CaptureSurface().NRGBAAt(px(126), px(110)).A != 0 {
 			panic("empty settings/chassis gap is painted or accepts native input")
 		}
 		fmt.Printf("scale=%g settingsVisible=%t nativeWingCoverage=true gapInput=false currentUtilityOwner=true\n", scale, visible)
 	}
-	p.List.SetSize(310, 356)
+	p.List().SetSize(310, 356)
 	pump()
-	verify(p.List, p.Main, scale, 310, 356, 155, 178, 270, 300, true)
+	verify(p.List(), p.Main(), scale, 310, 356, 155, 178, 270, 300, true)
 }
 
 func nativeID(w *ui.Window) uint64 {

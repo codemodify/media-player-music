@@ -234,14 +234,16 @@ window and its previously visible panels. **Quit**, Ctrl+Q and Escape exit the
 player. If no tray host is showing the icon, closing the main window exits;
 if the tray host disappears while hidden, the player returns to the desktop.
 
-The executable currently prefers available X11 on Linux, including
-XWayland, as a temporary workaround for the toolkit's missing portable
-window-group fallback. Platform selection should return entirely to the
-toolkit once the skins can move to desktop-ui-rack's `Group` (ledger R21;
-`backend.go` says what is still missing). Explicit `GOFRAMEWORK_DESKTOP_UI_BACKEND` choices are
-honored and screenshots remain headless. Without X11/XWayland, native
-Wayland still renders the skins as separate windows, but group motion is
-unavailable. XWayland is not a required dependency.
+The panelled skins (the Winamp skins, Fancy, Fandom and Half Life 2) keep
+their panels together through desktop-ui-rack's `Group`, on whatever
+backend the toolkit chooses. Where a program may place its windows (X11,
+Windows, macOS) each panel is a window of its own that snaps to the others
+and travels with them; on Wayland, which lets no program place a window,
+the panels stuck together share one shaped window, and a panel dragged
+away by its caption leaves in a window of its own (where the compositor
+carries windows, KWin 6 and Mutter 47) to be docked back by a drop.
+`GOFRAMEWORK_DESKTOP_UI_BACKEND` choices are honored and screenshots
+remain headless.
 
 The skinned equaliser and playlist have no minimize buttons. They declare
 owned utility windows through the toolkit; on X11 they have no taskbar or

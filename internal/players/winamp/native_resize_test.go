@@ -34,19 +34,19 @@ func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(p.Close)
-			if !strings.HasPrefix(nativeWindowID(p.List), "x11:") {
+			if !strings.HasPrefix(nativeWindowID(p.List()), "x11:") {
 				t.Skip("the X11 backend is unavailable")
 			}
 			pumpNativeResize(a.PumpOnce, p)
 			rowsBefore := p.listPane.list.geo.rows
-			p.List.SetSize(510, 410)
+			p.List().SetSize(510, 410)
 			a.PumpOnce()
-			p.List.Move(120, 160)
+			p.List().Move(120, 160)
 			pumpNativeResize(a.PumpOnce, p)
-			id := strings.TrimPrefix(nativeWindowID(p.List), "x11:")
+			id := strings.TrimPrefix(nativeWindowID(p.List()), "x11:")
 			data, err := exec.Command("xprop", "-id", "0x"+id, "WM_NORMAL_HINTS", "_NET_WM_ALLOWED_ACTIONS").CombinedOutput()
 			t.Logf("%s native hints: %s", skin, data)
-			if w, h := p.List.Size(); w != 510 || h != 410 {
+			if w, h := p.List().Size(); w != 510 || h != 410 {
 				t.Fatalf("the desktop did not accept the larger playlist: %dx%d", w, h)
 			}
 			if p.listPane.list.geo.rows.Dx() <= rowsBefore.Dx() || p.listPane.list.geo.rows.Dy() <= rowsBefore.Dy() {
@@ -55,7 +55,7 @@ func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
 			if err != nil {
 				t.Fatalf("inspect native resize policy: %v: %s", err, data)
 			}
-			margin := platform.FrameOf(p.List.Surface()).Frame().Margin
+			margin := platform.FrameOf(p.List().Surface()).Frame().Margin
 			minimum := fmt.Sprintf("minimum size: %d by %d", platform.DevicePixels(StripW, scale)+margin.Width(), platform.DevicePixels(ListH, scale)+margin.Height())
 			if !strings.Contains(string(data), minimum) || !strings.Contains(string(data), "_NET_WM_ACTION_RESIZE") ||
 				strings.Contains(string(data), "maximum size:") {
@@ -71,7 +71,7 @@ func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				err = p.List.Capture().WritePNG(file)
+				err = p.List().Capture().WritePNG(file)
 				closeErr := file.Close()
 				if err != nil || closeErr != nil {
 					t.Fatalf("save resized playlist: %v, %v", err, closeErr)
@@ -87,7 +87,7 @@ func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
 			t.Cleanup(p.Close)
 			p.RestorePlacement(saved)
 			pumpNativeResize(a.PumpOnce, p)
-			if w, h := p.List.Size(); w != 510 || h != 410 {
+			if w, h := p.List().Size(); w != 510 || h != 410 {
 				t.Fatalf("native skin switching discarded the saved playlist size: %dx%d", w, h)
 			}
 			if got := p.CapturePlacement()["playlist"]; got.X != saved["playlist"].X || got.Y != saved["playlist"].Y || got.Dock != nil {

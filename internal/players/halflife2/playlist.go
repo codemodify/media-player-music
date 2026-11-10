@@ -126,8 +126,7 @@ func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.restoredPlacement = nil
-		b.p.List.StartMove()
+		b.p.g.StartMove(b.p.iList)
 		return true
 	}
 	return false
@@ -151,7 +150,7 @@ func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 	}
 	widgets.ShowContextMenu(from, at, items...)
 }
-func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List, e) }
+func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List(), e) }
 func (b *playlistPane) Describe(n *a11y.Node) {
 	n.Role, n.Name = a11y.RoleGroup, "Half Life 2 playlist"
 }
@@ -212,6 +211,6 @@ func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false
 	}
-	g.p.restoredPlacement = nil
-	return g.p.List.StartResize(platform.EdgeBottom | platform.EdgeRight)
+	g.p.listSize.Release()
+	return g.p.g.StartResize(g.p.iList, platform.EdgeBottom|platform.EdgeRight)
 }

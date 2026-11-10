@@ -32,9 +32,9 @@ func TestPlaylistPointerSelectsBeforeDoubleClickActivates(t *testing.T) {
 					}
 					injectClick := func(row int) {
 						pos := list.AccessibleItems()[row].Bounds.Center()
-						p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
-						p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: pos})
-						p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: pos})
+						p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
+						p.List().Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: pos})
+						p.List().Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: pos})
 					}
 					click := func() { injectClick(2); a.PumpOnce() }
 					click()
@@ -81,18 +81,18 @@ func TestPlaylistPointerInterruptionsDoNotActivate(t *testing.T) {
 			}
 			pos := list.AccessibleItems()[row].Bounds.Center()
 			inject := func() {
-				p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
-				p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: pos})
-				p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: pos})
+				p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
+				p.List().Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: pos})
+				p.List().Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: pos})
 			}
 			inject()
 			switch interruption {
 			case "pointer-exit":
-				p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: widget.DeviceBounds(p.listPane.add).Center()})
+				p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: widget.DeviceBounds(p.listPane.add).Center()})
 			case "focus-change":
-				p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
+				p.List().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
 			case "wheel-at-end":
-				p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
+				p.List().Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
 			}
 			inject()
 			a.PumpOnce()
@@ -110,14 +110,14 @@ func TestDisabledPlaylistPointerDoesNotSelectOrOpenMenu(t *testing.T) {
 	list.SetEnabled(false)
 	pos := list.AccessibleItems()[2].Bounds.Center()
 	for _, button := range []platform.MouseButton{platform.ButtonLeft, platform.ButtonRight} {
-		p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
-		p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: pos})
-		p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: pos})
+		p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
+		p.List().Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: pos})
+		p.List().Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: pos})
 		a.PumpOnce()
 		if list.Selected != selected || p.Transport.List.Index() != 0 || p.Transport.State != players.Stopped {
 			t.Fatal("disabled pointer press selected or played a row")
 		}
-		if p.List.Popup() != nil {
+		if p.List().Popup() != nil {
 			t.Fatal("disabled pointer press opened a context menu")
 		}
 	}
@@ -135,13 +135,13 @@ func TestPlaylistSelectionAndActivationGestures(t *testing.T) {
 	}
 	click := func(button platform.MouseButton, row int) {
 		pos := list.AccessibleItems()[row].Bounds.Center()
-		p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
-		p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: pos})
-		p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: pos})
+		p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
+		p.List().Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: pos})
+		p.List().Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: pos})
 		a.PumpOnce()
 	}
 	press := func(key platform.Key) {
-		p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: key})
+		p.List().Inject(platform.Event{Kind: platform.EventKeyDown, Key: key})
 		a.PumpOnce()
 	}
 	click(platform.ButtonLeft, 2)
@@ -155,7 +155,7 @@ func TestPlaylistSelectionAndActivationGestures(t *testing.T) {
 		t.Fatal("separate single clicks were treated as a double click")
 	}
 	click(platform.ButtonRight, 3)
-	if p.List.Popup() == nil || list.Selected != 3 || plays != 0 {
+	if p.List().Popup() == nil || list.Selected != 3 || plays != 0 {
 		t.Fatal("context click changed the selection or playback")
 	}
 	press(platform.KeyEscape)
@@ -276,13 +276,13 @@ func TestPlaylistUsesToolkitInputAndPlayerActions(t *testing.T) {
 				a, p := openPlaylist(t, pack, scale)
 				list := p.listPane.list
 				press := func(key platform.Key) {
-					p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: key})
+					p.List().Inject(platform.Event{Kind: platform.EventKeyDown, Key: key})
 					a.PumpOnce()
 				}
 				injectClick := func(button platform.MouseButton, row int) {
 					pos := list.AccessibleItems()[row].Bounds.Center()
-					p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: pos})
-					p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: pos})
+					p.List().Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: pos})
+					p.List().Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: pos})
 				}
 				click := func(button platform.MouseButton, row int) { injectClick(button, row); a.PumpOnce() }
 				click(platform.ButtonLeft, 2)
@@ -296,8 +296,8 @@ func TestPlaylistUsesToolkitInputAndPlayerActions(t *testing.T) {
 				if list.Selected != 2 || p.Transport.List.Index() != 2 || p.Transport.State != players.Playing {
 					t.Fatalf("double click: selected=%d track=%d state=%v", list.Selected, p.Transport.List.Index(), p.Transport.State)
 				}
-				if p.List.Focus() != list {
-					t.Fatalf("playlist focus belongs to %T, want outer tracks", p.List.Focus())
+				if p.List().Focus() != list {
+					t.Fatalf("playlist focus belongs to %T, want outer tracks", p.List().Focus())
 				}
 				press(platform.KeyDown)
 				if list.Selected != 3 || p.Transport.List.Index() != 2 {
@@ -325,7 +325,7 @@ func TestPlaylistUsesToolkitInputAndPlayerActions(t *testing.T) {
 				if list.Selected != 1 || p.Transport.List.Index() != 1 || p.Transport.State != players.Paused {
 					t.Fatal("opening the skin menu selected or started a track")
 				}
-				if p.List.Popup() == nil {
+				if p.List().Popup() == nil {
 					t.Fatal("secondary press did not open the skin menu")
 				}
 			})
@@ -377,7 +377,7 @@ func TestPlaylistScrollAndAccessibleRowsFollowTheSkin(t *testing.T) {
 			}
 			list.ScrollTo(0)
 			pos := list.AccessibleItems()[0].Bounds.Center()
-			p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
+			p.List().Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
 			a.PumpOnce()
 			if list.OffsetY <= 0 {
 				t.Fatal("wheel event did not scroll the stock list")
@@ -389,10 +389,10 @@ func TestPlaylistScrollAndAccessibleRowsFollowTheSkin(t *testing.T) {
 			}
 			o := widget.DeviceOrigin(list)
 			pos = thumb.Center().Add(o)
-			p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: pos})
+			p.List().Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: pos})
 			pos.Y += (track.Dy() - thumb.Dy()) / 2
-			p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
-			p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: pos})
+			p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: pos})
+			p.List().Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: pos})
 			a.PumpOnce()
 			if list.OffsetY <= 0 || list.OffsetY >= list.MaxOffset() {
 				t.Fatalf("thumb drag did not scroll into the middle: offset=%f max=%f", list.OffsetY, list.MaxOffset())
@@ -464,7 +464,7 @@ func TestPlaylistPaintTracksOuterFocusAndPlayingRow(t *testing.T) {
 	lk := &playlistRowLook{LookAndFeel: list.Look()}
 	list.SetLook(lk)
 	list.Selected = 2
-	p.List.RequestFocus(list)
+	p.List().RequestFocus(list)
 	list.MarkKeyboardFocus()
 	paint := func() {
 		lk.states = nil
@@ -481,7 +481,7 @@ func TestPlaylistPaintTracksOuterFocusAndPlayingRow(t *testing.T) {
 	if !lk.states[2].Focused() || lk.states[2].Checked() {
 		t.Fatalf("current row lost keyboard focus or took the playing marker: %v", lk.states[2])
 	}
-	p.List.RequestFocus(p.listPane.mini[0])
+	p.List().RequestFocus(p.listPane.mini[0])
 	paint()
 	for i, st := range lk.states {
 		if st.Focused() {

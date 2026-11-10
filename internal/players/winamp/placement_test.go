@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-rack"
 	"goframework.io/desktop-ui/platform"
@@ -18,7 +19,7 @@ func TestSatelliteWindowsRequestAnAuxiliaryRoleWithoutMinimize(t *testing.T) {
 			for _, look := range []string{skin, otherPanelSkin(skin)} {
 				p.Host.ApplySkin(look)
 				a.PumpOnce()
-				for name, window := range map[string]*ui.Window{"main": p.Main, "equaliser": p.Eq, "playlist": p.List} {
+				for name, window := range map[string]*ui.Window{"main": p.Main(), "equaliser": p.Eq(), "playlist": p.List()} {
 					wantRole := platform.RoleUtility
 					if name == "main" {
 						wantRole = platform.RoleNormal
@@ -27,7 +28,7 @@ func TestSatelliteWindowsRequestAnAuxiliaryRoleWithoutMinimize(t *testing.T) {
 					if got := surface.WindowRole(); got != wantRole {
 						t.Errorf("%s requested role %v, want %v", name, got, wantRole)
 					}
-					if name != "main" && (surface.Owner() != p.Main.Surface() || !surface.SkipsTaskbar()) {
+					if name != "main" && (surface.Owner() != p.Main().Surface() || !surface.SkipsTaskbar()) {
 						t.Errorf("%s did not declare Main ownership and taskbar policy", name)
 					}
 					left, right := window.Caption().Controls()
@@ -59,12 +60,12 @@ func TestPlacementSurvivesSkinChangeWithHiddenDockAndDetachedPlaylist(t *testing
 				p.Advance(0)
 				dockingMove(t, p, p.iMain, 410, 270)
 				dockingMove(t, p, p.iList, 1500, 900)
-				main := p.Desk.Rack.Pane(p.iMain).Box
-				eq := p.Desk.Rack.Pane(p.iEq).Box
+				main := p.g.Rack.Pane(p.iMain).Box
+				eq := p.g.Rack.Pane(p.iEq).Box
 				near := dockingNear(bond.Place(main, eq.W, eq.H), bond.Side)
 				dockingMove(t, p, p.iEq, near.X, near.Y)
 				p.ShowEqualiser(false)
-				before := p.Desk.Rack.Boxes()
+				before := p.g.Rack.Boxes()
 				saved := placementJSONRoundTrip(t, p.CapturePlacement())
 				if dock := saved["equaliser"].Dock; dock == nil || dock.Parent != "main" ||
 					dock.Side != bond.Side.String() || dock.Along != bond.Along {
@@ -81,19 +82,18 @@ func TestPlacementSurvivesSkinChangeWithHiddenDockAndDetachedPlaylist(t *testing
 				}
 				t.Cleanup(reopened.Close)
 				reopened.RestorePlacement(saved)
-				a.PumpOnce()
-				reopened.Advance(0)
-				if got := reopened.Desk.Rack.Boxes(); !reflect.DeepEqual(got, before) {
+				playertest.SettleGroup(t, a, reopened.g)
+				if got := reopened.g.Rack.Boxes(); !reflect.DeepEqual(got, before) {
 					t.Fatalf("reopening replaced saved positions with a default stack: got %+v, want %+v", got, before)
 				}
-				if reopened.Eq.Visible() || reopened.Desk.Rack.Pane(reopened.iEq).Shown {
+				if reopened.Eq().Visible() || reopened.g.Rack.Pane(reopened.iEq).Shown {
 					t.Fatal("restoring placement showed the hidden equaliser")
 				}
 				dockingMove(t, reopened, reopened.iMain, main.X+70, main.Y+45)
-				if got := reopened.Desk.Rack.Pane(reopened.iEq).Box; got != before[p.iEq].Moved(70, 45) {
+				if got := reopened.g.Rack.Pane(reopened.iEq).Box; got != before[p.iEq].Moved(70, 45) {
 					t.Fatal("the hidden equaliser did not keep following its restored anchor")
 				}
-				if got := reopened.Desk.Rack.Pane(reopened.iList).Box; got != before[p.iList] {
+				if got := reopened.g.Rack.Pane(reopened.iList).Box; got != before[p.iList] {
 					t.Fatal("the restored detached playlist followed Main")
 				}
 				reopened.ShowEqualiser(true)
@@ -112,20 +112,20 @@ func TestPlacementRestoresDetachedPanelSubtreeAndKnownOrigin(t *testing.T) {
 				"playlist":  {Positioned: true, X: -600, Y: 800},
 				"equaliser": {Positioned: true, Dock: &players.WindowDock{Parent: "playlist", Side: "right", Along: 28}},
 			})
-			p.Advance(0)
-			if x, y, ok := p.Main.Position(); !ok || x != 0 || y != 0 {
+			playertest.Follow(p.App)
+			if x, y, ok := p.Main().Position(); !ok || x != 0 || y != 0 {
 				t.Fatalf("the known origin was discarded: %d,%d, known=%t", x, y, ok)
 			}
-			if w, h := p.Main.Size(); w != StripW || h != StripH {
+			if w, h := p.Main().Size(); w != StripW || h != StripH {
 				t.Fatalf("saved dimensions resized a fixed skin: %dx%d", w, h)
 			}
-			if p.Desk.Rack.Pane(p.iList).To != -1 || p.Desk.Rack.Pane(p.iEq).To != p.iList {
+			if p.g.Rack.Pane(p.iList).To != -1 || p.g.Rack.Pane(p.iEq).To != p.iList {
 				t.Fatal("the detached playlist's equaliser subtree was replaced by the default stack")
 			}
-			before := p.Desk.Rack.Boxes()
+			before := p.g.Rack.Boxes()
 			dockingMove(t, p, p.iList, -530, 840)
-			if p.Desk.Rack.Pane(p.iMain).Box != before[p.iMain] ||
-				p.Desk.Rack.Pane(p.iEq).Box != before[p.iEq].Moved(70, 40) {
+			if p.g.Rack.Pane(p.iMain).Box != before[p.iMain] ||
+				p.g.Rack.Pane(p.iEq).Box != before[p.iEq].Moved(70, 40) {
 				t.Fatal("moving a restored detached anchor did not carry only its own subtree")
 			}
 		})
@@ -140,19 +140,19 @@ func TestMalformedPlacementCannotCreateDockingCycles(t *testing.T) {
 		"playlist":  {Positioned: true, X: 1200, Y: 800, Dock: &players.WindowDock{Parent: "equaliser", Side: "right"}},
 		"unknown":   {Positioned: true, X: 4000, Y: 3000},
 	})
-	for i := 0; i < p.Desk.Rack.Len(); i++ {
+	for i := 0; i < p.g.Rack.Len(); i++ {
 		seen := make(map[int]bool)
-		for at := i; at >= 0; at = p.Desk.Rack.Pane(at).To {
+		for at := i; at >= 0; at = p.g.Rack.Pane(at).To {
 			if seen[at] {
 				t.Fatal("restored docking contains a cycle")
 			}
 			seen[at] = true
 		}
 	}
-	if p.Desk.Rack.Pane(p.iMain).To != -1 {
+	if p.g.Rack.Pane(p.iMain).To != -1 {
 		t.Fatal("malformed settings made Main follow a satellite")
 	}
-	p.Advance(0)
+	playertest.Follow(p.App)
 	dockingAssertPositions(t, p)
 }
 

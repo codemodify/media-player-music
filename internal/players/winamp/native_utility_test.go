@@ -56,7 +56,7 @@ func TestNativeUtilityWindowsStayOffTaskbarAfterFrameRecreation(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(p.Close)
-			if !strings.HasPrefix(nativeWindowID(p.Main), "x11:") {
+			if !strings.HasPrefix(nativeWindowID(p.Main()), "x11:") {
 				t.Skip("the X11 backend is unavailable")
 			}
 			pumpNativeUtility(a.PumpOnce, p)
@@ -65,9 +65,9 @@ func TestNativeUtilityWindowsStayOffTaskbarAfterFrameRecreation(t *testing.T) {
 
 			// A toolkit frame which newly needs alpha recreates native X11
 			// windows. Exercise both child identity and main-owner changes.
-			ownerBefore := nativeWindowID(p.Main)
-			childBefore := nativeWindowID(p.Eq)
-			mainFrame := p.Main.Surface().(platform.WindowFrame)
+			ownerBefore := nativeWindowID(p.Main())
+			childBefore := nativeWindowID(p.Eq())
+			mainFrame := p.Main().Surface().(platform.WindowFrame)
 			frame := mainFrame.Frame()
 			frame.Alpha = true
 			mainFrame.SetFrame(frame)
@@ -76,14 +76,14 @@ func TestNativeUtilityWindowsStayOffTaskbarAfterFrameRecreation(t *testing.T) {
 			pumpNativeUtility(a.PumpOnce, p)
 			assertNativeUtilityHints(t, p)
 			assertKWinTaskbarPolicy(t, p)
-			eqFrame := p.Eq.Surface().(platform.WindowFrame)
+			eqFrame := p.Eq().Surface().(platform.WindowFrame)
 			frame = eqFrame.Frame()
 			frame.Alpha = true
 			eqFrame.SetFrame(frame)
 			pumpNativeUtility(a.PumpOnce, p)
 			assertNativeUtilityHints(t, p)
 			assertKWinTaskbarPolicy(t, p)
-			if nativeWindowID(p.Main) == ownerBefore && nativeWindowID(p.Eq) == childBefore {
+			if nativeWindowID(p.Main()) == ownerBefore && nativeWindowID(p.Eq()) == childBefore {
 				t.Log("the desktop kept existing alpha visuals; utility hints remain correct")
 			} else {
 				t.Log("utility and owner hints survived toolkit native-window recreation")
@@ -118,14 +118,14 @@ func TestNativeUtilitySetterRestoresMappedPolicyWithoutIdentityChange(t *testing
 				t.Fatal(err)
 			}
 			defer p.Close()
-			if !strings.HasPrefix(nativeWindowID(p.Main), "x11:") {
+			if !strings.HasPrefix(nativeWindowID(p.Main()), "x11:") {
 				t.Skip("the X11 backend is unavailable")
 			}
 			pumpNativeUtility(a.PumpOnce, p)
 			assertKWinTaskbarPolicy(t, p)
 			for _, named := range p.Windows()[1:] {
 				id := nativeWindowID(named.Window)
-				if supported, ready := nativeUtilityStatus(named.Window, p.Main); !supported || !ready {
+				if supported, ready := nativeUtilityStatus(named.Window, p.Main()); !supported || !ready {
 					t.Fatalf("%s policy was not confirmed after mapping", named.Name)
 				}
 				if data, err := exec.Command(request, strings.TrimPrefix(id, "x11:")).CombinedOutput(); err != nil {
@@ -135,7 +135,7 @@ func TestNativeUtilitySetterRestoresMappedPolicyWithoutIdentityChange(t *testing
 				deadline := time.Now().Add(time.Second)
 				for {
 					a.PumpOnce()
-					if _, ready := nativeUtilityStatus(named.Window, p.Main); !ready {
+					if _, ready := nativeUtilityStatus(named.Window, p.Main()); !ready {
 						break
 					}
 					if time.Now().After(deadline) {
@@ -149,15 +149,15 @@ func TestNativeUtilitySetterRestoresMappedPolicyWithoutIdentityChange(t *testing
 			}
 			// An explicit toolkit policy request must reach a mapped window
 			// through its window manager, without rewriting initial properties.
-			if !p.Eq.SetSkipTaskbar(true) || !p.List.SetSkipTaskbar(true) {
+			if !p.Eq().SetSkipTaskbar(true) || !p.List().SetSkipTaskbar(true) {
 				t.Fatal("public utility policy request was rejected")
 			}
 			deadline := time.Now().Add(2500 * time.Millisecond)
 			for {
 				a.PumpOnce()
 				p.Advance(70 * time.Millisecond)
-				_, eqReady := nativeUtilityStatus(p.Eq, p.Main)
-				_, listReady := nativeUtilityStatus(p.List, p.Main)
+				_, eqReady := nativeUtilityStatus(p.Eq(), p.Main())
+				_, listReady := nativeUtilityStatus(p.List(), p.Main())
 				if eqReady && listReady {
 					break
 				}
@@ -214,9 +214,9 @@ func pumpNativeUtility(pump func(), p *Player) {
 	for time.Now().Before(deadline) {
 		pump()
 		p.Advance(0)
-		ready := p.stacked && p.restoredPlacement == nil
+		ready := groupPlaced(p)
 		for _, named := range p.Windows()[1:] {
-			if supported, accepted := nativeUtilityStatus(named.Window, p.Main); !supported || !accepted {
+			if supported, accepted := nativeUtilityStatus(named.Window, p.Main()); !supported || !accepted {
 				ready = false
 				break
 			}
@@ -235,7 +235,7 @@ func pumpNativeUtility(pump func(), p *Player) {
 
 func assertNativeUtilityHints(t *testing.T, p *Player) {
 	t.Helper()
-	owner := strings.TrimPrefix(nativeWindowID(p.Main), "x11:")
+	owner := strings.TrimPrefix(nativeWindowID(p.Main()), "x11:")
 	for _, named := range p.Windows()[1:] {
 		id := strings.TrimPrefix(nativeWindowID(named.Window), "x11:")
 		data, err := exec.Command("xprop", "-id", "0x"+id,

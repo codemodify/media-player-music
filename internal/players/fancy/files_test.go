@@ -120,12 +120,12 @@ func TestChooserFallbackOwnedSizeAndCloseLifetime(t *testing.T) {
 	}
 	var ownWindow bool
 	for _, w := range a.Windows() {
-		if w == p.Main || w == p.Eq || w == p.List || w.Closed() {
+		if w == p.Main() || w == p.Eq() || w == p.List() || w.Closed() {
 			continue
 		}
 		off := w.Surface().(*platform.Offscreen)
 		width, height := w.Size()
-		if off.Owner() != p.Main.Surface() || width < 520 || height < 380 {
+		if off.Owner() != p.Main().Surface() || width < 520 || height < 380 {
 			t.Fatal("fallback lacks owned readable window")
 		}
 		ownWindow = true

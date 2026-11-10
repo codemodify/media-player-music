@@ -477,9 +477,12 @@ func (f *Fader) KeyPress(e widget.KeyEvent) bool {
 // the readouts, the footers, the display wells.
 type DragsWindow struct {
 	widget.Base
-	// Win is the window a press moves. A nil one is inert, which is what a
-	// component wants before it has been given its window.
-	Win *ui.Window
+	// Move is what a press does: the press on a caption of the panel the
+	// component is in (a racked face's rack.Group.StartMove for its member,
+	// which moves the panel's window, or takes the panel out of a window it
+	// shares). A nil one is inert, which is what a component wants before it
+	// has been given its panel.
+	Move func()
 }
 
 // MousePress starts a window move and takes the press. Only the primary
@@ -489,8 +492,8 @@ func (d *DragsWindow) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false
 	}
-	if d.Win != nil {
-		d.Win.StartMove()
+	if d.Move != nil {
+		d.Move()
 	}
 	return true
 }
@@ -530,23 +533,24 @@ type AnalyserView struct {
 	Ramp []paint2d.Color
 	// PeakTint overrides the markers' colour.
 	PeakTint paint2d.Color
-	// Drag is the window a press on the analyser moves: an analyser sunk
-	// into a player's display is part of its face, and says so itself
-	// rather than leaving it to whatever is underneath.
-	Drag *ui.Window
+	// Move is what a press on the analyser does: an analyser sunk into a
+	// player's display is part of its face, and says so itself rather than
+	// leaving it to whatever is underneath. A racked face moves its panel
+	// (rack.Group.StartMove).
+	Move func()
 }
 
-// MousePress moves the window when the analyser is part of a face.
+// MousePress moves the panel when the analyser is part of a face.
 func (a *AnalyserView) MousePress(e widget.MouseEvent) bool {
-	if a.Drag == nil || e.Button != platform.ButtonLeft {
+	if a.Move == nil || e.Button != platform.ButtonLeft {
 		return false
 	}
-	a.Drag.StartMove()
+	a.Move()
 	return true
 }
 
 // CaptionAt: an analyser in a player's display is face, not content.
-func (a *AnalyserView) CaptionAt(paint2d.Point) bool { return a.Drag != nil }
+func (a *AnalyserView) CaptionAt(paint2d.Point) bool { return a.Move != nil }
 
 // NewAnalyserView shows s.
 func NewAnalyserView(s *Spectrum) *AnalyserView {

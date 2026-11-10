@@ -127,19 +127,19 @@ func TestPlaylistActivationAndKeyboardReachTheSharedPlaybackHost(t *testing.T) {
 			if !list.AccessibleAction(2, a11y.ActionDefault) || p.Transport.State != players.Playing {
 				t.Fatal("activating the current row did not resume through the host")
 			}
-			p.List.RequestFocus(list)
-			p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyDown})
+			p.List().RequestFocus(list)
+			p.List().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyDown})
 			a.PumpOnce()
 			if list.Selected != 3 || p.Transport.List.Index() != 2 || len(commands) != 2 {
 				t.Fatal("Down did not select the next row without changing playback")
 			}
-			p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyReturn})
+			p.List().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyReturn})
 			a.PumpOnce()
 			if p.Transport.List.Index() != 3 {
 				t.Fatal("Return did not activate the selected playlist track")
 			}
-			p.Main.RequestFocus(p.strip.seek)
-			p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyB})
+			p.Main().RequestFocus(p.strip.seek)
+			p.Main().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyB})
 			a.PumpOnce()
 			want := []players.Command{players.CmdPlay, players.CmdPlay, players.CmdPlay, players.CmdNext}
 			if !reflect.DeepEqual(commands, want) {

@@ -121,12 +121,12 @@ func probe(scale float32) {
 		panic(err)
 	}
 	defer p.Close()
-	p.Main.Hide()
-	p.Eq.Hide()
-	p.List.Hide()
-	p.Main.SetTitle("Half Life 2 native shape probe (main)")
-	p.Eq.SetTitle("Half Life 2 native shape probe (equalizer)")
-	p.List.SetTitle("Half Life 2 native shape probe (playlist)")
+	p.Main().Hide()
+	p.Eq().Hide()
+	p.List().Hide()
+	p.Main().SetTitle("Half Life 2 native shape probe (main)")
+	p.Eq().SetTitle("Half Life 2 native shape probe (equalizer)")
+	p.List().SetTitle("Half Life 2 native shape probe (playlist)")
 	pump := func() {
 		until := time.Now().Add(250 * time.Millisecond)
 		for time.Now().Before(until) {
@@ -136,27 +136,27 @@ func probe(scale float32) {
 		}
 	}
 	pump()
-	verify(p.Main, nil, scale, 339, 300, 150, 150, 200, 120)
-	verify(p.Eq, p.Main, scale, 430, 239, 210, 120, 350, 180)
-	verify(p.List, p.Main, scale, 393, 226, 200, 100, 260, 160)
-	p.List.SetSize(610, 430)
+	verify(p.Main(), nil, scale, 339, 300, 150, 150, 200, 120)
+	verify(p.Eq(), p.Main(), scale, 430, 239, 210, 120, 350, 180)
+	verify(p.List(), p.Main(), scale, 393, 226, 200, 100, 260, 160)
+	p.List().SetSize(610, 430)
 	pump()
-	verify(p.List, p.Main, scale, 610, 430, 305, 215, 500, 350)
+	verify(p.List(), p.Main(), scale, 610, 430, 305, 215, 500, 350)
 	for state := 0; state < 3; state++ {
 		var id uint64
-		p.Main.AccessibleTree().Walk(func(n *a11y.Node) bool {
+		p.Main().AccessibleTree().Walk(func(n *a11y.Node) bool {
 			if strings.Contains(n.Name, "shutter") {
 				id = n.ID
 			}
 			return true
 		})
-		if !p.Main.AccessibleAction(id, a11y.ActionDefault) {
+		if !p.Main().AccessibleAction(id, a11y.ActionDefault) {
 			panic("shutter action unavailable")
 		}
 		pump()
-		verify(p.Main, nil, scale, 339, 300, 150, 150, 200, 120)
-		verify(p.Eq, p.Main, scale, 430, 239, 210, 120, 350, 180)
-		verify(p.List, p.Main, scale, 610, 430, 305, 215, 500, 350)
+		verify(p.Main(), nil, scale, 339, 300, 150, 150, 200, 120)
+		verify(p.Eq(), p.Main(), scale, 430, 239, 210, 120, 350, 180)
+		verify(p.List(), p.Main(), scale, 610, 430, 305, 215, 500, 350)
 		fmt.Printf("scale=%g shutterState=%d currentUtilityOwners=true\n", scale, (state+1)%3)
 	}
 }

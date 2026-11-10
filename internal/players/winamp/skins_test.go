@@ -96,7 +96,7 @@ func TestEverySkinPaintsEveryWindowAtEveryScale(t *testing.T) {
 				name string
 				win  *ui.Window
 				h    int
-			}{{"strip", p.Main, panel.MainH}, {"equaliser", p.Eq, panel.EqH}, {"playlist", p.List, panel.ListH}} {
+			}{{"strip", p.Main(), panel.MainH}, {"equaliser", p.Eq(), panel.EqH}, {"playlist", p.List(), panel.ListH}} {
 				img := w.win.Capture()
 				if img == nil || blank(img) {
 					t.Fatalf("%s@%gx: the %s painted nothing", id, scale, w.name)
@@ -105,7 +105,7 @@ func TestEverySkinPaintsEveryWindowAtEveryScale(t *testing.T) {
 					t.Errorf("%s@%gx: the %s is %dx%d, want %dx%d", id, scale, w.name, ww, hh, panel.WindowW, w.h)
 				}
 			}
-			f := faceOf(p.Main.Look())
+			f := faceOf(p.Main().Look())
 			want := faceClassic
 			if id == SkinSilver {
 				want = faceSilver
@@ -126,10 +126,10 @@ func TestEverySkinPaintsEveryWindowAtEveryScale(t *testing.T) {
 // and the skin's layout had drifted apart.
 func checkDisplay(t *testing.T, id string, scale float32, p *Player) {
 	t.Helper()
-	img := p.Main.Capture()
+	img := p.Main().Capture()
 	o := widget.DeviceOrigin(p.strip)
 	// Capture crops the surface's shadow margin; DeviceOrigin includes it.
-	window := p.Main.WindowRect().Min
+	window := p.Main().WindowRect().Min
 	o.X, o.Y = o.X-window.X, o.Y-window.Y
 	d, ok := skins.SkinSlotRect(p.strip.Look(), layoutStrip, "display", p.strip.LocalBounds())
 	if !ok {
@@ -165,7 +165,7 @@ func TestTheSilverWindowsAreRoundAtEveryScale(t *testing.T) {
 		var base []float64
 		for _, scale := range scales {
 			_, p := open(t, SkinSilver, scale)
-			win := map[string]*ui.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List}[w]
+			win := map[string]*ui.Window{"strip": p.Main(), "equaliser": p.Eq(), "playlist": p.List()}[w]
 			if !win.ShapeActive() {
 				t.Fatalf("%s@%gx: not shaped", w, scale)
 			}
@@ -202,7 +202,7 @@ func TestTheSkinKeySelectsTheOtherPanel(t *testing.T) {
 	a, p := open(t, Skin, 1)
 	p.strip.skinBtn.AccessibleAction(0, a11y.ActionDefault)
 	a.PumpOnce()
-	for _, w := range []*ui.Window{p.Main, p.Eq, p.List} {
+	for _, w := range []*ui.Window{p.Main(), p.Eq(), p.List()} {
 		if got := style.LookAppearance(w.Look()).Name; got != SkinSilver {
 			t.Fatalf("after the skin key: %s wears %q, want %q", w.Title(), got, SkinSilver)
 		}
@@ -221,7 +221,7 @@ func TestTheSkinKeySelectsTheOtherPanel(t *testing.T) {
 
 func TestTheSkinSwitchIsOnTheKeyboard(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	for _, w := range []*ui.Window{p.Main, p.Eq, p.List} {
+	for _, w := range []*ui.Window{p.Main(), p.Eq(), p.List()} {
 		p.SetSkin(Skin)
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Rune: 'k', Mods: platform.ModCtrl})
 		a.PumpOnce()
@@ -232,13 +232,13 @@ func TestTheSkinSwitchIsOnTheKeyboard(t *testing.T) {
 	}
 	var chosen string
 	p.Host.ChooseSkin = func(id string) { chosen = id }
-	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Rune: 'k', Mods: platform.ModCtrl | platform.ModShift})
+	p.Main().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Rune: 'k', Mods: platform.ModCtrl | platform.ModShift})
 	a.PumpOnce()
 	if chosen != Themed {
 		t.Fatalf("Ctrl+Shift+K chose %q, want default", chosen)
 	}
 	p.Transport.State = players.Stopped
-	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
+	p.Main().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
 	a.PumpOnce()
 	if p.Transport.State != players.Playing {
 		t.Error("Space stopped working after the skin was switched")
@@ -255,9 +255,9 @@ func TestTheSkinMenuListsTheSkinsByName(t *testing.T) {
 		t.Fatal("the strip did not take a right-click")
 	}
 	a.PumpOnce()
-	pop, ok := p.Main.Popup().(*widgets.PopupMenu)
+	pop, ok := p.Main().Popup().(*widgets.PopupMenu)
 	if !ok {
-		t.Fatalf("a right-click opened %T, not a menu", p.Main.Popup())
+		t.Fatalf("a right-click opened %T, not a menu", p.Main().Popup())
 	}
 	if len(pop.Items) != len(Skins)+1 {
 		t.Fatalf("skin menu has %d items, want default and %d skins", len(pop.Items), len(Skins))
@@ -284,10 +284,10 @@ func TestTheSkinMenuListsTheSkinsByName(t *testing.T) {
 	auditAll(t, SkinSilver, p)
 
 	// And from the keyboard: the menu key, in the equaliser.
-	p.Eq.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyMenu})
+	p.Eq().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyMenu})
 	a.PumpOnce()
-	if _, ok := p.Eq.Popup().(*widgets.PopupMenu); !ok {
-		t.Errorf("the menu key opened %T, not the skin menu", p.Eq.Popup())
+	if _, ok := p.Eq().Popup().(*widgets.PopupMenu); !ok {
+		t.Errorf("the menu key opened %T, not the skin menu", p.Eq().Popup())
 	}
 }
 
@@ -296,27 +296,27 @@ func TestEveryPanelControlIsOnTheKeyboard(t *testing.T) {
 	for _, id := range Skins {
 		a, p := open(t, id, 1)
 		s := p.strip
-		ring := playertest.FocusRing(t, a, p.Main)
+		ring := playertest.FocusRing(t, a, p.Main())
 		for _, c := range []widget.Component{
 			s.prev, s.play, s.pause, s.stop, s.next, s.eject, s.seek, s.volume, s.balance,
 			s.shuffle, s.repeat, s.eqBtn, s.listBtn, s.skinBtn,
 		} {
 			if !playertest.Reaches(ring, c) {
-				t.Errorf("%s: Tab never reaches %q", id, nameOf(p.Main, c))
+				t.Errorf("%s: Tab never reaches %q", id, nameOf(p.Main(), c))
 			}
 		}
 		e := p.eqPane
-		eqRing := playertest.FocusRing(t, a, p.Eq)
+		eqRing := playertest.FocusRing(t, a, p.Eq())
 		for _, c := range []widget.Component{e.on, e.auto, e.presets, e.preamp} {
 			if !playertest.Reaches(eqRing, c) {
-				t.Errorf("%s: Tab never reaches the equaliser's %q", id, nameOf(p.Eq, c))
+				t.Errorf("%s: Tab never reaches the equaliser's %q", id, nameOf(p.Eq(), c))
 			}
 		}
 		l := p.listPane
-		listRing := playertest.FocusRing(t, a, p.List)
+		listRing := playertest.FocusRing(t, a, p.List())
 		for _, c := range []widget.Component{l.list, l.add, l.rem, l.sel, l.misc, l.opts, l.mini[0], l.mini[5]} {
 			if !playertest.Reaches(listRing, c) {
-				t.Errorf("%s: Tab never reaches the playlist's %q", id, nameOf(p.List, c))
+				t.Errorf("%s: Tab never reaches the playlist's %q", id, nameOf(p.List(), c))
 			}
 		}
 	}
@@ -327,7 +327,7 @@ func TestEveryPanelControlIsOnTheKeyboard(t *testing.T) {
 // the application's (players.Settings), and the face only asks for it.
 func auditAll(t *testing.T, id string, p *Player) {
 	t.Helper()
-	for name, w := range map[string]*ui.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List} {
+	for name, w := range map[string]*ui.Window{"strip": p.Main(), "equaliser": p.Eq(), "playlist": p.List()} {
 		playertest.Audit(t, id+" "+name, w)
 	}
 }

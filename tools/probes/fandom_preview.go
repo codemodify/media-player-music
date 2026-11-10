@@ -54,8 +54,8 @@ func main() {
 		}
 		fmt.Println("wrote", path)
 	}
-	write("main", p.Main.CaptureSurface())
-	write("playlist", p.List.CaptureSurface())
+	write("main", p.Main().CaptureSurface())
+	write("playlist", p.List().CaptureSurface())
 	d := float32(*scale)
 	im := paint2d.NewImage(int(680*d+.5), int(330*d+.5))
 	ctx := paint2d.NewContext(im)
@@ -63,18 +63,18 @@ func main() {
 	for _, v := range []struct {
 		im         *paint2d.Image
 		x, y, w, h float32
-	}{{p.Main.CaptureSurface(), 0, 0, 490, 330}, {p.List.CaptureSurface(), 490, 46, 190, 246}} {
+	}{{p.Main().CaptureSurface(), 0, 0, 490, 330}, {p.List().CaptureSurface(), 490, 46, 190, 246}} {
 		ctx.DrawImageRectPaint(v.im, paint2d.XYWH(0, 0, float32(v.im.Width), float32(v.im.Height)), paint2d.XYWH(v.x*d, v.y*d, v.w*d, v.h*d), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
 	}
 	write("group", im)
 	p.ShowEqualiser(true)
 	a.PumpOnce()
-	write("equalizer", p.Main.CaptureSurface())
+	write("equalizer", p.Main().CaptureSurface())
 	p.ShowSettingsPanel(false)
 	a.PumpOnce()
-	write("settings-hidden", p.Main.CaptureSurface())
-	p.List.SetSize(420, 360)
+	write("settings-hidden", p.Main().CaptureSurface())
+	p.List().SetSize(420, 360)
 	a.PumpOnce()
 	p.Advance(0)
-	write("playlist-resized", p.List.CaptureSurface())
+	write("playlist-resized", p.List().CaptureSurface())
 }

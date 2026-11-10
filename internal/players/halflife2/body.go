@@ -37,7 +37,7 @@ func newBody(p *Player) *body {
 	b.visual = players.NewAnalyserView(p.Spectrum)
 	b.visual.Tint = orange()
 	b.visual.Peaks = true
-	b.visual.Drag = p.Main
+	b.visual.Move = func() { p.g.StartMove(p.iMain) }
 	b.slots.Bind("analyser", b.visual)
 	b.Add(b.visual)
 	button := func(slot, name string, glyph players.Glyph, action func(), inner bool) *players.GlyphButton {
@@ -73,8 +73,8 @@ func newBody(p *Player) *body {
 	}
 	button("logo", "Appearance and settings", players.GlyphSkin, menu, true)
 	button("skin", "Appearance and settings", players.GlyphSkin, menu, false)
-	button("minimize", "Minimize Music Player", players.GlyphNone, p.Main.Minimize, false)
-	button("close", "Close to tray", players.GlyphNone, p.Main.RequestClose, false)
+	button("minimize", "Minimize Music Player", players.GlyphNone, func() { p.Main().Minimize() }, false)
+	button("close", "Close to tray", players.GlyphNone, func() { p.Main().RequestClose() }, false)
 	b.eq = button("eq", "Show equalizer", players.GlyphSliders, func() { p.ShowEqualiser(!p.Host.Model.EqualizerVisible) }, false)
 	b.eq.Toggle = true
 	b.pl = button("pl", "Show playlist", players.GlyphList, func() { p.ShowPlaylist(!p.Host.Model.PlaylistVisible) }, false)
@@ -146,11 +146,11 @@ func skinButton(role, slot, name string, glyph players.Glyph, action func()) *pl
 func orange() paint2d.Color { return paint2d.RGB(1, .48, .13) }
 func (b *body) cycleShutter() {
 	b.shutter = (b.shutter + 1) % 3
-	b.p.setShape(b.p.Main, LayoutMain)
+	b.p.g.SetShape(b.p.iMain, b.p.shape(b.p.iMain, LayoutMain))
 	b.p.configureUtilityWindows()
 	b.sync()
-	if c := b.p.Main.Focus(); c != nil && !c.Visible() {
-		b.p.Main.RequestFocus(b.buttons["shutter"])
+	if c := b.p.Main().Focus(); c != nil && !c.Visible() {
+		b.p.Main().RequestFocus(b.buttons["shutter"])
 	}
 	b.RequestLayout()
 }
@@ -164,11 +164,11 @@ func (b *body) sync() {
 	b.play.SetVisible(open && t.State != players.Playing)
 	b.buttons["pause"].SetVisible(open && t.State == players.Playing)
 	b.buttons["logo"].SetVisible(open && !b.visualOn)
-	if focused := b.p.Main.Focus(); focused != nil && !focused.Visible() {
+	if w := b.p.Main(); w != nil && w.Focus() != nil && !w.Focus().Visible() {
 		if open {
-			b.p.Main.RequestFocus(b.transportButton())
+			w.RequestFocus(b.transportButton())
 		} else {
-			b.p.Main.RequestFocus(b.buttons["shutter"])
+			w.RequestFocus(b.buttons["shutter"])
 		}
 	}
 	b.eq.SetChecked(b.p.Host.Model.EqualizerVisible)
@@ -232,13 +232,12 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.restoredPlacement = nil
-		b.p.Main.StartMove()
+		b.p.g.StartMove(b.p.iMain)
 		return true
 	}
 	return false
 }
-func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
+func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main(), e) }
 func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Half Life 2 music player" }
 func (b *body) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {

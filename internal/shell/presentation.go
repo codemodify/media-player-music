@@ -46,6 +46,14 @@ type StatefulPresentation interface {
 	RestoreState(players.PresentationState)
 }
 
+// RackedPresentation is a face whose panels are a rack.Group: closing its
+// player is the group's first member's close (rack.Member.OnClose), which
+// holds whichever window the player is in, the window it opened with or the
+// one it shares with its panels after the group falls back to sharing.
+type RackedPresentation interface {
+	SetOnClose(func() bool)
+}
+
 func openPresentation(h *players.Host, opts Options, skin string) (Presentation, error) {
 	if skin == players.DefaultSkin {
 		return standard.New(h, standard.Options{Headless: opts.Headless, Scale: opts.Scale})

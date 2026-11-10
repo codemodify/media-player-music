@@ -52,7 +52,7 @@ func newMainPane(p *Player, compact bool) *mainPane {
 	add("prev", "Previous track", "", players.GlyphPrev, func() { p.Host.Command(players.CmdPrev) })
 	add("next", "Next track", "", players.GlyphNext, func() { p.Host.Command(players.CmdNext) })
 	add("stop", "Stop", "", players.GlyphStop, func() { p.Host.Command(players.CmdStop) })
-	add("close", "Close to tray", "", players.GlyphNone, p.Main.RequestClose)
+	add("close", "Close to tray", "", players.GlyphNone, func() { p.Main().RequestClose() })
 	add("skin", "Appearance and settings", "", players.GlyphSkin, func() {
 		c := b.buttons["skin"]
 		p.Host.ContextMenu(c, widget.DeviceOrigin(c).Add(paint2d.Pt(0, c.Bounds().Dy())))
@@ -72,7 +72,7 @@ func newMainPane(p *Player, compact bool) *mainPane {
 	add("forward", "Seek forward", "", players.GlyphNext, func() { p.Host.Command(players.CmdSeekForward) })
 	add("open", "Open music files", "", players.GlyphEject, func() { p.Host.OpenFiles(b.buttons["open"], false) })
 	add("compact", "Compact player", "", players.GlyphNone, func() { p.SetCompact(true) })
-	add("minimize", "Minimize Music Player", "", players.GlyphNone, p.Main.Minimize)
+	add("minimize", "Minimize Music Player", "", players.GlyphNone, func() { p.Main().Minimize() })
 	add("eq", "Show equalizer", "EQ", players.GlyphNone, func() { p.ShowEqualiser(!p.Host.Model.EqualizerVisible) }).Toggle = true
 	add("pl", "Show playlist", "PL", players.GlyphNone, func() { p.ShowPlaylist(!p.Host.Model.PlaylistVisible) }).Toggle = true
 	add("shuffle", "Shuffle", "RND", players.GlyphNone, func() { p.Host.Command(players.CmdShuffle) }).Toggle = true
@@ -102,7 +102,7 @@ func newMainPane(p *Player, compact bool) *mainPane {
 	b.analyser.Peaks = false
 	b.analyser.MinBarW = 1
 	b.analyser.Gap = 1
-	b.analyser.Drag = p.Main
+	b.analyser.Move = func() { p.g.StartMove(p.iMain) }
 	b.slots.Bind("analyser", b.analyser)
 	b.Add(b.analyser)
 	return b
@@ -143,7 +143,7 @@ func (b *mainPane) Arrange(r paint2d.Rect) {
 }
 func (b *mainPane) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	paintLayout(ctx, lk, box, b.role, b.p.Main)
+	paintLayout(ctx, lk, box, b.role, b.p.Main())
 	track := b.p.Transport.Track().Label()
 	if track == "" {
 		track = "Open music files"
@@ -176,11 +176,10 @@ func (b *mainPane) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.restoredPlacement = nil
-		return b.p.Main.StartMove()
+		return b.p.g.StartMove(b.p.iMain)
 	}
 	return false
 }
 func (b *mainPane) CaptionAt(paint2d.Point) bool    { return true }
-func (b *mainPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
+func (b *mainPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main(), e) }
 func (b *mainPane) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Fancy music player" }

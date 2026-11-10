@@ -29,7 +29,7 @@ func TestPlaylistFileDropsReachTheHostWithoutChangingPlayback(t *testing.T) {
 				calls := 0
 				p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 				list, state, position, index := p.Transport.List, p.Transport.State, p.Transport.Pos, p.Transport.List.Index()
-				off := p.List.Surface().(*platform.Offscreen)
+				off := p.List().Surface().(*platform.Offscreen)
 				for _, at := range []paint2d.Point{
 					widget.DeviceBounds(p.listPane.list).Center(),
 					widget.DeviceBounds(p.listPane.add).Center(),

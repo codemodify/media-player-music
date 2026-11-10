@@ -331,8 +331,8 @@ machinery without knowing what a music player, playlist or equaliser is.
 The app should declare its main anchor, member panes, relative layout and
 snap/detach behavior. The toolkit should handle platform capabilities and
 the physical windows or host surfaces that realize that declaration,
-including a portable unsupported-case strategy. The current X11 preference
-below is a temporary workaround for a missing toolkit feature.
+including a portable unsupported-case strategy. desktop-ui-rack's `Group`
+does this now (ledger R21): see "Desktop positioning".
 
 The skinned equaliser and playlist hide their minimize buttons through the
 caption API and declare `RoleUtility` with Main as `Owner`. The toolkit
@@ -486,61 +486,35 @@ player's track-identity policy.
 
 ## Desktop positioning
 
-The panel windows use the toolkit's public `rack` package to snap and move
-as a group. X11, including XWayland, and the headless backend expose
-positions and allow windows to be placed. The app adopts the desktop's
-actual boxes after mapping, then attaches the equaliser and playlist to
-the strip. Moving a window is a request; the rack waits for the desktop's
-response.
+The four panelled faces (winamp, fancy, fandom, halflife2) declare their
+panels as the members of a desktop-ui-rack `Group`: each panel's content,
+size, silhouette (the skin's shape slot) and close policy, and for the
+Winamp skins its frame role (`strip`, `equaliser`, `playlist`), then the
+bonds between them (Fancy's and Winamp's stack, Fandom's playlist 46
+pixels down the player's right edge, Half Life 2's equaliser 80 pixels up
+it). The group realises them on whatever backend the toolkit chose; the
+app no longer prefers X11.
 
-Dragging the main strip carries its snapped group. Dragging a satellite
-away detaches it from Main; panes attached to that satellite travel with
-it. Bringing it back near an edge rejoins the group. Moving Main to a loose
-satellite also rejoins it. UIToolkit v0.23.6 preserves longer foreign chains
-and their side branches and closes a small snap gap by moving Main while
-leaving the stationary component in place. The app removes its scratch-Rack
-path-reversal and eager movement callbacks. Group following uses
-movement events while playback is playing, paused or stopped.
+Where a program may place its windows (X11, Windows, macOS, the offscreen
+backend), each panel has a window of its own. The group opens them, puts
+the declared bonds and the saved places in place past the window manager's
+own placement, then follows the desktop: dragging the strip carries what
+is snapped to it, dragging a satellite away detaches it with what hangs
+from it, and bringing it near an edge snaps it back. Where a program may
+not (Wayland), the panels stuck together share one shaped window, framed
+per panel for its role; a panel's caption dragged away takes it out into a
+window of its own, which docks back when dropped on another part. A
+desktop that says it places windows and places none (sway as an X11
+window manager) is shared the same way.
 
-The toolkit uses a 250 ms acknowledgement deadline. Native callbacks now
-coalesce a burst of events into one follow pass on the next loop turn,
-and an ordinary refused Apply request schedules its own expiry wake-up.
-v0.23.14 also preserves the earliest pending deadline when a later request
-arrives. Refused re-show, closing-satellite and staggered-request cases now
-settle through toolkit timers. The app removes its pending-geometry flag,
-Moved observer and Show/pulse fallback in all four panel families. Startup,
-saved placement, resizing, captures and backends without movement events
-retain explicit Follow calls. Settled event-capable windows need no
-position polling. Native event-driven movement, detachment
-and rejoining pass once startup placement is settled; these programmatic
-checks do not establish continuous-drag visual smoothness.
-
-The executable currently prefers available X11 at Linux startup, including
-XWayland, even when it starts in Default. This is a temporary workaround to
-retain group movement after switching to a skin. It should be removed when
-the toolkit supplies portable logical-window grouping and its fallback
-strategy; choosing X11/XWayland is not a permanent application responsibility.
-Explicit `GOFRAMEWORK_DESKTOP_UI_BACKEND` choices are honored, headless screenshots use
-offscreen, and the native toolkit fallback remains available without X11.
-On a Wayland-only system the skins still render and their controls work;
-their separate native windows cannot move as a snapped group. There is no
-mandatory XWayland dependency.
-
-Native Wayland ordinary toplevels expose no global position and cannot be
-placed by the client. That protocol/capability restriction prevents this
-grouped positioning; it is not a toolkit defect. Layer-shell placement and
-interactive toplevel dragging are separate capabilities and do not provide
-arbitrary positioning of these ordinary application windows. The model and
-panel controls still work. Default's single-window layout needs no satellite
-positioning.
-
-The missing feature is a higher-level grouping abstraction, rather than a
-different implementation of Wayland `Move`. The toolkit already provides
-`rack` for separate windows and `dock` for panes within a host, but does not
-choose or migrate between representations for a declared skin-window group.
-A portable strategy might keep docked logical panes in one physical host,
-or use suitable compositor cooperation where available, while retaining the
-app's artwork, geometry and behavior. That strategy belongs in the toolkit.
+A saved layout is each panel's box and bond (`Dock.Along` included).
+Restored, the resizable playlist gets its size back, each docked panel its
+bond along its edge (a bond the group refuses, a cycle in a hand-edited
+file, leaves the panel loose) and each loose panel its place, which the
+group keeps while it settles. Sharing windows, a box is in the group's own
+plane and is saved unpositioned. Closing a satellite hides it; showing it
+brings it back where it was. Closing the player is the shell's close to
+tray, through the group's first member.
 
 Native popup surfaces already existed in v0.23.1 and remain available in
 v0.23.5. A general menu is not universally confined to its parent window.

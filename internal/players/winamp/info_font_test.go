@@ -33,8 +33,8 @@ func testPlaylistReadoutInk(t *testing.T, skin string, want [3]uint8) {
 			if !ok || sk.Sprites["font.31"] == nil || sk.Sprites["font.31"].Tint || sk.Sprites["info.font.31"] == nil || !sk.Sprites["info.font.31"].Tint {
 				t.Fatal("main source font or optional readout alpha masks are missing")
 			}
-			image := p.List.Capture()
-			origin := widget.DeviceOrigin(p.listPane).Sub(p.List.WindowRect().Min)
+			image := p.List().Capture()
+			origin := widget.DeviceOrigin(p.listPane).Sub(p.List().WindowRect().Min)
 			for _, slot := range []string{"info", "clock"} {
 				r := slotRect(p.listPane.Look(), layoutPlaylist, slot, p.listPane.LocalBounds()).Translate(origin)
 				count := 0
@@ -58,7 +58,7 @@ func TestPlaylistInfoFontFallsBackWithoutChangingClassicArtwork(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			_, p := open(t, Skin, scale)
-			lk := p.List.Look()
+			lk := p.List().Look()
 			const text = "3:47/37:14"
 			width := pixWidth(lk, text)
 			if got := pixInfoWidth(lk, text); got != width {

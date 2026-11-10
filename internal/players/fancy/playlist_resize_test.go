@@ -18,14 +18,14 @@ func TestResizedPlaylistKeepsIndependentChromeSizeAndVisibleResizeGrip(t *testin
 			a, p := open(t, scale)
 			initial := map[string]paint2d.Rect{}
 			for _, size := range [][2]int{{ListW, ListH}, {620, 340}} {
-				p.List.SetSize(size[0], size[1])
+				p.List().SetSize(size[0], size[1])
 				a.PumpOnce()
 				p.Advance(0)
 				a.PumpOnce()
-				pw, ph := p.List.PixelSize()
+				pw, ph := p.List().PixelSize()
 				box := paint2d.XYWH(0, 0, float32(pw), float32(ph))
-				lk := p.List.Look()
-				capture := p.List.CaptureSurface()
+				lk := p.List().Look()
+				capture := p.List().CaptureSurface()
 				for _, slot := range []string{"logo", "open", "save", "clear", "shuffle", "repeat"} {
 					r, ok := skins.SkinSlotRect(lk, LayoutPlaylist, slot, box)
 					if !ok {
@@ -100,7 +100,7 @@ func TestResizedPlaylistKeepsIndependentChromeSizeAndVisibleResizeGrip(t *testin
 					for x := 0; x < raw.Width; x++ {
 						if raw.Pix[(y*raw.Width+x)*4+3] > 128 {
 							at := r.Min.Add(paint2d.Pt(float32(x), float32(y)))
-							if p.List.Shape().Raster(pw, ph).Contains(int(at.X), int(at.Y)) {
+							if p.List().Shape().Raster(pw, ph).Contains(int(at.X), int(at.Y)) {
 								visible++
 							}
 						}
@@ -109,9 +109,9 @@ func TestResizedPlaylistKeepsIndependentChromeSizeAndVisibleResizeGrip(t *testin
 				if visible < 5 {
 					t.Fatal("grip strokes fall outside visible window mask")
 				}
-				off := p.List.Surface().(*platform.Offscreen)
+				off := p.List().Surface().(*platform.Offscreen)
 				before := len(off.FrameCalls().Resizes)
-				click(p.List, r.Center(), platform.ButtonLeft)
+				click(p.List(), r.Center(), platform.ButtonLeft)
 				a.PumpOnce()
 				calls := off.FrameCalls().Resizes
 				if len(calls) != before+1 || calls[len(calls)-1] != platform.EdgeBottom|platform.EdgeRight {

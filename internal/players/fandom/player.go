@@ -31,24 +31,30 @@ const (
 type Options struct {
 	Headless bool
 	Scale    float32
+	// Group is how the panels are realised: the zero lets the desktop
+	// decide; rack.GroupHosted shares windows wherever it runs.
+	Group rack.GroupMode
 }
 
 type Player struct {
-	Host              *players.Host
-	App               *ui.Application
-	Transport         *players.Transport
-	Spectrum          *players.Spectrum
-	Equaliser         *players.Equalizer
-	Main, List        *ui.Window
-	body              *body
-	listPane          *playlistPane
-	dropLook          func()
-	Desk              *rack.Desk
-	iMain, iList      int
-	stacked           bool
-	tries             int
-	restoredPlacement map[string]players.WindowPlacement
-	utilityOwnerID    string
+	Host      *players.Host
+	App       *ui.Application
+	Transport *players.Transport
+	Spectrum  *players.Spectrum
+	Equaliser *players.Equalizer
+	body      *body
+	listPane  *playlistPane
+	dropLook  func()
+	// g is the two panels, the player and its playlist; iMain and iList
+	// are their members.
+	g            *rack.Group
+	iMain, iList int
+	// listSize is the restored playlist size, kept while the group
+	// settles (R21).
+	listSize players.HeldSize
+	// onClose is the application's word on closing the player (SetOnClose).
+	onClose        func() bool
+	utilityOwnerID string
 }
 
 func New(h *players.Host, opts Options) (*Player, error) {
@@ -58,60 +64,70 @@ func New(h *players.Host, opts Options) (*Player, error) {
 		}
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
-	var err error
-	p.Main, err = players.OpenSized(h.App, platform.WindowOptions{Title: "Music Player", Headless: opts.Headless, Decorations: platform.DecorationsNone}, MainW, MainH, true)
-	if err != nil {
-		return nil, err
-	}
+	p.g = rack.NewGroup(h.App, rack.GroupOptions{Mode: opts.Group})
 	p.body = newBody(p)
-	p.Main.SetContent(p.body)
-	p.setShape(p.Main, LayoutMain)
-	p.List, err = players.OpenSized(h.App, platform.WindowOptions{Title: "Playlist", Headless: opts.Headless, Decorations: platform.DecorationsNone,
-		Role: platform.RoleUtility, Owner: p.Main.Surface(), MinWidth: MinListW, MinHeight: MinListH}, ListW, ListH, false)
-	if err != nil {
-		p.Main.Close()
+	p.listPane = newPlaylistPane(p)
+	mw, mh := players.WindowSize(h.App, MainW, MainH)
+	p.iMain = p.g.Add(rack.Member{Name: "main", Content: p.body, OnClose: p.closeMain, Shape: p.shape(0, LayoutMain),
+		Window: platform.WindowOptions{Title: "Music Player", Headless: opts.Headless, Width: mw, Height: mh, Sizing: platform.SizingFixed}})
+	lw, lh := players.WindowSize(h.App, ListW, ListH)
+	p.iList = p.g.Add(rack.Member{Name: "playlist", Content: p.listPane, Shape: p.shape(1, LayoutPlaylist),
+		OnClose: func() bool { h.Model.PlaylistVisible = false; return true },
+		Window: platform.WindowOptions{Title: "Playlist", Headless: opts.Headless, Width: lw, Height: lh,
+			MinWidth: MinListW, MinHeight: MinListH, Hidden: !h.Model.PlaylistVisible}})
+	// The reference arrangement: the playlist down the player's right edge.
+	p.g.Stick(p.iList, p.iMain, rack.Bond{Side: rack.SideRight, Along: 46})
+	if err := p.g.Realise(); err != nil {
 		return nil, err
 	}
-	p.listPane = newPlaylistPane(p)
-	p.List.SetContent(p.listPane)
-	p.setShape(p.List, LayoutPlaylist)
-	p.initGroup()
-	p.List.SetOnCloseRequest(func() bool { p.ShowPlaylist(false); return false })
 	p.Transport.Changed, p.Equaliser.Changed = p.Refresh, p.Refresh
 	p.dropLook = p.App.OnLookChange(func() {
-		p.setShape(p.Main, LayoutMain)
-		p.setShape(p.List, LayoutPlaylist)
-		p.configureUtilityWindows()
+		p.updateShape()
+		p.g.SetShape(p.iList, p.shape(p.iList, LayoutPlaylist))
 		p.Refresh()
 	})
-	p.ShowPlaylist(h.Model.PlaylistVisible)
 	p.configureUtilityWindows()
 	p.Refresh()
-	p.Main.RequestFocus(p.body.play)
-	p.List.RequestFocus(p.listPane.list)
+	p.Main().RequestFocus(p.body.play)
+	if w := p.List(); w != nil && w != p.Main() {
+		p.List().RequestFocus(p.listPane.list)
+	}
 	return p, nil
 }
 
-func (p *Player) MainWindow() *ui.Window { return p.Main }
+// Main is the player's window, and List the window the playlist is in now:
+// its own, or the player's where the two share one (nil while it is hidden
+// there).
+func (p *Player) Main() *ui.Window { return p.g.Window(p.iMain) }
+func (p *Player) List() *ui.Window { return p.g.Window(p.iList) }
+
+// SetOnClose is what closing the player asks first, false keeping it: its
+// close button, or the desktop closing its window. It holds whichever window
+// the player is in, as the group's first member's OnClose.
+func (p *Player) SetOnClose(fn func() bool) { p.onClose = fn }
+
+// closeMain is the player closed: the application's word, else it goes.
+func (p *Player) closeMain() bool { return p.onClose == nil || p.onClose() }
+
+func (p *Player) MainWindow() *ui.Window { return p.Main() }
 func (p *Player) Windows() []players.NamedWindow {
-	return []players.NamedWindow{{Name: "main", Window: p.Main}, {Name: "playlist", Window: p.List}}
+	return players.GroupWindows(p.g)
 }
 func (p *Player) Close() {
-	p.restoredPlacement = nil
 	if p.dropLook != nil {
 		p.dropLook()
 		p.dropLook = nil
 	}
-	for _, w := range []*ui.Window{p.List, p.Main} {
-		if w != nil {
-			w.Close()
-		}
-	}
+	p.g.Close()
 }
-func (p *Player) Pose(pos time.Duration)   { p.Host.Pose(pos); p.Refresh() }
-func (p *Player) Advance(dt time.Duration) { p.AdvanceGeometry(dt); p.Refresh() }
+func (p *Player) Pose(pos time.Duration) { p.Host.Pose(pos); p.Refresh() }
+func (p *Player) Advance(time.Duration) {
+	p.listSize.Keep(p.g)
+	p.configureUtilityWindows()
+	p.Refresh()
+}
 func (p *Player) Refresh() {
-	if p.Main == nil || p.Main.Closed() || p.body == nil || p.listPane == nil {
+	if w := p.Main(); w == nil || w.Closed() || p.body == nil || p.listPane == nil {
 		return
 	}
 	p.Equaliser.AutoForTrack(p.Transport.List.Index())
@@ -121,12 +137,17 @@ func (p *Player) Refresh() {
 func (p *Player) ShowEqualiser(on bool) {
 	p.Host.Model.EqualizerVisible = on
 	p.body.sync()
-	if c := p.Main.Focus(); c != nil && !c.Visible() {
-		p.Main.RequestFocus(p.body.play)
+	if c := p.Main().Focus(); c != nil && !c.Visible() {
+		p.Main().RequestFocus(p.body.play)
 	}
 	p.body.RequestLayout()
 }
-func (p *Player) ShowPlaylist(on bool) { p.showWindow(p.iList, on) }
+func (p *Player) ShowPlaylist(on bool) {
+	p.Host.Model.PlaylistVisible = on
+	p.g.Show(p.iList, on)
+	p.configureUtilityWindows()
+	p.Refresh()
+}
 
 func (p *Player) ShowSettingsPanel(on bool) {
 	if p.body != nil {
@@ -134,28 +155,24 @@ func (p *Player) ShowSettingsPanel(on bool) {
 	}
 }
 
-// userMoved releases startup placement before a native drag or resize begins.
-// A user gesture owns the whole group's geometry once restoration is cancelled.
-func (p *Player) userMoved(name string) {
-	if p.Desk == nil {
-		return
-	}
-	if pane, _ := p.Desk.Rack.Find(name); pane == nil {
-		return
-	}
-	p.restoredPlacement = nil
-	p.stacked = true
-}
-
 // updateShape is called after collapsing or reopening the embedded settings
 // wing. Only the visible artwork participates in input and painted coverage.
 func (p *Player) updateShape() {
-	p.setShape(p.Main, LayoutMain)
+	if p.g == nil {
+		return
+	}
+	p.g.SetShape(p.iMain, p.shape(p.iMain, LayoutMain))
 	p.configureUtilityWindows()
 }
 
-func (p *Player) setShape(w *ui.Window, role string) {
-	w.SetShapeFunc(func(size paint2d.Point, _ float32) *platform.Shape {
+// shape is member i's silhouette, drawn from its role's artwork in the look
+// of the window it is in.
+func (p *Player) shape(i int, role string) func(paint2d.Point, float32) *platform.Shape {
+	return func(size paint2d.Point, _ float32) *platform.Shape {
+		lk := p.App.Look()
+		if w := p.g.Window(i); w != nil {
+			lk = w.Look()
+		}
 		mask := paint2d.NewImage(int(size.X+.5), int(size.Y+.5))
 		ctx := paint2d.NewContext(mask)
 		ctx.Clear(paint2d.Transparent)
@@ -168,8 +185,8 @@ func (p *Player) setShape(w *ui.Window, role string) {
 			}
 		}
 		for _, slot := range slots {
-			r, ok := skins.SkinSlotRect(w.Look(), role, slot, box)
-			if !ok || !skins.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
+			r, ok := skins.SkinSlotRect(lk, role, slot, box)
+			if !ok || !skins.DrawSkinSlot(lk, ctx, r, role, slot, 0) {
 				return nil
 			}
 		}
@@ -182,19 +199,33 @@ func (p *Player) setShape(w *ui.Window, role string) {
 			}
 		}
 		return platform.NewShapeImage(mask)
-	})
+	}
 }
 
+// configureUtilityWindows refreshes the playlist's owner when the player's
+// native identity changes, where each panel has a window of its own.
 func (p *Player) configureUtilityWindows() {
-	if p.Main == nil || p.Main.Closed() || p.List == nil || p.List.Closed() {
+	main, list := p.Main(), p.List()
+	if p.g.Mode() != rack.GroupWindows || main == nil || main.Closed() || list == nil || list.Closed() || list == main {
 		return
 	}
-	if id := p.Main.PortalParent(); id != "" && id != p.utilityOwnerID {
+	if id := main.PortalParent(); id != "" && id != p.utilityOwnerID {
 		// v0.23.4 recreates child hints but leaves an extant child's owner
 		// pointing at a destroyed parent. Retain the public-owner refresh.
-		p.List.SetOwner(p.Main)
+		list.SetOwner(main)
 		p.utilityOwnerID = id
 	}
+}
+
+// inPlaylist reports whether w's keyboard focus is in the playlist's pane:
+// the playlist may share its window with the player.
+func (p *Player) inPlaylist(w *ui.Window) bool {
+	for c := w.Focus(); c != nil; c = c.Parent() {
+		if c == p.listPane {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Player) keys(w *ui.Window, e widget.KeyEvent) bool {
@@ -223,7 +254,7 @@ func (p *Player) keys(w *ui.Window, e widget.KeyEvent) bool {
 			o := widget.DeviceOrigin(c)
 			at = paint2d.Pt(o.X, o.Y+c.Bounds().Dy())
 		}
-		if w == p.List {
+		if p.inPlaylist(w) {
 			p.listPane.contextMenu(from, at)
 		} else {
 			p.Host.ContextMenu(from, at)

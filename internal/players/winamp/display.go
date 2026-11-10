@@ -23,7 +23,7 @@ type readout struct {
 func newReadout(p *Player) *readout {
 	r := &readout{p: p}
 	r.Init(r)
-	r.Win = p.Main
+	r.Move = func() { p.g.StartMove(p.iMain) }
 	return r
 }
 

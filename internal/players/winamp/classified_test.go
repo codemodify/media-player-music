@@ -15,17 +15,17 @@ func TestClassifiedUsesItsOriginalPlaylistAndVisualizerColors(t *testing.T) {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, SkinClassified, scale)
 			p.Pose(97 * time.Second)
-			p.List.RequestFocus(p.listPane.list)
+			p.List().RequestFocus(p.listPane.list)
 			for range 2 {
-				p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyDown})
+				p.List().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyDown})
 			}
 			a.PumpOnce()
 			if p.listPane.list.Selected != 2 || p.Transport.List.Index() != 0 {
 				t.Fatal("browsing the imported skin changed playback")
 			}
 			row := p.listPane.list.AccessibleItems()[2].Bounds
-			origin := p.List.WindowRect().Min
-			img := p.List.Capture()
+			origin := p.List().WindowRect().Min
+			img := p.List().Capture()
 			selectedPixels := 0
 			for y := max(int(row.Min.Y-origin.Y), 0); y < min(int(row.Max.Y-origin.Y), img.Height); y++ {
 				for x := max(int(row.Min.X-origin.X), 0); x < min(int(row.Max.X-origin.X), img.Width); x++ {

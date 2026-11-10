@@ -58,8 +58,8 @@ func newBody(p *Player) *body {
 	button("prev", "Previous track", players.GlyphPrev, func() { p.Host.Command(players.CmdPrev) })
 	button("next", "Next track", players.GlyphNext, func() { p.Host.Command(players.CmdNext) })
 	button("open", "Open music files", players.GlyphEject, func() { p.Host.OpenFiles(b.buttons["open"], false) })
-	button("minimize", "Minimize Music Player", players.GlyphNone, p.Main.Minimize)
-	button("close", "Close to tray", players.GlyphNone, p.Main.RequestClose)
+	button("minimize", "Minimize Music Player", players.GlyphNone, func() { p.Main().Minimize() })
+	button("close", "Close to tray", players.GlyphNone, func() { p.Main().RequestClose() })
 	button("logo", "Appearance and settings", players.GlyphSkin, func() {
 		c := b.buttons["logo"]
 		o := widget.DeviceOrigin(c)
@@ -231,8 +231,8 @@ func (b *body) setSettingsVisible(on bool) {
 		c.SetVisible(on)
 	}
 	b.buttons["settings"].SetChecked(on)
-	if c := b.p.Main.Focus(); c != nil && !c.Visible() {
-		b.p.Main.RequestFocus(b.play)
+	if c := b.p.Main().Focus(); c != nil && !c.Visible() {
+		b.p.Main().RequestFocus(b.play)
 	}
 	b.p.updateShape()
 	b.RequestLayout()
@@ -371,13 +371,12 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.userMoved("main")
-		b.p.Main.StartMove()
+		b.p.g.StartMove(b.p.iMain)
 		return true
 	}
 	return false
 }
-func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
+func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main(), e) }
 func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Fandom music player" }
 func (b *body) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {

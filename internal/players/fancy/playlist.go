@@ -119,7 +119,7 @@ func (b *playlistPane) Arrange(r paint2d.Rect) {
 }
 func (b *playlistPane) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	paintLayout(ctx, lk, box, LayoutPlaylist, b.p.List)
+	paintLayout(ctx, lk, box, LayoutPlaylist, b.p.List())
 	if r, ok := uiskins.SkinSlotRect(lk, LayoutPlaylist, "logo", box); ok {
 		uiskins.DrawSkinSlot(lk, ctx, r, LayoutPlaylist, "logo", 0)
 	}
@@ -132,8 +132,7 @@ func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 		return true
 	}
 	if e.Button == platform.ButtonLeft {
-		b.p.restoredPlacement = nil
-		return b.p.List.StartMove()
+		return b.p.g.StartMove(b.p.iList)
 	}
 	return false
 }
@@ -149,7 +148,7 @@ func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 	}
 	widgets.ShowContextMenu(from, at, items...)
 }
-func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List, e) }
+func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List(), e) }
 func (b *playlistPane) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *playlistPane) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy
@@ -177,8 +176,8 @@ func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false
 	}
-	g.p.restoredPlacement = nil
-	return g.p.List.StartResize(platform.EdgeBottom | platform.EdgeRight)
+	g.p.listSize.Release()
+	return g.p.g.StartResize(g.p.iList, platform.EdgeBottom|platform.EdgeRight)
 }
 func (p *Player) clearPlaylist() {
 	queue := p.Transport.List

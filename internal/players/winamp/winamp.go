@@ -28,19 +28,21 @@ const (
 // Skin is the classic Winamp panel pack.
 const Skin = players.WinampSkin
 
-// Player is the three windows and the one model under them. The model is
+// Player is the three panels and the one model under them. The model is
 // the application's (players.Host): this face shows it, and putting on
 // another face leaves it exactly where it was.
 type Player struct {
 	Host *players.Host
 	App  *ui.Application
-	Desk *rack.Desk
+	// g is the panels: a window each, snapped together and travelling
+	// together, where the desktop lets a program place windows; the panels
+	// stuck together sharing one where it does not (Wayland).
+	g *rack.Group
 
 	Transport *players.Transport
 	Spectrum  *players.Spectrum
 	Equaliser *players.Equalizer
 
-	Main, Eq, List  *ui.Window
 	strip           *strip
 	eqPane          *eqPane
 	listPane        *listPane
@@ -48,17 +50,14 @@ type Player struct {
 	// dropLook takes the look watcher off again when the face is closed.
 	dropLook func()
 
-	// iMain, iEq, iList are the panes in the desk's rack.
+	// iMain, iEq, iList are the panels' members (-1 for one not opened).
 	iMain, iEq, iList int
-	// stacked is whether the three have been put in a stack yet, and tries
-	// how many times settle has asked — see settle, which cannot run until
-	// the desktop has placed them and may not be obeyed when it does.
-	stacked bool
-	tries   int
-	// restoredPlacement survives the desktop's initial mapping/configure.
-	// Once the requested arrangement arrives, ordinary dragging owns it again.
-	restoredPlacement map[string]players.WindowPlacement
-	utilityOwnerID    string
+	// listSize is the restored playlist size, kept while the group
+	// settles (R21).
+	listSize players.HeldSize
+	// onClose is the application's word on closing the player (SetOnClose).
+	onClose        func() bool
+	utilityOwnerID string
 }
 
 // Options is what the command line passes in.
@@ -68,9 +67,20 @@ type Options struct {
 	Scale float32
 	// NoEq and NoList open the main strip on its own.
 	NoEq, NoList bool
+	// Group is how the panels are realised: the zero lets the desktop
+	// decide; rack.GroupHosted shares windows wherever it runs.
+	Group rack.GroupMode
 }
 
 // New opens the player's windows on the application's own model.
+//
+// Each panel wears the toolkit's frame for its role, the name of the layout
+// it is laid out by: the skin's caption band is the title strip a player of
+// this shape had, and a skin can dress one panel differently from the
+// others (Winamp Silver's equaliser has a tab for a header where the other
+// two have a band). A look that says nothing about the role gives every
+// panel its one frame. With a window each, the toolkit frames each window;
+// sharing one, the group frames each panel in it the same way.
 func New(h *players.Host, opts Options) (*Player, error) {
 	a := h.App
 	if !faceOf(a.Look()).panelled() {
@@ -85,51 +95,37 @@ func New(h *players.Host, opts Options) (*Player, error) {
 		iEq:       -1,
 		iList:     -1,
 	}
-	main, err := p.open(a, opts, "Music Player", layoutStrip, StripW, StripH)
-	if err != nil {
-		return nil, err
-	}
-	p.Main = main
-	p.strip = newStrip(p)
-	main.SetContent(p.strip)
-
 	// The rack speaks logical pixels, so its reach grows with the display
 	// like every other measurement in the toolkit: ten pixels of slop is a
 	// fingertip at 1× and at 2× alike.
-	p.Desk = rack.NewDesk(rack.DefaultReach)
-	p.iMain = p.Desk.Add("main", main)
-
+	p.g = rack.NewGroup(a, rack.GroupOptions{Mode: opts.Group})
+	window := func(title string, w, h int, hidden bool) platform.WindowOptions {
+		o := platform.WindowOptions{Title: title, Headless: opts.Headless, Hidden: hidden, Sizing: platform.SizingFixed}
+		o.Width, o.Height = players.WindowSize(a, w, h)
+		return o
+	}
+	p.strip = newStrip(p)
+	p.iMain = p.g.Add(rack.Member{Name: "main", Content: p.strip, OnClose: p.closeMain, FrameRole: layoutStrip,
+		Window: window("Music Player", StripW, StripH, false)})
 	if !opts.NoEq {
-		w, err := p.open(a, opts, "Equaliser", layoutEqualiser, StripW, EqH)
-		if err != nil {
-			return nil, err
-		}
-		p.Eq = w
 		p.eqPane = newEqPane(p)
-		w.SetContent(p.eqPane)
-		p.iEq = p.Desk.Add("equaliser", w)
-		p.Desk.Attach(p.iEq, p.iMain, rack.SideBottom)
-		w.SetOnCloseRequest(func() bool {
-			p.showWindow(p.iEq, false)
-			return false
-		})
-		p.Desk.Show(p.iEq, h.Model.EqualizerVisible)
+		p.iEq = p.g.Add(rack.Member{Name: "equaliser", Content: p.eqPane, FrameRole: layoutEqualiser,
+			OnClose: func() bool { h.Model.EqualizerVisible = false; a.Post(p.refresh); return true },
+			Window:  window("Equaliser", StripW, EqH, !h.Model.EqualizerVisible)})
+		p.g.Attach(p.iEq, p.iMain, rack.SideBottom)
 	}
 	if !opts.NoList {
-		w, err := p.open(a, opts, "Playlist", layoutPlaylist, StripW, ListH)
-		if err != nil {
-			return nil, err
-		}
-		p.List = w
 		p.listPane = newListPane(p)
-		w.SetContent(p.listPane)
-		p.iList = p.Desk.Add("playlist", w)
-		p.Desk.Attach(p.iList, maxInt(p.iEq, p.iMain), rack.SideBottom)
-		w.SetOnCloseRequest(func() bool {
-			p.showWindow(p.iList, false)
-			return false
-		})
-		p.Desk.Show(p.iList, h.Model.PlaylistVisible)
+		o := window("Playlist", StripW, ListH, !h.Model.PlaylistVisible)
+		o.Sizing, o.MinWidth, o.MinHeight = platform.SizingResizable, StripW, ListH
+		p.iList = p.g.Add(rack.Member{Name: "playlist", Content: p.listPane, FrameRole: layoutPlaylist,
+			OnClose: func() bool { h.Model.PlaylistVisible = false; a.Post(p.refresh); return true },
+			Window:  o})
+		p.g.Attach(p.iList, maxInt(p.iEq, p.iMain), rack.SideBottom)
+	}
+	p.g.Moved = p.syncPanels
+	if err := p.g.Realise(); err != nil {
+		return nil, err
 	}
 
 	p.Transport.Changed = p.refresh
@@ -145,55 +141,33 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	// focused, and a window with no focus at all has nothing for them to
 	// bubble from — so the equaliser and the playlist are given one too,
 	// or the transport keys would be dead in two windows out of three.
-	p.Main.RequestFocus(p.strip.play)
-	if p.eqPane != nil {
-		p.Eq.RequestFocus(p.eqPane.preamp)
+	// Panels sharing a window share its focus, which stays the strip's.
+	p.Main().RequestFocus(p.strip.play)
+	if w := p.Eq(); p.eqPane != nil && w != nil && w != p.Main() {
+		w.RequestFocus(p.eqPane.preamp)
 	}
-	if p.listPane != nil {
-		p.List.RequestFocus(p.listPane.list)
+	if w := p.List(); p.listPane != nil && w != nil && w != p.Main() && w != p.Eq() {
+		w.RequestFocus(p.listPane.list)
 	}
 	return p, nil
 }
 
-// open makes one of the player's windows. All three take the toolkit's own
-// frame: the skin's caption band is the title strip a player of this shape
-// had, and a *look's* silhouette is only asked of a window the toolkit
-// frames — where the desktop draws the frame, the window is the rectangle
-// inside it and there is nothing to cut.
-//
-// Each is given its role — the name of the layout it is laid out by — so a
-// skin can dress one window differently from the others: Winamp Silver's
-// equaliser has a tab for a header where the other two have a band. A look
-// that says nothing about the role gives every window its one frame.
-func (p *Player) open(a *ui.Application, opts Options, title, role string, w, h int) (*ui.Window, error) {
-	windowRole := platform.RoleNormal
-	if role != layoutStrip {
-		// Satellite panels belong to Main and stay out of the desktop's
-		// taskbar and pager on backends supporting utility policy.
-		windowRole = platform.RoleUtility
+// Main is the strip's window, and Eq and List the windows the equaliser and
+// the playlist are in now: their own, or one they share with what they are
+// stuck to; nil for a panel not opened, or hidden in a shared window.
+func (p *Player) Main() *ui.Window { return p.g.Window(p.iMain) }
+func (p *Player) Eq() *ui.Window   { return p.g.Window(p.iEq) }
+func (p *Player) List() *ui.Window { return p.g.Window(p.iList) }
+
+// syncPanels keeps the model's panel switches to what the group shows: a
+// window the desktop closed hides every panel in it.
+func (p *Player) syncPanels() {
+	if pane := p.g.Rack.Pane(p.iEq); pane != nil && p.iEq >= 0 {
+		p.Host.Model.EqualizerVisible = pane.Shown
 	}
-	windowOptions := platform.WindowOptions{
-		Title:       title,
-		Headless:    opts.Headless,
-		Decorations: platform.DecorationsClient,
-		Role:        windowRole,
+	if pane := p.g.Rack.Pane(p.iList); pane != nil && p.iList >= 0 {
+		p.Host.Model.PlaylistVisible = pane.Shown
 	}
-	if role != layoutStrip {
-		windowOptions.Owner = p.Main.Surface()
-	}
-	if role == layoutPlaylist {
-		windowOptions.MinWidth, windowOptions.MinHeight = StripW, ListH
-	}
-	win, err := players.OpenSized(a, windowOptions, w, h, role != layoutPlaylist)
-	if err != nil {
-		return nil, err
-	}
-	win.SetFrameRole(role)
-	if role != layoutStrip {
-		win.SetCaptionButtonVisible(platform.CaptionMinimize, false)
-		win.SetCaptionButtonVisible(platform.CaptionMaximize, false)
-	}
-	return win, nil
 }
 
 // Close takes the face off: its windows go, and the model they were showing
@@ -203,28 +177,25 @@ func (p *Player) Close() {
 		p.dropLook()
 		p.dropLook = nil
 	}
-	for _, w := range []*ui.Window{p.List, p.Eq, p.Main} {
-		if w != nil {
-			w.Close()
-		}
-	}
+	p.g.Close()
 }
 
 // Windows are the face's windows, named, for a caller taking a picture of
-// each.
+// each: each window once, where panels share one.
 func (p *Player) Windows() []players.NamedWindow {
-	out := []players.NamedWindow{{Name: "strip", Window: p.Main}}
-	if p.Eq != nil {
-		out = append(out, players.NamedWindow{Name: "equaliser", Window: p.Eq})
-	}
-	if p.List != nil {
-		out = append(out, players.NamedWindow{Name: "playlist", Window: p.List})
-	}
-	return out
+	return players.GroupWindows(p.g, "strip", "equaliser", "playlist")
 }
 
 // MainWindow is the window the application's clock wakes on.
-func (p *Player) MainWindow() *ui.Window { return p.Main }
+// SetOnClose is what closing the player asks first, false keeping it: its
+// close button, or the desktop closing its window. It holds whichever window
+// the player is in, as the group's first member's OnClose.
+func (p *Player) SetOnClose(fn func() bool) { p.onClose = fn }
+
+// closeMain is the player closed: the application's word, else it goes.
+func (p *Player) closeMain() bool { return p.onClose == nil || p.onClose() }
+
+func (p *Player) MainWindow() *ui.Window { return p.Main() }
 
 func (p *Player) ShowEqualiser(on bool) { p.showWindow(p.iEq, on) }
 func (p *Player) ShowPlaylist(on bool)  { p.showWindow(p.iList, on) }
@@ -242,81 +213,18 @@ func (p *Player) Pose(pos time.Duration) {
 	p.refresh()
 }
 
-// Advance settles startup and maintains resized geometry. Desk handles native
-// move bursts and request deadlines independently of the playback clock;
-// backends without those events retain polling. A zero-duration call explicitly
-// observes geometry, as capture/restore and scripted callers expect.
-func (p *Player) Advance(dt time.Duration) {
+// Advance keeps what the desktop may remake under the player: the
+// playlist caption's drop policy and the satellites' owner. The group keeps
+// the panels together itself, on the desktop's word.
+func (p *Player) Advance(time.Duration) {
+	p.listSize.Keep(p.g)
 	p.bindPlaylistCaption()
 	p.configureUtilityWindows()
-	p.settle()
-	if p.restoredPlacement == nil && p.needsFollow(dt == 0) {
-		p.followWindows()
-	}
 	p.refresh()
 }
 
 // Refresh puts the model back into the controls.
 func (p *Player) Refresh() { p.refresh() }
-
-// settle builds the stack once the desktop has said where it put the
-// windows, and then never again.
-//
-// It cannot be done when the windows are made: a window manager places a
-// window as it maps it and the app is told afterwards, so a stack arranged
-// at construction is arranged around a strip that is still at the origin.
-// On a desktop that will not place windows at all this never runs, which is
-// right — there is nothing to arrange.
-func (p *Player) settle() {
-	if p.stacked || !p.Desk.Places() || !p.Desk.Adopt() {
-		return
-	}
-	p.tries++
-	if p.restoredPlacement != nil {
-		p.restorePlaylistSize()
-		p.applyPlacement(p.restoredPlacement)
-		p.Desk.Apply()
-		if p.placed() || p.tries >= settleTries {
-			p.stacked = true
-			p.restoredPlacement = nil
-		}
-		return
-	}
-	if p.iEq >= 0 {
-		p.Desk.Attach(p.iEq, p.iMain, rack.SideBottom)
-	}
-	if p.iList >= 0 {
-		p.Desk.Attach(p.iList, maxInt(p.iEq, p.iMain), rack.SideBottom)
-	}
-	// It has taken when the panes are where their bonds say. A window
-	// manager may refuse a move that would hang a window off the screen,
-	// so it is asked a few times and then left alone; the panes are then
-	// loose, and dragging one back to an edge snaps it as it always does.
-	if p.placed() || p.tries >= settleTries {
-		p.stacked = true
-	}
-}
-
-// settleTries is how many clock ticks the stack is asked for before the
-// desktop's answer is taken as final.
-const settleTries = 20
-
-// placed reports whether every pane's window is where the rack says.
-func (p *Player) placed() bool {
-	for i := 0; i < p.Desk.Rack.Len(); i++ {
-		pane, w := p.Desk.Rack.Pane(i), p.Desk.Window(i)
-		if pane == nil || w == nil || w.Closed() || !pane.Shown {
-			continue
-		}
-		if x, y, ok := w.Position(); !ok || x != pane.Box.X || y != pane.Box.Y {
-			return false
-		}
-		if width, height := w.Size(); width != pane.Box.W || height != pane.Box.H {
-			return false
-		}
-	}
-	return true
-}
 
 // refresh puts the model back into the controls and repaints. Everything
 // here is cheap and idempotent, so it runs on every tick rather than being
@@ -359,11 +267,11 @@ func (p *Player) Keys(w *ui.Window, e widget.KeyEvent) bool {
 func (p *Player) Status() string {
 	t := p.Transport
 	where := "loose"
-	if pane := p.Desk.Rack.Pane(p.iEq); pane != nil && pane.To >= 0 {
+	if pane := p.g.Rack.Pane(p.iEq); pane != nil && pane.To >= 0 {
 		where = "stacked"
 	}
-	if !p.Desk.Places() {
-		where = "this desktop places windows"
+	if p.g.Limits().Has(rack.LimitPlace) {
+		where = "the panels share a window on this desktop"
 	}
 	return fmt.Sprintf("%s · %s · %s", t.State, players.Percent(t.Volume), where)
 }
@@ -384,31 +292,33 @@ func (p *Player) restyle() {
 	p.configureUtilityWindows()
 	if p.strip != nil {
 		p.strip.show()
-		keepFocus(p.Main, p.strip.play)
+		keepFocus(p.Main(), p.strip.play)
 	}
-	if p.eqPane != nil {
-		keepFocus(p.Eq, p.eqPane.preamp)
+	if p.eqPane != nil && p.Eq() != p.Main() {
+		keepFocus(p.Eq(), p.eqPane.preamp)
 	}
-	if p.listPane != nil {
-		keepFocus(p.List, p.listPane.list)
+	if p.listPane != nil && p.List() != p.Main() && p.List() != p.Eq() {
+		keepFocus(p.List(), p.listPane.list)
 	}
 }
 
 // configureUtilityWindows refreshes ownership only when Main's native identity
-// changes. v0.23.4 restores a recreated child's hints, but does not update
-// existing children when their owner is recreated. Keep this public-API refresh
-// until the toolkit carries owner relationships across that lifecycle change.
+// changes, where each panel has a window of its own. v0.23.4 restores a
+// recreated child's hints, but does not update existing children when their
+// owner is recreated. Keep this public-API refresh until the toolkit carries
+// owner relationships across that lifecycle change.
 func (p *Player) configureUtilityWindows() {
-	if p.Main == nil || p.Main.Closed() {
+	main := p.Main()
+	if p.g.Mode() != rack.GroupWindows || main == nil || main.Closed() {
 		return
 	}
-	ownerID := p.Main.PortalParent()
+	ownerID := main.PortalParent()
 	if ownerID == "" || ownerID == p.utilityOwnerID {
 		return
 	}
-	for _, window := range []*ui.Window{p.Eq, p.List} {
-		if window != nil && !window.Closed() {
-			window.SetOwner(p.Main)
+	for _, window := range []*ui.Window{p.Eq(), p.List()} {
+		if window != nil && window != main && !window.Closed() {
+			window.SetOwner(main)
 		}
 	}
 	p.utilityOwnerID = ownerID

@@ -96,7 +96,7 @@ callDBus(%q, %q, %q, "Report", JSON.stringify(rows));
 				continue
 			}
 			found = true
-			wantSkip := named.Window != p.Main
+			wantSkip := named.Window != p.Main()
 			if row.SkipTaskbar != wantSkip || row.SkipPager != wantSkip {
 				t.Fatalf("KWin policy for %s: skipTaskbar=%t skipPager=%t; want %t", named.Name, row.SkipTaskbar, row.SkipPager, wantSkip)
 			}

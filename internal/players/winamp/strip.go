@@ -48,7 +48,7 @@ func newStrip(p *Player) *strip {
 
 	s.readout = newReadout(p)
 	s.analyser = players.NewAnalyserView(p.Spectrum)
-	s.analyser.Drag = p.Main
+	s.analyser.Move = func() { p.g.StartMove(p.iMain) }
 	s.analyser.Peaks = true
 
 	// The seek bar is a fader on its side rather than the toolkit's slider,
@@ -134,7 +134,7 @@ func (s *strip) show() {
 }
 
 func (p *Player) toggle(i int) {
-	pane := p.Desk.Rack.Pane(i)
+	pane := p.g.Rack.Pane(i)
 	if pane == nil {
 		return
 	}
@@ -147,7 +147,7 @@ func (p *Player) showWindow(i int, on bool) {
 	} else if i == p.iList {
 		p.Host.Model.PlaylistVisible = on
 	}
-	p.Desk.Show(i, on)
+	p.g.Show(i, on)
 	p.configureUtilityWindows()
 	p.refresh()
 }
@@ -165,10 +165,10 @@ func (s *strip) sync() {
 	} else {
 		s.repeat.SetGlyph(players.GlyphRepeat, t.Repeat.String())
 	}
-	if p := s.p.Desk.Rack.Pane(s.p.iEq); p != nil {
+	if p := s.p.g.Rack.Pane(s.p.iEq); p != nil {
 		s.eqBtn.SetChecked(p.Shown)
 	}
-	if p := s.p.Desk.Rack.Pane(s.p.iList); p != nil {
+	if p := s.p.g.Rack.Pane(s.p.iList); p != nil {
 		s.listBtn.SetChecked(p.Shown)
 	}
 	if !s.seek.Dragging() {
@@ -278,11 +278,11 @@ func (s *strip) MousePress(e widget.MouseEvent) bool {
 	if s.p.rightClick(s, e) {
 		return true
 	}
-	s.p.Main.StartMove()
+	s.p.g.StartMove(s.p.iMain)
 	return true
 }
 
-func (s *strip) KeyPress(e widget.KeyEvent) bool { return s.p.Keys(s.p.Main, e) }
+func (s *strip) KeyPress(e widget.KeyEvent) bool { return s.p.Keys(s.p.Main(), e) }
 
 // CaptionAt tells the frame that the strip's own background is caption: a
 // press there moves the window rather than landing in the app.

@@ -200,11 +200,11 @@ func (e *eqPane) MousePress(ev widget.MouseEvent) bool {
 	if e.p.rightClick(e, ev) {
 		return true
 	}
-	e.p.Eq.StartMove()
+	e.p.g.StartMove(e.p.iEq)
 	return true
 }
 
-func (e *eqPane) KeyPress(ev widget.KeyEvent) bool { return e.p.Keys(e.p.Eq, ev) }
+func (e *eqPane) KeyPress(ev widget.KeyEvent) bool { return e.p.Keys(e.p.Eq(), ev) }
 
 func (e *eqPane) CaptionAt(paint2d.Point) bool { return true }
 
@@ -242,7 +242,7 @@ func newListPane(p *Player) *listPane {
 	l.list = newTracks(p)
 	l.foot = &foot{p: p}
 	l.foot.Init(l.foot)
-	l.foot.Win = p.List
+	l.foot.Move = func() { p.g.StartMove(p.iList) }
 	// The playlist controls operate the same queue as the main transport.
 	l.add = players.NewGlyphButton(players.GlyphNone, "Add", func() {
 		p.Host.OpenFiles(l.add, true)
@@ -406,11 +406,11 @@ func (l *listPane) MousePress(e widget.MouseEvent) bool {
 	if l.p.rightClick(l, e) {
 		return true
 	}
-	l.p.List.StartMove()
+	l.p.g.StartMove(l.p.iList)
 	return true
 }
 
-func (l *listPane) KeyPress(e widget.KeyEvent) bool { return l.p.Keys(l.p.List, e) }
+func (l *listPane) KeyPress(e widget.KeyEvent) bool { return l.p.Keys(l.p.List(), e) }
 
 func (l *listPane) CaptionAt(paint2d.Point) bool { return true }
 

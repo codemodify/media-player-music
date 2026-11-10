@@ -29,7 +29,7 @@ func TestAnExternalSkinCanRearrangeThePlayer(t *testing.T) {
 			s := p.strip
 			playBefore, nextBefore := s.play.Bounds(), s.next.Bounds()
 			playID, nextID := s.play.ID(), s.next.ID()
-			ringBefore := skinKeyless(playertest.RingNames(p.Main, playertest.FocusRing(t, a, p.Main)))
+			ringBefore := skinKeyless(playertest.RingNames(p.Main(), playertest.FocusRing(t, a, p.Main())))
 
 			const custom = "winamp-third-party-layout"
 			installExternalPanel(t, custom)
@@ -50,34 +50,34 @@ func TestAnExternalSkinCanRearrangeThePlayer(t *testing.T) {
 					t.Errorf("%s did not move to the other key's slot: got %v, want %v", key.name, key.c.Bounds(), key.want)
 				}
 			}
-			ringAfter := skinKeyless(playertest.RingNames(p.Main, playertest.FocusRing(t, a, p.Main)))
+			ringAfter := skinKeyless(playertest.RingNames(p.Main(), playertest.FocusRing(t, a, p.Main())))
 			if !sameOrder(ringBefore, ringAfter) {
 				t.Errorf("moving the keys changed keyboard order: before %v, after %v", ringBefore, ringAfter)
 			}
 
 			checkFlexibleExternalSlots(t, p, scale)
 			keyBefore, seekBefore := s.skinBtn.Bounds(), s.seek.Bounds()
-			width, height := p.Main.Size()
-			p.Main.SetSize(width+40, height)
+			width, height := p.Main().Size()
+			p.Main().SetSize(width+40, height)
 			a.PumpOnce()
 			checkFlexibleExternalSlots(t, p, scale)
 			if s.skinBtn.Bounds().Min.X <= keyBefore.Min.X || s.seek.Bounds().Dx() <= seekBefore.Dx() {
 				t.Fatal("the external skin's pinned and stretched controls did not follow the larger window")
 			}
 
-			tree := playertest.Audit(t, "external strip", p.Main)
+			tree := playertest.Audit(t, "external strip", p.Main())
 			node := tree.Find(playID)
 			if node == nil || node.Name != "Play" {
 				t.Fatalf("the relocated control is not accessible as Play: %v", node)
 			}
-			if !p.Main.AccessibleAction(node.ID, a11y.ActionDefault) {
+			if !p.Main().AccessibleAction(node.ID, a11y.ActionDefault) {
 				t.Fatal("the relocated Play node refused its default action")
 			}
 			a.PumpOnce()
 			if p.Transport.State != players.Playing {
 				t.Fatal("the relocated Play control did not start the transport")
 			}
-			for _, win := range []*ui.Window{p.Main, p.Eq, p.List} {
+			for _, win := range []*ui.Window{p.Main(), p.Eq(), p.List()} {
 				img := win.Capture()
 				if img == nil || img.Width < 1 || img.Height < 1 || blank(img) {
 					t.Errorf("%s painted nothing in the external skin", win.Title())

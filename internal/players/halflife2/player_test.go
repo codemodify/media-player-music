@@ -63,14 +63,14 @@ func TestOriginalThreeWindowGeometryAndMasksAtEveryScale(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
-			if len(p.Windows()) != 3 || p.Main.Title() != "Music Player" || p.Main.Resizable() || p.Eq.Resizable() || !p.List.Resizable() {
+			if len(p.Windows()) != 3 || p.Main().Title() != "Music Player" || p.Main().Resizable() || p.Eq().Resizable() || !p.List().Resizable() {
 				t.Fatal("source window composition or sizing policy changed")
 			}
 			for _, window := range []struct {
 				w      *ui.Window
 				width  int
 				height int
-			}{{p.Main, 339, 300}, {p.Eq, 430, 239}, {p.List, 393, 226}} {
+			}{{p.Main(), 339, 300}, {p.Eq(), 430, 239}, {p.List(), 393, 226}} {
 				w, h := window.w.Size()
 				if w != window.width || h != window.height {
 					t.Fatalf("%q geometry %dx%d", window.w.Title(), w, h)
@@ -90,9 +90,9 @@ func TestOriginalThreeWindowGeometryAndMasksAtEveryScale(t *testing.T) {
 				if !shape.Contains(pw/2, ph/2) || capture.NRGBAAt(pw/2, ph/2).A == 0 {
 					t.Fatalf("%q center is missing from its image/input mask", window.w.Title())
 				}
-				if window.w != p.Main {
+				if window.w != p.Main() {
 					off := window.w.Surface().(*platform.Offscreen)
-					if off.WindowRole() != platform.RoleUtility || off.Owner() != p.Main.Surface() || !off.SkipsTaskbar() {
+					if off.WindowRole() != platform.RoleUtility || off.Owner() != p.Main().Surface() || !off.SkipsTaskbar() {
 						t.Fatal("satellite lacks public utility ownership/taskbar policy")
 					}
 				}
@@ -102,23 +102,23 @@ func TestOriginalThreeWindowGeometryAndMasksAtEveryScale(t *testing.T) {
 				if p.body.shutter != state {
 					t.Fatal("source shutter sequence changed")
 				}
-				if p.Main.CaptureSurface().NRGBAAt(0, 0).A != 0 || !p.Main.ShapeActive() {
+				if p.Main().CaptureSurface().NRGBAAt(0, 0).A != 0 || !p.Main().ShapeActive() {
 					t.Fatal("shutter changed the transparent primary outline")
 				}
 				// In the original artwork the opened outer shutter leaves
 				// this frame tip empty. A union of all shutter masks would
 				// still accept input here even though nothing is painted.
 				x, y := int(209*scale), int(3*scale)
-				pw, ph := p.Main.PixelSize()
-				inside := p.Main.Shape().Raster(pw, ph).Contains(x, y)
-				alpha := p.Main.CaptureSurface().NRGBAAt(x, y).A
+				pw, ph := p.Main().PixelSize()
+				inside := p.Main().Shape().Raster(pw, ph).Contains(x, y)
+				alpha := p.Main().CaptureSurface().NRGBAAt(x, y).A
 				if state == 0 && (inside || alpha != 0) || state != 0 && (!inside || alpha == 0) {
 					t.Fatalf("shutter%d frame tip input=%t alpha=%d does not follow its visible artwork", state, inside, alpha)
 				}
-				p.Main.RequestFocus(p.body.seek)
+				p.Main().RequestFocus(p.body.seek)
 				p.body.cycleShutter()
 				a.PumpOnce()
-				if p.body.shutter != 0 && p.Main.Focus() != p.body.buttons["shutter"] {
+				if p.body.shutter != 0 && p.Main().Focus() != p.body.buttons["shutter"] {
 					t.Fatal("closing a shutter left keyboard focus on a hidden inner control")
 				}
 				for _, c := range p.body.innerControls {
@@ -138,36 +138,36 @@ func TestOriginalTransportSpritesAndCrossWindowShortcuts(t *testing.T) {
 			var commands []players.Command
 			p.Host.Run = func(c players.Command) { commands = append(commands, c); p.Transport.Do(c) }
 			press := func(slot string) {
-				click(p.Main, platform.ButtonLeft, widget.DeviceBounds(p.body.buttons[slot]).Center())
+				click(p.Main(), platform.ButtonLeft, widget.DeviceBounds(p.body.buttons[slot]).Center())
 				a.PumpOnce()
 			}
 			press("play")
 			if p.Transport.State != players.Playing || p.body.play.Visible() || !p.body.buttons["pause"].Visible() {
 				t.Fatal("original Play sprite did not start and expose Pause")
 			}
-			if p.Main.Focus() != nil && !p.Main.Focus().Visible() {
+			if p.Main().Focus() != nil && !p.Main().Focus().Visible() {
 				t.Fatal("Play left focus on its hidden sprite")
 			}
 			press("pause")
 			if p.Transport.State != players.Paused || !p.body.play.Visible() {
 				t.Fatal("original Pause sprite did not pause")
 			}
-			p.Main.RequestFocus(p.body.play)
-			key(a, p.Main, platform.KeyReturn, 0)
+			p.Main().RequestFocus(p.body.play)
+			key(a, p.Main(), platform.KeyReturn, 0)
 			press("next")
 			if p.Transport.State != players.Playing || p.Transport.List.Index() != 1 {
 				t.Fatal("keyboard Play/next failed to use the shared queue")
 			}
-			if !p.Main.AccessibleAction(p.body.buttons["stop"].ID(), a11y.ActionDefault) || p.Transport.State != players.Stopped {
+			if !p.Main().AccessibleAction(p.body.buttons["stop"].ID(), a11y.ActionDefault) || p.Transport.State != players.Stopped {
 				t.Fatal("accessible Stop failed")
 			}
-			p.List.RequestFocus(p.listPane.list)
-			key(a, p.List, platform.KeySpace, 0)
-			key(a, p.List, platform.KeyB, 0)
-			p.Eq.RequestFocus(p.eqPane.bands[0])
-			key(a, p.Eq, platform.KeyZ, 0)
-			p.Main.RequestFocus(p.body.seek)
-			key(a, p.Main, platform.KeyV, 0)
+			p.List().RequestFocus(p.listPane.list)
+			key(a, p.List(), platform.KeySpace, 0)
+			key(a, p.List(), platform.KeyB, 0)
+			p.Eq().RequestFocus(p.eqPane.bands[0])
+			key(a, p.Eq(), platform.KeyZ, 0)
+			p.Main().RequestFocus(p.body.seek)
+			key(a, p.Main(), platform.KeyV, 0)
 			want := []players.Command{players.CmdPlay, players.CmdPlayPause, players.CmdPlayPause, players.CmdNext, players.CmdStop, players.CmdPlayPause, players.CmdNext, players.CmdPrev, players.CmdStop}
 			if !reflect.DeepEqual(commands, want) {
 				t.Fatalf("controls swallowed or duplicated transport actions: %v", commands)
@@ -232,7 +232,7 @@ func TestOriginalCurvedPositionMapsDriveSharedPlayback(t *testing.T) {
 						t.Fatal("original curve point is absent from the control hit map")
 					}
 					at, before := widget.DeviceOrigin(item.f).Add(local), syncs
-					click(p.Main, platform.ButtonLeft, at)
+					click(p.Main(), platform.ButtonLeft, at)
 					a.PumpOnce()
 					want := item.f.Min + (item.f.Max-item.f.Min)*float32(gray)/255
 					if syncs != before+1 || math.Abs(float64(item.f.Value-want)) > float64(item.f.Max-item.f.Min)*3/255 {
@@ -266,13 +266,13 @@ func TestSeparateEqualizerHooksAndHonestBackendLimits(t *testing.T) {
 	refresh := p.Equaliser.Changed
 	p.Equaliser.Changed = func() { changes++; refresh() }
 	p.Host.SyncPlayback = func() { syncs++ }
-	if !p.Eq.AccessibleAction(p.eqPane.bands[0].ID(), a11y.ActionIncrement) || changes != 1 || p.Equaliser.Gains[0] <= 0 {
+	if !p.Eq().AccessibleAction(p.eqPane.bands[0].ID(), a11y.ActionIncrement) || changes != 1 || p.Equaliser.Gains[0] <= 0 {
 		t.Fatal("EQ band did not edit the shared equalizer once")
 	}
-	if !p.Eq.AccessibleAction(p.eqPane.balance.ID(), a11y.ActionIncrement) || syncs != 1 || p.Transport.Pan <= 0 {
+	if !p.Eq().AccessibleAction(p.eqPane.balance.ID(), a11y.ActionIncrement) || syncs != 1 || p.Transport.Pan <= 0 {
 		t.Fatal("balance did not invoke the shared audio hook once")
 	}
-	ring := playertest.FocusRing(t, a, p.Eq)
+	ring := playertest.FocusRing(t, a, p.Eq())
 	for _, c := range p.eqPane.Children() {
 		if c.Visible() && c.Enabled() && c.WantsFocus() && !playertest.Reaches(ring, c) {
 			t.Fatalf("enabled EQ control %T is absent from keyboard order", c)
@@ -295,10 +295,10 @@ func TestSeparateEqualizerHooksAndHonestBackendLimits(t *testing.T) {
 	if !p.eqPane.bands[0].Enabled() || !p.eqPane.balance.Enabled() || gain != p.Equaliser.Gains[0] || pan != p.Transport.Pan {
 		t.Fatal("restoring a capable engine erased audio adjustments")
 	}
-	for _, window := range []*ui.Window{p.Eq, p.List} {
+	for _, window := range []*ui.Window{p.Eq(), p.List()} {
 		window.RequestClose()
 		a.PumpOnce()
-		if window.Closed() || window.Visible() || p.Main.Closed() {
+		if window.Closed() || window.Visible() || p.Main().Closed() {
 			t.Fatal("satellite close must hide its panel and keep Main")
 		}
 	}
@@ -330,7 +330,7 @@ func TestEqualizerSourceThumbRemainsVisibleAboveChangingLevelFill(t *testing.T) 
 	for _, gain := range []float32{-players.EqRange, players.EqRange} {
 		p.Equaliser.Set(0, gain)
 		a.PumpOnce()
-		im := p.Eq.CaptureSurface()
+		im := p.Eq().CaptureSurface()
 		top := int(origin.Y)
 		if gain < 0 {
 			top += int(band.Bounds().Dy()) - thumb.Bounds().Dy()
@@ -378,7 +378,7 @@ func TestAllThreeViewsAcceptDecodedLocalFileAndFolderCopyDrops(t *testing.T) {
 	for _, target := range []struct {
 		w  *ui.Window
 		at paint2d.Point
-	}{{p.Main, paint2d.Pt(150*p.Main.Scale(), 150*p.Main.Scale())}, {p.Eq, widget.DeviceBounds(p.eqPane.bands[0]).Center()}, {p.List, p.listPane.list.AccessibleItems()[0].Bounds.Center()}} {
+	}{{p.Main(), paint2d.Pt(150*p.Main().Scale(), 150*p.Main().Scale())}, {p.Eq(), widget.DeviceBounds(p.eqPane.bands[0]).Center()}, {p.List(), p.listPane.list.AccessibleItems()[0].Bounds.Center()}} {
 		off := target.w.Surface().(*platform.Offscreen)
 		before := calls
 		off.SimulateDropAction(target.at, map[string][]byte{"text/uri-list": data}, platform.DragCopy|platform.DragMove, platform.DragMove)
@@ -409,19 +409,19 @@ func TestVisualizerToggleAndMeasuredBandsChangeVisiblePixels(t *testing.T) {
 			p.Spectrum.SetLevels([]float32{.8, 1, .6, .9})
 			p.Refresh()
 			a.PumpOnce()
-			original := p.Main.CaptureSurface()
-			if !p.Main.AccessibleAction(p.body.buttons["vis"].ID(), a11y.ActionDefault) {
+			original := p.Main().CaptureSurface()
+			if !p.Main().AccessibleAction(p.body.buttons["vis"].ID(), a11y.ActionDefault) {
 				t.Fatal("source visualization button refused activation")
 			}
 			a.PumpOnce()
 			if !p.body.visual.Visible() || p.body.buttons["logo"].Visible() {
 				t.Fatal("visualization toggle left the opaque Lambda over the analyser")
 			}
-			active := p.Main.CaptureSurface()
+			active := p.Main().CaptureSurface()
 			p.Spectrum.Reset()
 			p.Refresh()
 			a.PumpOnce()
-			silent := p.Main.CaptureSurface()
+			silent := p.Main().CaptureSurface()
 			area := widget.DeviceBounds(p.body.visual)
 			appearance, signal := 0, 0
 			for y := int(area.Min.Y); y < int(area.Max.Y); y++ {
@@ -445,10 +445,10 @@ func TestPlaylistResizeBrowseActivateAndInterruptedGesture(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
-			p.List.SetSize(620, 420)
+			p.List().SetSize(620, 420)
 			a.PumpOnce()
 			p.Advance(0)
-			if w, h := p.List.Size(); w != 620 || h != 420 {
+			if w, h := p.List().Size(); w != 620 || h != 420 {
 				t.Fatal("playlist resize was not acknowledged")
 			}
 			for _, c := range p.listPane.Children() {
@@ -457,7 +457,7 @@ func TestPlaylistResizeBrowseActivateAndInterruptedGesture(t *testing.T) {
 					t.Fatalf("resized playlist clipped %T %v", c, r)
 				}
 			}
-			if p.List.CaptureSurface().NRGBAAt(0, 0).A != 0 {
+			if p.List().CaptureSurface().NRGBAAt(0, 0).A != 0 {
 				t.Fatal("resizing discarded the source outline")
 			}
 			list, plays := p.listPane.list, 0
@@ -469,26 +469,26 @@ func TestPlaylistResizeBrowseActivateAndInterruptedGesture(t *testing.T) {
 			}
 			p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
 			at := list.AccessibleItems()[2].Bounds.Center()
-			click(p.List, platform.ButtonLeft, at)
+			click(p.List(), platform.ButtonLeft, at)
 			a.PumpOnce()
 			p.Refresh()
 			if list.Selected != 2 || plays != 0 || p.Transport.List.Index() != 0 || p.Transport.State != players.Paused {
 				t.Fatal("single-click browsing changed playback or refresh reset selection")
 			}
-			key(a, p.List, platform.KeyDown, 0)
+			key(a, p.List(), platform.KeyDown, 0)
 			if list.Selected != 3 || plays != 0 {
 				t.Fatal("arrow navigation started playback")
 			}
-			key(a, p.List, platform.KeyReturn, 0)
+			key(a, p.List(), platform.KeyReturn, 0)
 			if plays != 1 || p.Transport.List.Index() != 3 {
 				t.Fatal("Enter did not play the selected row once")
 			}
 			p.Transport.State = players.Paused
-			if !p.List.AccessibleAction(widget.ItemID(list, 3), a11y.ActionDefault) || p.Transport.State != players.Playing || plays != 2 {
+			if !p.List().AccessibleAction(widget.ItemID(list, 3), a11y.ActionDefault) || p.Transport.State != players.Playing || plays != 2 {
 				t.Fatal("accessible repeated activation did not resume")
 			}
-			click(p.List, platform.ButtonLeft, at)
-			click(p.List, platform.ButtonLeft, at)
+			click(p.List(), platform.ButtonLeft, at)
+			click(p.List(), platform.ButtonLeft, at)
 			a.PumpOnce()
 			if plays != 3 || p.Transport.List.Index() != 2 {
 				t.Fatal("double-click did not activate once")
@@ -497,9 +497,9 @@ func TestPlaylistResizeBrowseActivateAndInterruptedGesture(t *testing.T) {
 			p.Transport.State = players.Paused
 			p.Refresh()
 			before := plays
-			click(p.List, platform.ButtonLeft, at)
-			p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: widget.DeviceBounds(p.listPane.buttons["shuffle"]).Center()})
-			click(p.List, platform.ButtonLeft, at)
+			click(p.List(), platform.ButtonLeft, at)
+			p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: widget.DeviceBounds(p.listPane.buttons["shuffle"]).Center()})
+			click(p.List(), platform.ButtonLeft, at)
 			a.PumpOnce()
 			if plays != before || p.Transport.List.Index() != 0 {
 				t.Fatal("pointer exit combined interrupted clicks into playback")
@@ -507,16 +507,16 @@ func TestPlaylistResizeBrowseActivateAndInterruptedGesture(t *testing.T) {
 			g := list.geometry(list.Look())
 			gutter := widget.DeviceOrigin(list).Add(paint2d.Pt(g.Rows.Min.X-2*scale, at.Y-widget.DeviceOrigin(list).Y))
 			selected := list.Selected
-			click(p.List, platform.ButtonLeft, gutter)
+			click(p.List(), platform.ButtonLeft, gutter)
 			a.PumpOnce()
 			if list.Selected != selected || plays != before {
 				t.Fatal("a horizontal row gutter acted as a track")
 			}
 			list.SetEnabled(false)
 			for _, button := range []platform.MouseButton{platform.ButtonLeft, platform.ButtonRight} {
-				click(p.List, button, at)
+				click(p.List(), button, at)
 				a.PumpOnce()
-				if list.Selected != selected || plays != before || p.List.Popup() != nil {
+				if list.Selected != selected || plays != before || p.List().Popup() != nil {
 					t.Fatal("disabled playlist selected, played or opened a menu")
 				}
 			}
@@ -548,7 +548,7 @@ func TestSatelliteControlsMatchOriginalWMSRightAndBottomOffsets(t *testing.T) {
 				check("EQ "+key.slot, p.eqPane.buttons[key.slot].Bounds(), EqW-78+key.offset, 5, key.width, 23)
 			}
 			for _, size := range [][2]int{{ListW, ListH}, {620, 420}} {
-				p.List.SetSize(size[0], size[1])
+				p.List().SetSize(size[0], size[1])
 				a.PumpOnce()
 				for _, key := range []struct {
 					slot          string
@@ -556,7 +556,7 @@ func TestSatelliteControlsMatchOriginalWMSRightAndBottomOffsets(t *testing.T) {
 				}{{"shuffle", 0, 23}, {"repeat", 23, 23}, {"close", 46, 22}} {
 					check("PL "+key.slot, p.listPane.buttons[key.slot].Bounds(), size[0]-78+key.offset, 5, key.width, 23)
 				}
-				grip, ok := skins.SkinSlotRect(p.List.Look(), LayoutPlaylist, "resize", p.listPane.LocalBounds())
+				grip, ok := skins.SkinSlotRect(p.List().Look(), LayoutPlaylist, "resize", p.listPane.LocalBounds())
 				if !ok {
 					t.Fatal("source playlist resize slot missing")
 				}

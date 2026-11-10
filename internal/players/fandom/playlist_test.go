@@ -23,12 +23,12 @@ func TestPlaylistResizeKeepsSlotsRowsAndMainGeometryUsable(t *testing.T) {
 			a, p := open(t, scale)
 			var initialRows paint2d.Rect
 			for i, size := range [][2]int{{190, 246}, {310, 356}} {
-				p.List.SetSize(size[0], size[1])
+				p.List().SetSize(size[0], size[1])
 				a.PumpOnce()
-				if w, h := p.List.Size(); w != size[0] || h != size[1] {
+				if w, h := p.List().Size(); w != size[0] || h != size[1] {
 					t.Fatal("playlist resize was not acknowledged")
 				}
-				if w, h := p.Main.Size(); w != 490 || h != 330 {
+				if w, h := p.Main().Size(); w != 490 || h != 330 {
 					t.Fatal("resizing playlist changed the fixed combined Main/Settings window")
 				}
 				pane := p.listPane
@@ -47,10 +47,10 @@ func TestPlaylistResizeKeepsSlotsRowsAndMainGeometryUsable(t *testing.T) {
 				} else if g.Rows.Dx() <= initialRows.Dx() || g.Rows.Dy() <= initialRows.Dy() {
 					t.Fatal("enlarging the playlist did not enlarge its row viewport")
 				}
-				if !p.List.ShapeActive() || p.List.CaptureSurface().NRGBAAt(0, 0).A != 0 {
+				if !p.List().ShapeActive() || p.List().CaptureSurface().NRGBAAt(0, 0).A != 0 {
 					t.Fatal("resizing discarded the playlist's transparent outline")
 				}
-				playertest.Audit(t, "Fandom playlist", p.List)
+				playertest.Audit(t, "Fandom playlist", p.List())
 			}
 		})
 	}
@@ -67,27 +67,27 @@ func TestPlaylistBrowsesThenActivatesExactlyOnceAndResumes(t *testing.T) {
 	}
 	p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
 	at := list.AccessibleItems()[2].Bounds.Center()
-	click(p.List, platform.ButtonLeft, at)
+	click(p.List(), platform.ButtonLeft, at)
 	a.PumpOnce()
 	p.Refresh()
 	a.PumpOnce()
 	if list.Selected != 2 || p.Transport.List.Index() != 0 || p.Transport.State != players.Paused || p.Transport.Pos != 17*time.Second || plays != 0 {
 		t.Fatal("single-click browsing changed playback or refresh reset selection")
 	}
-	key(a, p.List, platform.KeyDown, 0)
+	key(a, p.List(), platform.KeyDown, 0)
 	if list.Selected != 3 || plays != 0 {
 		t.Fatal("arrow navigation started playback")
 	}
-	key(a, p.List, platform.KeyReturn, 0)
+	key(a, p.List(), platform.KeyReturn, 0)
 	if p.Transport.List.Index() != 3 || p.Transport.State != players.Playing || plays != 1 {
 		t.Fatal("Enter did not activate the browsed track exactly once")
 	}
 	p.Transport.State = players.Paused
-	if !p.List.AccessibleAction(widget.ItemID(list, 3), a11y.ActionDefault) || p.Transport.State != players.Playing || plays != 2 {
+	if !p.List().AccessibleAction(widget.ItemID(list, 3), a11y.ActionDefault) || p.Transport.State != players.Playing || plays != 2 {
 		t.Fatal("accessible repeated activation did not resume the selected track once")
 	}
-	click(p.List, platform.ButtonLeft, at)
-	click(p.List, platform.ButtonLeft, at)
+	click(p.List(), platform.ButtonLeft, at)
+	click(p.List(), platform.ButtonLeft, at)
 	a.PumpOnce()
 	if p.Transport.List.Index() != 2 || plays != 3 {
 		t.Fatal("double-click did not activate its track exactly once")
@@ -105,18 +105,18 @@ func TestPlaylistRejectsGutterInterruptedClicksAndDisabledInput(t *testing.T) {
 	}
 	p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
 	at := list.AccessibleItems()[2].Bounds.Center()
-	click(p.List, platform.ButtonLeft, at)
+	click(p.List(), platform.ButtonLeft, at)
 	a.PumpOnce()
-	click(p.List, platform.ButtonRight, list.AccessibleItems()[1].Bounds.Center())
+	click(p.List(), platform.ButtonRight, list.AccessibleItems()[1].Bounds.Center())
 	a.PumpOnce()
-	if p.List.Popup() == nil || list.Selected != 2 || p.Transport.List.Index() != 0 || plays != 0 || p.Transport.Pos != 17*time.Second {
+	if p.List().Popup() == nil || list.Selected != 2 || p.Transport.List.Index() != 0 || plays != 0 || p.Transport.Pos != 17*time.Second {
 		t.Fatal("context press selected or played its row instead of keeping the browsed selection")
 	}
-	key(a, p.List, platform.KeyEscape, 0)
-	if p.List.Popup() != nil || a.Quitting() {
+	key(a, p.List(), platform.KeyEscape, 0)
+	if p.List().Popup() != nil || a.Quitting() {
 		t.Fatal("dismissing a playlist menu exited the player")
 	}
-	click(p.List, platform.ButtonLeft, at)
+	click(p.List(), platform.ButtonLeft, at)
 	a.PumpOnce()
 	if plays != 0 {
 		t.Fatal("a context interruption combined separate clicks into playback")
@@ -126,27 +126,27 @@ func TestPlaylistRejectsGutterInterruptedClicksAndDisabledInput(t *testing.T) {
 	g := list.geometry(list.Look())
 	local := at.Sub(widget.DeviceOrigin(list))
 	local.X = g.Rows.Min.X / 2
-	click(p.List, platform.ButtonLeft, local.Add(widget.DeviceOrigin(list)))
+	click(p.List(), platform.ButtonLeft, local.Add(widget.DeviceOrigin(list)))
 	a.PumpOnce()
-	click(p.List, platform.ButtonLeft, at)
+	click(p.List(), platform.ButtonLeft, at)
 	a.PumpOnce()
 	if list.Selected != 2 || plays != 0 {
 		t.Fatal("horizontal gutter selected a row or preserved double-click history")
 	}
-	p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: widget.DeviceBounds(p.listPane.buttons["open"]).Center()})
-	click(p.List, platform.ButtonLeft, at)
+	p.List().Inject(platform.Event{Kind: platform.EventMouseMove, Pos: widget.DeviceBounds(p.listPane.buttons["open"]).Center()})
+	click(p.List(), platform.ButtonLeft, at)
 	a.PumpOnce()
 	if plays != 0 {
 		t.Fatal("leaving the row combined interrupted clicks into playback")
 	}
 	list.SetEnabled(false)
 	for _, button := range []platform.MouseButton{platform.ButtonLeft, platform.ButtonRight} {
-		click(p.List, button, at)
+		click(p.List(), button, at)
 		a.PumpOnce()
 	}
-	key(a, p.List, platform.KeyDown, 0)
-	key(a, p.List, platform.KeyReturn, 0)
-	if p.List.AccessibleAction(widget.ItemID(list, 2), a11y.ActionDefault) || list.Selected != 2 || plays != 0 || p.List.Popup() != nil {
+	key(a, p.List(), platform.KeyDown, 0)
+	key(a, p.List(), platform.KeyReturn, 0)
+	if p.List().AccessibleAction(widget.ItemID(list, 2), a11y.ActionDefault) || list.Selected != 2 || plays != 0 || p.List().Popup() != nil {
 		t.Fatal("disabled playlist selected, activated or opened a context menu")
 	}
 }
@@ -168,7 +168,7 @@ func TestPlaylistAndItsControlsAcceptOnlyLocalCopyDrops(t *testing.T) {
 	calls := 0
 	var got []string
 	p.Host.DropFiles = func(paths []string) { calls++; got = paths }
-	off := p.List.Surface().(*platform.Offscreen)
+	off := p.List().Surface().(*platform.Offscreen)
 	for _, at := range []paint2d.Point{
 		p.listPane.list.AccessibleItems()[0].Bounds.Center(),
 		widget.DeviceBounds(p.listPane.buttons["open"]).Center(),

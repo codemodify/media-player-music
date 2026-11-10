@@ -19,7 +19,7 @@ func face(lk style.LookAndFeel, size float32) *style.Font {
 	return players.ScaledFace(lk.Font(), style.Dip(lk, size))
 }
 func paintLayout(ctx *paint2d.Context, lk style.LookAndFeel, box paint2d.Rect, role string, w *ui.Window) {
-	if w.ShapeActive() {
+	if w != nil && w.ShapeActive() {
 		ctx.DrawRect(box, paint2d.Paint{Color: paint2d.White, Blend: paint2d.BlendDestOut})
 	} else {
 		ctx.DrawRect(box, paint2d.Fill(paint2d.RGB(.067, .082, .106)))

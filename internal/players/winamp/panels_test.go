@@ -50,7 +50,7 @@ func TestThePanelsControlsAreWhereTheSkinSays(t *testing.T) {
 			if scale != 1 {
 				continue
 			}
-			ring := skinKeyless(playertest.RingNames(p.Main, playertest.FocusRing(t, a, p.Main)))
+			ring := skinKeyless(playertest.RingNames(p.Main(), playertest.FocusRing(t, a, p.Main())))
 			if firstRing == nil {
 				firstRing = ring
 			} else if !sameOrder(firstRing, ring) {
@@ -107,13 +107,13 @@ func sameOrder(a, b []string) bool {
 func TestTheSilverEqualiserWearsItsOwnCaption(t *testing.T) {
 	for _, scale := range scales {
 		_, p := open(t, SkinSilver, scale)
-		if p.Eq.FrameRole() != layoutEqualiser {
-			t.Fatalf("the equaliser's role is %q", p.Eq.FrameRole())
+		if p.Eq().FrameRole() != layoutEqualiser {
+			t.Fatalf("the equaliser's role is %q", p.Eq().FrameRole())
 		}
 		st := style.DecorationState{Active: true}
-		main := style.DecorationOf(p.Main.Look(), st)
-		st.Role = p.Eq.FrameRole()
-		eq := style.DecorationOf(p.Eq.Look(), st)
+		main := style.DecorationOf(p.Main().Look(), st)
+		st.Role = p.Eq().FrameRole()
+		eq := style.DecorationOf(p.Eq().Look(), st)
 		whole := func(v float32) float32 { return float32(int(v*scale + 0.5)) }
 		if main.Caption != whole(float32(panel.Silver.Caption)) || eq.Caption != whole(float32(panel.Silver.EqCaption)) {
 			t.Errorf("@%gx: captions %g (strip) and %g (equaliser), want %g and %g",
@@ -126,17 +126,17 @@ func TestTheSilverEqualiserWearsItsOwnCaption(t *testing.T) {
 			r, g, b, _ := w.Capture().PremulAt(x, y)
 			return b > r+20 && r < 90 && g < 110
 		}
-		if !navy(p.Main) {
+		if !navy(p.Main()) {
 			t.Errorf("@%gx: the strip's caption is not the navy band", scale)
 		}
-		if navy(p.Eq) {
+		if navy(p.Eq()) {
 			t.Errorf("@%gx: the equaliser still has the navy band", scale)
 		}
 	}
 	// In the classic panel every window keeps the one band.
 	_, p := open(t, Skin, 1)
-	st := style.DecorationState{Active: true, Role: p.Eq.FrameRole()}
-	if got := style.DecorationOf(p.Eq.Look(), st).Caption; got != float32(panel.Classic.Caption) {
+	st := style.DecorationState{Active: true, Role: p.Eq().FrameRole()}
+	if got := style.DecorationOf(p.Eq().Look(), st).Caption; got != float32(panel.Classic.Caption) {
 		t.Errorf("classic equaliser caption %g, want the band's %d", got, panel.Classic.Caption)
 	}
 }
@@ -216,7 +216,7 @@ func TestTheTitlesAreThePlayersInEveryFace(t *testing.T) {
 	for _, id := range Skins {
 		for _, scale := range []float32{1, 1.75} {
 			_, p := open(t, id, scale)
-			for name, w := range map[string]*ui.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List} {
+			for name, w := range map[string]*ui.Window{"strip": p.Main(), "equaliser": p.Eq(), "playlist": p.List()} {
 				if w.Title() != want[name] {
 					t.Errorf("%s@%g: the %s is titled %q, want %q", id, scale, name, w.Title(), want[name])
 				}
@@ -247,7 +247,7 @@ func TestTheClassicReadoutIsWholePixelsAtFractionalScales(t *testing.T) {
 	rowOf := func(p *Player) (paint2d.Rect, paint2d.Point) {
 		first, _ := skins.SkinSlotRect(p.strip.Look(), layoutStrip, "display", p.strip.LocalBounds())
 		// Capture crops the surface's shadow margin; DeviceOrigin includes it.
-		o, window := widget.DeviceOrigin(p.strip), p.Main.WindowRect().Min
+		o, window := widget.DeviceOrigin(p.strip), p.Main().WindowRect().Min
 		o.X, o.Y = o.X-window.X, o.Y-window.Y
 		return first, o
 	}
@@ -257,7 +257,7 @@ func TestTheClassicReadoutIsWholePixelsAtFractionalScales(t *testing.T) {
 		p.Spectrum.Reset()
 		p.refresh()
 		row, o := rowOf(p)
-		return p.Main.Capture(), row, o
+		return p.Main().Capture(), row, o
 	}
 	// The palette is what the row is painted in at the two whole scales:
 	// the 1x sheet's colours and the 2x sheet's, which is every colour the

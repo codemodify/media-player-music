@@ -23,7 +23,7 @@ func TestPlaylistReferenceHeadersMetadataAndStatusFitAfterResize(t *testing.T) {
 			p.Transport.List = players.NewPlaylist(players.Track{Path: "alpha.flac", Title: "Alpha", Artist: "Artist", Album: "Album", Length: 187 * time.Second})
 			p.Refresh()
 			for _, size := range [][2]int{{393, 226}, {610, 430}} {
-				p.List.SetSize(size[0], size[1])
+				p.List().SetSize(size[0], size[1])
 				a.PumpOnce()
 				pane := p.listPane
 				dropdown := widget.DeviceBounds(pane.buttons["playlist.dropdown"])
@@ -38,7 +38,7 @@ func TestPlaylistReferenceHeadersMetadataAndStatusFitAfterResize(t *testing.T) {
 					!near(rows.Max.Y, footer.Min.Y) || !near(footer.Max.Y, float32(size[1]-37)*scale) {
 					t.Fatalf("%dx%d playlist chrome overlaps or leaves its source viewport: dropdown=%v header=%v rows=%v footer=%v", size[0], size[1], dropdown, header, rows, footer)
 				}
-				capture := p.List.CaptureSurface()
+				capture := p.List().CaptureSurface()
 				bg := capture.NRGBAAt(int(dropdown.Min.X+scale), int(dropdown.Min.Y+scale))
 				if bg.R < 200 || bg.R > 225 || bg.G != bg.R || bg.B != bg.R {
 					t.Fatalf("Now Playing reference background is not light gray: %v", bg)
@@ -90,7 +90,7 @@ func TestPlaylistColumnsAndStatusUseKnownMetadataAndBrowsedSelection(t *testing.
 	p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
 	p.Refresh()
 	a.PumpOnce()
-	click(p.List, platform.ButtonLeft, p.listPane.list.AccessibleItems()[1].Bounds.Center())
+	click(p.List(), platform.ButtonLeft, p.listPane.list.AccessibleItems()[1].Bounds.Center())
 	a.PumpOnce()
 	if p.Transport.List.Index() != 0 || p.Transport.State != players.Paused || p.Transport.Pos != 17*time.Second {
 		t.Fatal("browsing a status duration started or moved playback")
@@ -130,23 +130,23 @@ func TestPlaylistDropdownAndHeadersOpenUsableQueueMenus(t *testing.T) {
 	for _, slot := range []string{"playlist.dropdown", "playlist.header"} {
 		from := p.listPane.buttons[slot]
 		if slot == "playlist.dropdown" {
-			click(p.List, platform.ButtonLeft, widget.DeviceBounds(from).Center())
+			click(p.List(), platform.ButtonLeft, widget.DeviceBounds(from).Center())
 			a.PumpOnce()
-		} else if !p.List.AccessibleAction(from.ID(), a11y.ActionDefault) {
+		} else if !p.List().AccessibleAction(from.ID(), a11y.ActionDefault) {
 			t.Fatal("column headers do not expose their queue-menu action")
 		}
-		menu, ok := p.List.Popup().(*widgets.PopupMenu)
+		menu, ok := p.List().Popup().(*widgets.PopupMenu)
 		if !ok {
-			t.Fatalf("%s opened %T instead of the queue menu", slot, p.List.Popup())
+			t.Fatalf("%s opened %T instead of the queue menu", slot, p.List().Popup())
 		}
 		found := false
 		for i, item := range menu.AccessibleItems() {
 			if item.Name == "Add music files…" {
-				found = p.List.AccessibleAction(widget.ItemID(menu, i), a11y.ActionDefault)
+				found = p.List().AccessibleAction(widget.ItemID(menu, i), a11y.ActionDefault)
 				break
 			}
 		}
-		if !found || p.List.Popup() != nil {
+		if !found || p.List().Popup() != nil {
 			t.Fatal("queue menu Add action is inaccessible or stayed open")
 		}
 		if p.Transport.State != players.Paused || p.Transport.Pos != 17*time.Second {

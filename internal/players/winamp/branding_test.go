@@ -21,13 +21,13 @@ func TestMainCaptionKeepsExactBrandingAndFitsEverySkin(t *testing.T) {
 				prefs.Layout.Left = []platform.CaptionButton{platform.CaptionMenu}
 				a.SetTitleBarPrefs(prefs)
 				a.PumpOnce()
-				caption := p.Main.Caption()
-				r := widget.DeviceBounds(caption).Translate(p.Main.WindowRect().Min.Mul(-1))
+				caption := p.Main().Caption()
+				r := widget.DeviceBounds(caption).Translate(p.Main().WindowRect().Min.Mul(-1))
 				x0, y0, x1, y1 := r.IntBounds()
 				pixels := func(title string) []byte {
-					p.Main.SetTitle(title)
+					p.Main().SetTitle(title)
 					a.PumpOnce()
-					return p.Main.Capture().SubImage(x0, y0, x1, y1).Clone().Pix
+					return p.Main().Capture().SubImage(x0, y0, x1, y1).Clone().Pix
 				}
 				full := pixels("Music Player")
 				if bytes.Equal(full, pixels("MUSIC PLAYER")) {
@@ -36,7 +36,7 @@ func TestMainCaptionKeepsExactBrandingAndFitsEverySkin(t *testing.T) {
 				if bytes.Equal(full, pixels("Music Playe")) {
 					t.Fatal("the complete main title did not fit beside the caption controls")
 				}
-				p.Main.SetTitle("Music Player")
+				p.Main().SetTitle("Music Player")
 			})
 		}
 	}

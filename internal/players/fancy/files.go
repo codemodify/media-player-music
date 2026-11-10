@@ -95,7 +95,7 @@ func (p *Player) chooseFile(from widget.Component, opts widgets.FileDialogOption
 	opts.OnCancel = func() { delete(p.dialogs, fd) }
 	opts.OnPick = func(path string) {
 		delete(p.dialogs, fd)
-		if p.Main == nil || p.Main.Closed() {
+		if w := p.Main(); w == nil || w.Closed() {
 			return
 		}
 		if err := pick(path); err != nil {

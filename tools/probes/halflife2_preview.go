@@ -69,43 +69,43 @@ func main() {
 	for _, panel := range []struct {
 		im         *paint2d.Image
 		x, y, w, h float32
-	}{{p.Main.CaptureSurface(), 0, 80, 339, 300}, {p.Eq.CaptureSurface(), 339, 0, 430, 239}, {p.List.CaptureSurface(), 339, 239, 393, 226}} {
+	}{{p.Main().CaptureSurface(), 0, 80, 339, 300}, {p.Eq().CaptureSurface(), 339, 0, 430, 239}, {p.List().CaptureSurface(), 339, 239, 393, 226}} {
 		ctx.DrawImageRectPaint(panel.im, paint2d.XYWH(0, 0, float32(panel.im.Bounds().Dx()), float32(panel.im.Bounds().Dy())), paint2d.XYWH(panel.x*d, panel.y*d, panel.w*d, panel.h*d), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
 	}
 	write("group", composition)
 	for _, state := range []string{"inner-shutter", "outer-shutter"} {
 		var id uint64
-		p.Main.AccessibleTree().Walk(func(n *a11y.Node) bool {
+		p.Main().AccessibleTree().Walk(func(n *a11y.Node) bool {
 			if n.Name == "Close inner shutter" || n.Name == "Close outer shutter" {
 				id = n.ID
 			}
 			return true
 		})
-		if !p.Main.AccessibleAction(id, a11y.ActionDefault) {
+		if !p.Main().AccessibleAction(id, a11y.ActionDefault) {
 			panic("source shutter control is inaccessible")
 		}
 		a.PumpOnce()
-		write(state, p.Main.CaptureSurface())
+		write(state, p.Main().CaptureSurface())
 	}
 	// Restore open mode through keyboard activation of the same focused
 	// shutter control, as a user would after closing the display.
-	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
-	p.Main.Inject(platform.Event{Kind: platform.EventKeyUp, Key: platform.KeySpace})
+	p.Main().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
+	p.Main().Inject(platform.Event{Kind: platform.EventKeyUp, Key: platform.KeySpace})
 	a.PumpOnce()
 	var visualID uint64
-	p.Main.AccessibleTree().Walk(func(n *a11y.Node) bool {
+	p.Main().AccessibleTree().Walk(func(n *a11y.Node) bool {
 		if n.Name == "Show or hide spectrum" {
 			visualID = n.ID
 		}
 		return true
 	})
-	if !p.Main.AccessibleAction(visualID, a11y.ActionDefault) {
+	if !p.Main().AccessibleAction(visualID, a11y.ActionDefault) {
 		panic("spectrum control is inaccessible")
 	}
 	a.PumpOnce()
-	write("spectrum", p.Main.CaptureSurface())
-	p.List.SetSize(610, 430)
+	write("spectrum", p.Main().CaptureSurface())
+	p.List().SetSize(610, 430)
 	a.PumpOnce()
 	p.Advance(0)
-	write("playlist-resized", p.List.CaptureSurface())
+	write("playlist-resized", p.List().CaptureSurface())
 }
