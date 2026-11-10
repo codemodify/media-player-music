@@ -3,7 +3,7 @@ package halflife2
 import (
 	"time"
 
-	"github.com/codemodify/uitoolkit/rack"
+	"goframework.io/desktop-ui-rack"
 )
 
 // initGroup creates the source skin's arrangement through the public desk.
@@ -16,7 +16,6 @@ func (p *Player) initGroup() {
 	p.iList = p.Desk.Add("playlist", p.List)
 	p.attachDefaultGroup()
 	p.Desk.Apply()
-	p.watchWindowMoves()
 }
 
 func (p *Player) attachDefaultGroup() {
@@ -26,9 +25,9 @@ func (p *Player) attachDefaultGroup() {
 	p.placeDockedWindows()
 }
 
-// AdvanceGeometry settles startup and maintains resized or unacknowledged
-// geometry. Move callbacks follow an established group immediately; the pulse
-// also covers backends without move events and the desk's native deadlines.
+// AdvanceGeometry settles startup and maintains resized geometry. Desk
+// follows native moves after each event burst and owns request deadlines;
+// the pulse covers backends without move events.
 func (p *Player) AdvanceGeometry(dt time.Duration) {
 	if p.Main == nil || p.Main.Closed() || p.Desk == nil {
 		return

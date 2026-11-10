@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func libraryFixture(p *Player) []players.Track {
@@ -190,7 +190,7 @@ func TestPlaylistResizeAndLocalCopyDropsRemainUsableWithAnEmptyFilter(t *testing
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
 			libraryFixture(p)
-			var small paintengine2d.Rect
+			var small paint2d.Rect
 			for i, size := range [][2]int{{640, 400}, {940, 650}} {
 				p.Main.SetSize(size[0], size[1])
 				a.PumpOnce()
@@ -217,13 +217,13 @@ func TestPlaylistResizeAndLocalCopyDropsRemainUsableWithAnEmptyFilter(t *testing
 				}
 			}
 			off := p.Main.Surface().(*platform.Offscreen)
-			drop := func(at paintengine2d.Point, data []byte, actions platform.DragAction) bool {
+			drop := func(at paint2d.Point, data []byte, actions platform.DragAction) bool {
 				off.SimulateDropAction(at, map[string][]byte{"text/uri-list": data}, actions, actions)
 				a.PumpOnce()
 				taken := off.DropTaken()
 				return taken != nil && *taken
 			}
-			for _, at := range []paintengine2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.search).Center()} {
+			for _, at := range []paint2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.search).Center()} {
 				before := calls
 				if !drop(at, payload, platform.DragCopy) || calls != before+1 || p.Transport.State != players.Paused || p.Transport.Pos != 17*time.Second || p.Transport.List.Index() != 0 {
 					t.Fatal("library row/header did not append a local Copy drop without changing playback")

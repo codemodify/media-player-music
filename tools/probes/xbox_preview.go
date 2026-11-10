@@ -14,8 +14,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/xbox"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 	os.Setenv(style.ThemeEnv, players.XboxSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
 	p, err := xbox.New(players.NewHost(a), xbox.Options{Headless: true, Scale: float32(*scale)})
 	if err != nil {
 		panic(err)

@@ -13,8 +13,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/series9"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 	os.Setenv(style.ThemeEnv, players.Series9Skin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.ShowSettings = func() {}
 	p, err := series9.New(h, series9.Options{Headless: true, Scale: float32(*scale)})

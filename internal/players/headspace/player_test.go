@@ -13,22 +13,22 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
 
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, players.HeadspaceSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	p, err := New(h, Options{Headless: true, Scale: scale})
@@ -40,13 +40,13 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	return a, p
 }
 
-func injectClick(p *Player, button platform.MouseButton, at paintengine2d.Point) {
+func injectClick(p *Player, button platform.MouseButton, at paint2d.Point) {
 	p.Main.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	p.Main.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: at})
 	p.Main.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: at})
 }
 
-func key(a *uitoolkit.Application, p *Player, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, p *Player, k platform.Key, mods platform.Modifiers) {
 	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	p.Main.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -243,7 +243,7 @@ func TestDecodedFileAndFolderDropsUseTheSharedLoader(t *testing.T) {
 	var got []string
 	p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 	off := p.Main.Surface().(*platform.Offscreen)
-	for _, at := range []paintengine2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.visual).Center()} {
+	for _, at := range []paint2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.visual).Center()} {
 		before := calls
 		off.SimulateDropAction(at, map[string][]byte{"text/uri-list": data}, platform.DragCopy|platform.DragMove, platform.DragCopy)
 		a.PumpOnce()
@@ -265,7 +265,7 @@ func TestDecodedFileAndFolderDropsUseTheSharedLoader(t *testing.T) {
 	if p.body.DropActionFor(platform.DragMove)&platform.DragMove != 0 || p.body.list.DropActionFor(platform.DragMove)&platform.DragMove != 0 {
 		t.Fatal("Headspace offered to move source files")
 	}
-	for _, at := range []paintengine2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.visual).Center()} {
+	for _, at := range []paint2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.visual).Center()} {
 		before := calls
 		off.SimulateDropAction(at, map[string][]byte{"text/uri-list": data}, platform.DragMove, platform.DragMove)
 		a.PumpOnce()
@@ -336,7 +336,7 @@ func TestPlaylistSelectionActivationAndInterruptedGestures(t *testing.T) {
 				case "focus-change":
 					p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
 				case "wheel-at-end":
-					p.Main.Inject(platform.Event{Kind: platform.EventScroll, Pos: at, Scroll: paintengine2d.Pt(0, 1)})
+					p.Main.Inject(platform.Event{Kind: platform.EventScroll, Pos: at, Scroll: paint2d.Pt(0, 1)})
 				}
 				injectClick(p, platform.ButtonLeft, at)
 				a.PumpOnce()
@@ -353,7 +353,7 @@ func TestPlaylistGutterAndDisabledInputDoNotSelectOrPlay(t *testing.T) {
 	list := p.body.list
 	geometry := list.geometry(list.Look())
 	o := widget.DeviceOrigin(list)
-	at := o.Add(paintengine2d.Pt((geometry.Rows.Max.X+geometry.Bar.Min.X)/2, geometry.Rows.Min.Y+geometry.RowHeight*2.5))
+	at := o.Add(paint2d.Pt((geometry.Rows.Max.X+geometry.Bar.Min.X)/2, geometry.Rows.Min.Y+geometry.RowHeight*2.5))
 	selected, playing := list.Selected, p.Transport.List.Index()
 	injectClick(p, platform.ButtonLeft, at)
 	injectClick(p, platform.ButtonLeft, at)

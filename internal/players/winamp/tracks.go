@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // tracks supplies the playlist's labels, actions and artwork to a stock
@@ -31,7 +32,7 @@ type tracks struct {
 
 // listGeo is a panel face's playlist, in the list's own coordinates.
 type listGeo struct {
-	rows, bar paintengine2d.Rect
+	rows, bar paint2d.Rect
 	rowH      float32
 }
 
@@ -51,7 +52,7 @@ func newTracks(p *Player) *tracks {
 	t.RowGeo = t.rowGeometry
 	t.RowPaint = t.paintRow
 	t.ScrollPaint = t.paintScroll
-	t.OnContext = func(_ int, at paintengine2d.Point) { p.skinMenu(t, at) }
+	t.OnContext = func(_ int, at paint2d.Point) { p.skinMenu(t, at) }
 	t.DropMimes = []string{"text/uri-list"}
 	t.DropActions = platform.DragCopy
 	t.OnDropAt = func(_ int, e widget.DropEvent) bool { return p.Host.AcceptFileDrop(e) }
@@ -67,7 +68,7 @@ func (t *tracks) rowGeometry(lk style.LookAndFeel) *widgets.RowGeometry {
 		return nil
 	}
 	g := &widgets.RowGeometry{Rows: t.geo.rows, Bar: t.geo.bar, RowHeight: t.geo.rowH}
-	if _, h, ok := style.SkinSpriteSize(lk, "list.thumb"); ok {
+	if _, h, ok := skins.SkinSpriteSize(lk, "list.thumb"); ok {
 		g.ThumbLength = style.Dip(lk, h)
 	}
 	return g
@@ -115,7 +116,7 @@ func (t *tracks) syncQueue() {
 	t.queue, t.playing = queue, playing
 }
 
-func (t *tracks) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i int, st style.ControlState) bool {
+func (t *tracks) paintRow(ctx *paint2d.Context, row paint2d.Rect, i int, st style.ControlState) bool {
 	lk := t.Look()
 	f := faceOf(lk)
 	playing := i == t.p.Transport.List.Index()
@@ -142,7 +143,7 @@ func (t *tracks) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i 
 		col = in.current
 	}
 	if i == t.Selected {
-		ctx.DrawRect(row, paintengine2d.Fill(in.selected))
+		ctx.DrawRect(row, paint2d.Fill(in.selected))
 		if !playing {
 			col = in.selectedText
 		}
@@ -152,19 +153,19 @@ func (t *tracks) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i 
 	}
 	clock := t.ItemDetail(i)
 	cw, pad := face.Advance(clock), style.Dip(lk, 3)
-	players.DrawTextIn(ctx, face, paintengine2d.XYWH(row.Max.X-cw-pad, row.Min.Y, cw, row.Dy()), clock, col, style.AlignEnd)
-	players.DrawTextIn(ctx, face, paintengine2d.XYWH(row.Min.X+pad, row.Min.Y, max(row.Dx()-cw-3*pad, 0), row.Dy()), t.label(i), col, style.AlignStart)
+	players.DrawTextIn(ctx, face, paint2d.XYWH(row.Max.X-cw-pad, row.Min.Y, cw, row.Dy()), clock, col, style.AlignEnd)
+	players.DrawTextIn(ctx, face, paint2d.XYWH(row.Min.X+pad, row.Min.Y, max(row.Dx()-cw-3*pad, 0), row.Dy()), t.label(i), col, style.AlignStart)
 	return true
 }
 
-func (t *tracks) paintScroll(ctx *paintengine2d.Context, track, thumb paintengine2d.Rect, st style.ControlState) bool {
+func (t *tracks) paintScroll(ctx *paint2d.Context, track, thumb paint2d.Rect, st style.ControlState) bool {
 	lk := t.Look()
 	if t.geo == nil || !faceOf(lk).panelled() {
 		return false
 	}
 	// The artwork sits on the panel's design grid; ListView owns the
 	// scroll offset and all hit testing and dragging of the thumb.
-	thumb = paintengine2d.XYWH(thumb.Min.X, track.Min.Y+snapDesign(thumb.Min.Y-track.Min.Y, style.Dip(lk, 1)), thumb.Dx(), thumb.Dy())
+	thumb = paint2d.XYWH(thumb.Min.X, track.Min.Y+snapDesign(thumb.Min.Y-track.Min.Y, style.Dip(lk, 1)), thumb.Dx(), thumb.Dy())
 	name := "list.thumb"
 	if st.Pressed() {
 		name = "list.thumb.down"

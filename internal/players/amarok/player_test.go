@@ -15,13 +15,13 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	uiskins "goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) {
@@ -32,14 +32,14 @@ func TestMain(m *testing.M) {
 	// Standalone plan validation is useful before the shared catalogue is
 	// generated. Once shipped, all UI tests consume the actual embedded pack.
 	var temporary string
-	if _, ok := style.LoadSkin("amarok"); !ok {
+	if _, ok := uiskins.LoadSkin("amarok"); !ok {
 		var err error
 		temporary, err = os.MkdirTemp("", "music-player-amarok-test-")
 		if err == nil {
 			err = plans.Write(temporary, plans.Amarok())
 		}
 		if err == nil {
-			err = style.RegisterSkinFS(os.DirFS(filepath.Join(temporary, "amarok")), "amarok")
+			err = uiskins.RegisterSkinFS(os.DirFS(filepath.Join(temporary, "amarok")), "amarok")
 		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -52,11 +52,11 @@ func TestMain(m *testing.M) {
 	}
 	os.Exit(code)
 }
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, "amarok")
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	h.ShowSettings = func() {}
@@ -69,12 +69,12 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	p.Advance(0)
 	return a, p
 }
-func click(w *app.Window, at paintengine2d.Point, button platform.MouseButton) {
+func click(w *ui.Window, at paint2d.Point, button platform.MouseButton) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Pos: at, Button: button})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Pos: at, Button: button})
 }
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -276,7 +276,7 @@ func TestFileFolderCopyDropsAndSavedPlacement(t *testing.T) {
 	var got []string
 	p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 	off := p.Main.Surface().(*platform.Offscreen)
-	for _, at := range []paintengine2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.headers[0]).Center(), widget.DeviceBounds(p.body.play).Center()} {
+	for _, at := range []paint2d.Point{p.body.list.AccessibleItems()[0].Bounds.Center(), widget.DeviceBounds(p.body.headers[0]).Center(), widget.DeviceBounds(p.body.play).Center()} {
 		before := calls
 		off.SimulateDropAction(at, map[string][]byte{"text/uri-list": data}, platform.DragCopy|platform.DragMove, platform.DragMove)
 		a.PumpOnce()
@@ -366,7 +366,7 @@ func TestSecondarySliderClickOpensMenuWithoutEditingAudio(t *testing.T) {
 	p.Host.SyncPlayback = func() { updates++ }
 	for _, c := range []*sourceSlider{p.body.volume, p.body.seek, p.body.eq.balance, p.body.eq.bands[3]} {
 		before := c.Value
-		at := widget.DeviceBounds(c).Min.Add(paintengine2d.Pt(2, 2))
+		at := widget.DeviceBounds(c).Min.Add(paint2d.Pt(2, 2))
 		click(p.Main, at, platform.ButtonRight)
 		a.PumpOnce()
 		if c.Value != before || updates != 0 || c.Dragging() {

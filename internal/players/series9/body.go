@@ -2,13 +2,14 @@ package series9
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
@@ -46,7 +47,7 @@ func (b *body) sync() {
 	b.playlist.sync()
 	b.Invalidate()
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	w, h := float32(346), float32(344)
 	if b.p.Host.Model.PlaylistVisible {
 		w += 250
@@ -54,9 +55,9 @@ func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
 	if b.p.Host.Model.EqualizerVisible {
 		h += 124
 	}
-	return c.Constrain(paintengine2d.Pt(style.Dip(b.Look(), w), style.Dip(b.Look(), h)))
+	return c.Constrain(paint2d.Pt(style.Dip(b.Look(), w), style.Dip(b.Look(), h)))
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	g := b.p.panelRects(b.LocalBounds())
 	b.main.Arrange(g.Main)
@@ -64,14 +65,14 @@ func (b *body) Arrange(r paintengine2d.Rect) {
 	b.eq.Arrange(g.Equalizer)
 	b.playlist.Arrange(g.Playlist)
 }
-func eraseFrame(ctx *paintengine2d.Context, box paintengine2d.Rect, p *Player) {
+func eraseFrame(ctx *paint2d.Context, box paint2d.Rect, p *Player) {
 	if p.Main.ShapeActive() {
-		ctx.DrawRect(box, paintengine2d.Paint{Color: paintengine2d.White, Blend: paintengine2d.BlendDestOut})
+		ctx.DrawRect(box, paint2d.Paint{Color: paint2d.White, Blend: paint2d.BlendDestOut})
 	} else {
-		ctx.DrawRect(box, paintengine2d.Fill(paintengine2d.RGB(.65, .7, .8)))
+		ctx.DrawRect(box, paint2d.Fill(paint2d.RGB(.65, .7, .8)))
 	}
 }
-func (b *body) Paint(ctx *paintengine2d.Context) { eraseFrame(ctx, b.LocalBounds(), b.p) }
+func (b *body) Paint(ctx *paint2d.Context) { eraseFrame(ctx, b.LocalBounds(), b.p) }
 func (b *body) MousePress(e widget.MouseEvent) bool {
 	if e.Button == platform.ButtonRight {
 		b.contextMenu(b, e.Pos.Add(widget.DeviceOrigin(b)))
@@ -91,7 +92,7 @@ func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy
 }
 func (b *body) Drop(e widget.DropEvent) bool { return b.p.Host.AcceptFileDrop(e) }
-func (b *body) contextMenu(from widget.Component, at paintengine2d.Point) {
+func (b *body) contextMenu(from widget.Component, at paint2d.Point) {
 	p, h, t := b.p, b.p.Host, b.p.Transport
 	remove := widgets.Item("Remove current track", h.RemoveTrack)
 	remove.Disabled = t.List.Len() == 0
@@ -121,7 +122,7 @@ func newMainPane(p *Player) *mainPane {
 	b.button("minimize", "Minimize Music Player", players.GlyphNone, p.Main.Minimize)
 	b.button("close", "Close to tray", players.GlyphNone, p.Main.RequestClose)
 	b.analyser = players.NewAnalyserView(p.Spectrum)
-	b.analyser.Tint = paintengine2d.RGB(.38, .84, .2)
+	b.analyser.Tint = paint2d.RGB(.38, .84, .2)
 	b.analyser.Peaks = true
 	b.analyser.SetTransparent(true)
 	b.slots.Bind("video", b.analyser)
@@ -138,21 +139,21 @@ func (b *mainPane) sync() {
 	b.analyser.Invalidate()
 	b.Invalidate()
 }
-func (b *mainPane) Paint(ctx *paintengine2d.Context) {
+func (b *mainPane) Paint(ctx *paint2d.Context) {
 	b.pane.Paint(ctx)
 	lk, box := b.Look(), b.LocalBounds()
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, slot, box); return r }
+	at := func(slot string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, slot, box); return r }
 	title := at("title")
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 9)), title, "Music Player", paintengine2d.White, style.AlignStart)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 9)), title, "Music Player", paint2d.White, style.AlignStart)
 	if !b.analyser.Visible() {
 		r := at("video")
 		s := style.Dip(lk, 48)
-		logo := paintengine2d.XYWH((r.Min.X+r.Max.X-s)/2, (r.Min.Y+r.Max.Y-s)/2, s, s)
-		style.DrawSkinSprite(lk, ctx, logo, "app.logo", paintengine2d.Color{})
+		logo := paint2d.XYWH((r.Min.X+r.Max.X-s)/2, (r.Min.Y+r.Max.Y-s)/2, s, s)
+		skins.DrawSkinSprite(lk, ctx, logo, "app.logo", paint2d.Color{})
 	}
 	drawStatus(ctx, lk, at("metadata"), at("time"), b.p)
 }
-func drawStatus(ctx *paintengine2d.Context, lk style.LookAndFeel, label, clock paintengine2d.Rect, p *Player) {
+func drawStatus(ctx *paint2d.Context, lk style.LookAndFeel, label, clock paint2d.Rect, p *Player) {
 	text := p.Transport.Track().Label()
 	if p.Transport.State == players.Stopped && p.Host.Model.Error == "" {
 		text = "Ready"
@@ -161,7 +162,7 @@ func drawStatus(ctx *paintengine2d.Context, lk style.LookAndFeel, label, clock p
 		text = p.Host.StatusText()
 	}
 	f := players.ScaledFace(lk.BoldFont(), style.Dip(lk, 10))
-	ink := paintengine2d.RGB(.52, .95, .35)
+	ink := paint2d.RGB(.52, .95, .35)
 	players.DrawScrollingText(ctx, lk, f, label, text, ink, p.Transport.Pos)
 	players.DrawTextIn(ctx, f, clock, players.Clock(p.Transport.Pos), ink, style.AlignEnd)
 }

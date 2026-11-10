@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // playlistList keeps the stock list's navigation and scrolling and reserves
@@ -41,7 +42,7 @@ func newPlaylistList(p *Player) *playlistList {
 	l.Init(l)
 	l.OnActivate = func(i int) { l.activate(i) }
 	l.ContextKeepsSelection = true
-	l.OnContext = func(_ int, at paintengine2d.Point) { p.body.contextMenu(l, at) }
+	l.OnContext = func(_ int, at paint2d.Point) { p.body.contextMenu(l, at) }
 	l.SetFocusVisibleOnly(true)
 	l.SetAccessibleName("Music library")
 	l.DisableTypeAhead = true
@@ -62,31 +63,31 @@ func (l *playlistList) geometry(lk style.LookAndFeel) *widgets.RowGeometry {
 		return nil
 	}
 	box := parent.LocalBounds()
-	rows, ok := style.SkinSlotRect(lk, LayoutMain, "rows", box)
+	rows, ok := skins.SkinSlotRect(lk, LayoutMain, "rows", box)
 	if !ok {
 		return nil
 	}
-	bar, _ := style.SkinSlotRect(lk, LayoutMain, "scroll", box)
+	bar, _ := skins.SkinSlotRect(lk, LayoutMain, "scroll", box)
 	o := l.Bounds().Min
 	return &widgets.RowGeometry{
-		Rows:      rows.Translate(paintengine2d.Pt(-o.X, -o.Y)),
-		Bar:       bar.Translate(paintengine2d.Pt(-o.X, -o.Y)),
+		Rows:      rows.Translate(paint2d.Pt(-o.X, -o.Y)),
+		Bar:       bar.Translate(paint2d.Pt(-o.X, -o.Y)),
 		RowHeight: style.Dip(lk, 17),
 	}
 }
 
-func (l *playlistList) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i int, st style.ControlState) bool {
+func (l *playlistList) paintRow(ctx *paint2d.Context, row paint2d.Rect, i int, st style.ControlState) bool {
 	lk := l.Look()
-	col := paintengine2d.RGB(.08, .09, .1)
-	bg := paintengine2d.White
+	col := paint2d.RGB(.08, .09, .1)
+	bg := paint2d.White
 	if i%2 == 1 {
-		bg = paintengine2d.RGB(.92, .95, .98)
+		bg = paint2d.RGB(.92, .95, .98)
 	}
 	if i == l.Selected {
-		bg = paintengine2d.RGB(.29, .5, .76)
-		col = paintengine2d.White
+		bg = paint2d.RGB(.29, .5, .76)
+		col = paint2d.White
 	}
-	ctx.DrawRect(row, paintengine2d.Fill(bg))
+	ctx.DrawRect(row, paint2d.Fill(bg))
 	if i == l.Selected && st.Focused() {
 		lk.DrawFocusRing(ctx, row)
 	}
@@ -99,27 +100,27 @@ func (l *playlistList) paintRow(ctx *paintengine2d.Context, row paintengine2d.Re
 			align = style.AlignEnd
 		}
 		if column == 0 && l.queueIndex(i) == l.p.Transport.List.Index() {
-			players.DrawGlyph(ctx, paintengine2d.XYWH(cell.Min.X, cell.Min.Y, style.Dip(lk, 15), cell.Dy()), players.GlyphPlay, col, style.Dip(lk, 1))
+			players.DrawGlyph(ctx, paint2d.XYWH(cell.Min.X, cell.Min.Y, style.Dip(lk, 15), cell.Dy()), players.GlyphPlay, col, style.Dip(lk, 1))
 			cell.Min.X += style.Dip(lk, 15)
 		}
 		players.DrawTextIn(ctx, f, cell.Inset(pad), values[column], col, align)
 	}
 	return true
 }
-func (l *playlistList) paintScroll(ctx *paintengine2d.Context, track, thumb paintengine2d.Rect, st style.ControlState) bool {
-	ctx.DrawRect(track, paintengine2d.Fill(paintengine2d.RGB(.87, .9, .94)))
-	ctx.DrawRoundRect(thumb, style.Dip(l.Look(), 6), style.Dip(l.Look(), 6), paintengine2d.Fill(paintengine2d.RGB(.38, .63, .85)))
-	ctx.DrawRoundRect(thumb, style.Dip(l.Look(), 6), style.Dip(l.Look(), 6), paintengine2d.StrokePaint(paintengine2d.RGB(.2, .4, .65), style.Dip(l.Look(), 1)))
+func (l *playlistList) paintScroll(ctx *paint2d.Context, track, thumb paint2d.Rect, st style.ControlState) bool {
+	ctx.DrawRect(track, paint2d.Fill(paint2d.RGB(.87, .9, .94)))
+	ctx.DrawRoundRect(thumb, style.Dip(l.Look(), 6), style.Dip(l.Look(), 6), paint2d.Fill(paint2d.RGB(.38, .63, .85)))
+	ctx.DrawRoundRect(thumb, style.Dip(l.Look(), 6), style.Dip(l.Look(), 6), paint2d.StrokePaint(paint2d.RGB(.2, .4, .65), style.Dip(l.Look(), 1)))
 	return true
 }
-func columnRects(row paintengine2d.Rect, lk style.LookAndFeel) [4]paintengine2d.Rect {
+func columnRects(row paint2d.Rect, lk style.LookAndFeel) [4]paint2d.Rect {
 	timeW := style.Dip(lk, 55)
 	remaining := max(row.Dx()-timeW, 0)
 	widths := [4]float32{remaining * .4, timeW, remaining * .3, remaining * .3}
-	var out [4]paintengine2d.Rect
+	var out [4]paint2d.Rect
 	x := row.Min.X
 	for i, w := range widths {
-		out[i] = paintengine2d.XYWH(x, row.Min.Y, w, row.Dy())
+		out[i] = paint2d.XYWH(x, row.Min.Y, w, row.Dy())
 		x += w
 	}
 	return out

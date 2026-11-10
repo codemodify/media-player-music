@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
 )
 
 // A user override with only the main artwork must fail before changing the
@@ -17,16 +17,16 @@ import (
 func TestXboxRequiresPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
 	a, s := open(t, players.HeadspaceSkin)
 	w, model := s.MainWindow(), s.Host.Model
-	dir := style.UserSkinDir(players.XboxSkin)
+	dir := skins.UserSkinDir(players.XboxSkin)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	manifest := `{"skin":1,"label":"Xbox main only","base":"dark","layouts":{"xbox.main":{"size":[350,216]}}}`
-	if err := os.WriteFile(filepath.Join(dir, style.SkinFile), []byte(manifest), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), []byte(manifest), 0600); err != nil {
 		t.Fatal(err)
 	}
-	style.InvalidateSkinCache()
-	t.Cleanup(style.InvalidateSkinCache)
+	skins.InvalidateSkinCache()
+	t.Cleanup(skins.InvalidateSkinCache)
 	if err := s.SetSkin(players.XboxSkin); err == nil || !strings.Contains(err.Error(), `missing layout "xbox.playlist"`) {
 		t.Fatalf("Xbox main-only override: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestXboxRequiresPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
 func TestXboxSkinKeysCycleFromHeadspaceAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.HeadspaceSkin)
 	model := s.Host.Model
-	key := func(w *app.Window, mods platform.Modifiers) {
+	key := func(w *ui.Window, mods platform.Modifiers) {
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Mods: mods})
 		a.PumpOnce()
 		a.PumpOnce()

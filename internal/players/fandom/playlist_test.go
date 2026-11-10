@@ -11,17 +11,17 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistResizeKeepsSlotsRowsAndMainGeometryUsable(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
-			var initialRows paintengine2d.Rect
+			var initialRows paint2d.Rect
 			for i, size := range [][2]int{{190, 246}, {310, 356}} {
 				p.List.SetSize(size[0], size[1])
 				a.PumpOnce()
@@ -169,7 +169,7 @@ func TestPlaylistAndItsControlsAcceptOnlyLocalCopyDrops(t *testing.T) {
 	var got []string
 	p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 	off := p.List.Surface().(*platform.Offscreen)
-	for _, at := range []paintengine2d.Point{
+	for _, at := range []paint2d.Point{
 		p.listPane.list.AccessibleItems()[0].Bounds.Center(),
 		widget.DeviceBounds(p.listPane.buttons["open"]).Center(),
 	} {

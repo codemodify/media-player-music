@@ -2,25 +2,25 @@ package xbox
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type playlistPane struct {
 	widget.Base
 	p       *Player
-	slots   *widget.Slots
+	slots   *skins.Slots
 	list    *playlistList
 	buttons map[string]*players.GlyphButton
 }
 
 func newPlaylistPane(p *Player) *playlistPane {
-	b := &playlistPane{p: p, slots: widget.NewSlots(LayoutPlaylist), buttons: make(map[string]*players.GlyphButton)}
+	b := &playlistPane{p: p, slots: skins.NewSlots(LayoutPlaylist), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Xbox playlist")
@@ -55,16 +55,16 @@ func (b *playlistPane) sync() {
 	b.list.Invalidate()
 	b.Invalidate()
 }
-func (b *playlistPane) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *playlistPane) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *playlistPane) Arrange(r paintengine2d.Rect) {
+func (b *playlistPane) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *playlistPane) Paint(ctx *paintengine2d.Context) {
-	style.DrawSkinLayout(b.Look(), ctx, b.LocalBounds(), LayoutPlaylist)
+func (b *playlistPane) Paint(ctx *paint2d.Context) {
+	skins.DrawSkinLayout(b.Look(), ctx, b.LocalBounds(), LayoutPlaylist)
 }
 func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 	if e.Button == platform.ButtonRight {
@@ -78,7 +78,7 @@ func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 	}
 	return false
 }
-func (b *playlistPane) contextMenu(from widget.Component, at paintengine2d.Point) {
+func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 	h, t := b.p.Host, b.p.Transport
 	remove := widgets.Item("Remove current track", h.RemoveTrack)
 	remove.Disabled = t.List.Len() == 0
@@ -110,7 +110,7 @@ type resizeGrip struct {
 	p *Player
 }
 
-func (g *resizeGrip) Paint(*paintengine2d.Context) {}
+func (g *resizeGrip) Paint(*paint2d.Context) {}
 func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false

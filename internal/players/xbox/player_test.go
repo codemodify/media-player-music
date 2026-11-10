@@ -19,23 +19,22 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	xbsource "github.com/codemodify/media-player-music/internal/skins/sources/xbox"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
 
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, players.XboxSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	p, err := New(h, Options{Headless: true, Scale: scale})
@@ -47,13 +46,13 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	return a, p
 }
 
-func click(w *app.Window, button platform.MouseButton, at paintengine2d.Point) {
+func click(w *ui.Window, button platform.MouseButton, at paint2d.Point) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: at})
 }
 
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -75,7 +74,7 @@ func TestOriginalWindowGeometryAndShapedTransparencyAtEveryScale(t *testing.T) {
 				t.Fatal("playlist must use the public utility/ownership policy")
 			}
 			for _, window := range []struct {
-				w             *app.Window
+				w             *ui.Window
 				width, height int
 			}{{p.Main, 350, 216}, {p.List, 448, 316}} {
 				w, h := window.w.Size()
@@ -188,7 +187,7 @@ func TestCurvedSourcePositionMapsDrivePointerValuesAtEveryScale(t *testing.T) {
 				a.PumpOnce()
 				for _, target := range []uint8{64, 224} {
 					point, gray := originalCurvePoint(t, im, target)
-					local := paintengine2d.Pt((float32(point.X-im.Bounds().Min.X)+.5)*scale, (float32(point.Y-im.Bounds().Min.Y)+.5)*scale)
+					local := paint2d.Pt((float32(point.X-im.Bounds().Min.X)+.5)*scale, (float32(point.Y-im.Bounds().Min.Y)+.5)*scale)
 					at := widget.DeviceOrigin(item.f).Add(local)
 					if item.f.HitTest(local) != item.f {
 						t.Fatal("original grayscale curve is absent from the slider hit area")
@@ -393,8 +392,8 @@ func TestBothViewsRouteDecodedFileAndFolderDropsWithoutMovingSources(t *testing.
 	var got []string
 	p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 	for _, target := range []struct {
-		w  *app.Window
-		at paintengine2d.Point
+		w  *ui.Window
+		at paint2d.Point
 	}{{p.Main, widget.DeviceBounds(p.body.visual).Center()}, {p.List, p.listPane.list.AccessibleItems()[0].Bounds.Center()}} {
 		off := target.w.Surface().(*platform.Offscreen)
 		before := calls
@@ -505,7 +504,7 @@ func TestPlaylistResizeSelectionActivationAndInterruptedGestures(t *testing.T) {
 				case "focus-change":
 					p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
 				case "wheel-at-end":
-					p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: at, Scroll: paintengine2d.Pt(0, 1)})
+					p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: at, Scroll: paint2d.Pt(0, 1)})
 				}
 				click(p.List, platform.ButtonLeft, at)
 				a.PumpOnce()

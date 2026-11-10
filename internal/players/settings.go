@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui/style"
 )
 
 // Settings remembers the audio backend, appearance and desktop session. Window
@@ -75,8 +75,11 @@ type PresentationSize struct {
 	Height int `json:"height"`
 }
 
+const settingsName = "media-player-music.json"
+
+// SettingsPath is where Save writes.
 func SettingsPath() string {
-	return filepath.Join(style.ConfigDir(), "media-player-music.json")
+	return filepath.Join(style.ConfigDir(), settingsName)
 }
 
 // NormalizeSkin also accepts names written by older versions of the app.
@@ -103,7 +106,9 @@ func LoadSettings() Settings {
 		Face  string            `json:"face"`
 		Skins map[string]string `json:"skins"`
 	}
-	data, err := os.ReadFile(SettingsPath())
+	// The file saved under uitoolkit's folder is read until the first Save
+	// writes desktop-ui's own.
+	data, err := os.ReadFile(style.ConfigSource(settingsName))
 	if err != nil || json.Unmarshal(data, &saved) != nil {
 		return Settings{Skin: DefaultSkin}
 	}

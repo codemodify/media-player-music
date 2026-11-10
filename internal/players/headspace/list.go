@@ -4,12 +4,13 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // playlistList keeps the stock list's navigation and scrolling and reserves
@@ -33,7 +34,7 @@ func newPlaylistList(p *Player) *playlistList {
 	l.Init(l)
 	l.OnActivate = func(i int) { l.activate(i) }
 	l.ContextKeepsSelection = true
-	l.OnContext = func(_ int, at paintengine2d.Point) { p.Host.ContextMenu(l, at) }
+	l.OnContext = func(_ int, at paint2d.Point) { p.Host.ContextMenu(l, at) }
 	l.SetFocusVisibleOnly(true)
 	l.SetAccessibleName("Playlist")
 	l.DisableTypeAhead = true
@@ -53,27 +54,27 @@ func (l *playlistList) geometry(lk style.LookAndFeel) *widgets.RowGeometry {
 		return nil
 	}
 	box := parent.LocalBounds()
-	rows, ok := style.SkinSlotRect(lk, LayoutMain, "rows", box)
+	rows, ok := skins.SkinSlotRect(lk, LayoutMain, "rows", box)
 	if !ok {
 		return nil
 	}
-	bar, _ := style.SkinSlotRect(lk, LayoutMain, "scroll", box)
+	bar, _ := skins.SkinSlotRect(lk, LayoutMain, "scroll", box)
 	o := l.Bounds().Min
 	return &widgets.RowGeometry{
-		Rows:      rows.Translate(paintengine2d.Pt(-o.X, -o.Y)),
-		Bar:       bar.Translate(paintengine2d.Pt(-o.X, -o.Y)),
+		Rows:      rows.Translate(paint2d.Pt(-o.X, -o.Y)),
+		Bar:       bar.Translate(paint2d.Pt(-o.X, -o.Y)),
 		RowHeight: style.Dip(lk, 14),
 	}
 }
 
-func (l *playlistList) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i int, st style.ControlState) bool {
+func (l *playlistList) paintRow(ctx *paint2d.Context, row paint2d.Rect, i int, st style.ControlState) bool {
 	lk := l.Look()
-	col := paintengine2d.RGB(.8, .94, .64)
+	col := paint2d.RGB(.8, .94, .64)
 	if i == l.p.Transport.List.Index() {
-		col = paintengine2d.White
+		col = paint2d.White
 	}
 	if i == l.Selected {
-		ctx.DrawRect(row, paintengine2d.Fill(paintengine2d.RGB(.36, .55, .12)))
+		ctx.DrawRect(row, paint2d.Fill(paint2d.RGB(.36, .55, .12)))
 		if st.Focused() {
 			lk.DrawFocusRing(ctx, row)
 		}
@@ -81,15 +82,15 @@ func (l *playlistList) paintRow(ctx *paintengine2d.Context, row paintengine2d.Re
 	f := players.ScaledFace(lk.Font(), style.Dip(lk, 11))
 	clock := l.ItemDetail(i)
 	pad, width := style.Dip(lk, 2), f.Advance(clock)
-	players.DrawTextIn(ctx, f, paintengine2d.XYWH(row.Max.X-width-pad, row.Min.Y, width, row.Dy()), clock, col, style.AlignEnd)
-	players.DrawTextIn(ctx, f, paintengine2d.XYWH(row.Min.X+pad, row.Min.Y, max(row.Dx()-width-3*pad, 0), row.Dy()), l.ItemText(i), col, style.AlignStart)
+	players.DrawTextIn(ctx, f, paint2d.XYWH(row.Max.X-width-pad, row.Min.Y, width, row.Dy()), clock, col, style.AlignEnd)
+	players.DrawTextIn(ctx, f, paint2d.XYWH(row.Min.X+pad, row.Min.Y, max(row.Dx()-width-3*pad, 0), row.Dy()), l.ItemText(i), col, style.AlignStart)
 	return true
 }
 
-func (l *playlistList) paintScroll(ctx *paintengine2d.Context, track, thumb paintengine2d.Rect, st style.ControlState) bool {
-	ctx.DrawRect(track, paintengine2d.Fill(paintengine2d.RGB(.76, .76, .76)))
-	ctx.DrawRect(thumb, paintengine2d.Fill(paintengine2d.RGB(.88, .88, .88)))
-	ctx.DrawRect(thumb, paintengine2d.StrokePaint(paintengine2d.RGB(.32, .32, .32), 1))
+func (l *playlistList) paintScroll(ctx *paint2d.Context, track, thumb paint2d.Rect, st style.ControlState) bool {
+	ctx.DrawRect(track, paint2d.Fill(paint2d.RGB(.76, .76, .76)))
+	ctx.DrawRect(thumb, paint2d.Fill(paint2d.RGB(.88, .88, .88)))
+	ctx.DrawRect(thumb, paint2d.StrokePaint(paint2d.RGB(.32, .32, .32), 1))
 	return true
 }
 

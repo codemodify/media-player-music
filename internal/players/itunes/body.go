@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	uiskins "goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p            *Player
-	slots        *widget.Slots
+	slots        *uiskins.Slots
 	buttons      map[string]*players.GlyphButton
 	play         *players.GlyphButton
 	seek, volume *sourceSlider
@@ -31,7 +32,7 @@ type body struct {
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), visualOn: true}
+	b := &body{p: p, slots: uiskins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), visualOn: true}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("iTunes music library")
@@ -62,7 +63,7 @@ func newBody(p *Player) *body {
 	button("settings", "Appearance and settings", players.GlyphSkin, func() {
 		c := b.buttons["settings"]
 		o := widget.DeviceOrigin(c)
-		p.Host.ContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()))
+		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	})
 	button("mute", "Mute", players.GlyphNone, func() { p.Host.Command(players.CmdMute) }).Toggle = true
 	b.volume = newSourceSlider(false, 0, 100, p.Transport.Volume*100, "Volume", func(v float32) { p.Host.SetVolume(v / 100) }, "volume")
@@ -108,7 +109,7 @@ func newBody(p *Player) *body {
 		column := i
 		c := players.NewGlyphButton(players.GlyphNone, "Sort by "+name, func() { b.list.sortBy(column); b.Invalidate() })
 		label := name
-		c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+		c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 			return paintHeader(ctx, c.Look(), r, label, column == b.list.sortColumn, b.list.descending, st)
 		}
 		b.headers[i] = c
@@ -117,20 +118,20 @@ func newBody(p *Player) *body {
 	sidebarButton := func(slot, label string, action func()) *players.GlyphButton {
 		c := button(slot, label, players.GlyphNone, action)
 		c.Shaper = nil
-		c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+		c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 			if st.Checked() || st.Hovered() {
-				ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.RGB(.62, .72, .8)))
+				ctx.DrawRect(r, paint2d.Fill(paint2d.RGB(.62, .72, .8)))
 			}
-			ink := paintengine2d.RGB(.1, .12, .14)
+			ink := paint2d.RGB(.1, .12, .14)
 			if st.Disabled() {
-				ink = paintengine2d.RGB(.52, .55, .58)
+				ink = paint2d.RGB(.52, .55, .58)
 			}
 			pad := style.Dip(c.Look(), 4)
 			text := r
 			text.Min.X += pad
 			if slot == "library" {
-				icon := paintengine2d.XYWH(r.Min.X+pad, r.Min.Y+style.Dip(c.Look(), 2), style.Dip(c.Look(), 21), style.Dip(c.Look(), 21))
-				style.DrawSkinSprite(c.Look(), ctx, icon, "library.icon", paintengine2d.Color{})
+				icon := paint2d.XYWH(r.Min.X+pad, r.Min.Y+style.Dip(c.Look(), 2), style.Dip(c.Look(), 21), style.Dip(c.Look(), 21))
+				uiskins.DrawSkinSprite(c.Look(), ctx, icon, "library.icon", paint2d.Color{})
 				text.Min.X += style.Dip(c.Look(), 27)
 			}
 			players.DrawTextIn(ctx, players.ScaledFace(c.Look().Font(), style.Dip(c.Look(), 11)), text, label, ink, style.AlignStart)
@@ -153,7 +154,7 @@ func newBody(p *Player) *body {
 	sidebarButton("skins", "Appearance…", func() {
 		c := b.buttons["skins"]
 		o := widget.DeviceOrigin(c)
-		p.Host.ContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()))
+		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	})
 	sidebarButton("store", "Music Store", nil).SetEnabled(false)
 	b.buttons["store"].Tip = "The original Music Store service is not provided by this music player"
@@ -163,18 +164,18 @@ func newBody(p *Player) *body {
 	return b
 }
 
-func lcdInk() paintengine2d.Color { return paintengine2d.RGB(.16, .2, .1) }
-func paintHeader(ctx *paintengine2d.Context, lk style.LookAndFeel, r paintengine2d.Rect, label string, sorted, descending bool, st style.ControlState) bool {
-	ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.RGB(.85, .89, .9)))
+func lcdInk() paint2d.Color { return paint2d.RGB(.16, .2, .1) }
+func paintHeader(ctx *paint2d.Context, lk style.LookAndFeel, r paint2d.Rect, label string, sorted, descending bool, st style.ControlState) bool {
+	ctx.DrawRect(r, paint2d.Fill(paint2d.RGB(.85, .89, .9)))
 	if sorted {
-		ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.RGB(.65, .77, .86)))
+		ctx.DrawRect(r, paint2d.Fill(paint2d.RGB(.65, .77, .86)))
 	}
-	ctx.DrawRect(paintengine2d.XYWH(r.Min.X, r.Min.Y, r.Dx(), 1), paintengine2d.Fill(paintengine2d.White))
-	ctx.DrawRect(paintengine2d.XYWH(r.Max.X-1, r.Min.Y, 1, r.Dy()), paintengine2d.Fill(paintengine2d.RGB(.56, .59, .61)))
+	ctx.DrawRect(paint2d.XYWH(r.Min.X, r.Min.Y, r.Dx(), 1), paint2d.Fill(paint2d.White))
+	ctx.DrawRect(paint2d.XYWH(r.Max.X-1, r.Min.Y, 1, r.Dy()), paint2d.Fill(paint2d.RGB(.56, .59, .61)))
 	if sorted {
 		d := style.Dip(lk, 1)
 		x, y := r.Max.X-8*d, (r.Min.Y+r.Max.Y)/2
-		var arrow paintengine2d.Path
+		var arrow paint2d.Path
 		if descending {
 			arrow.MoveTo(x-3*d, y-2*d)
 			arrow.LineTo(x+3*d, y-2*d)
@@ -185,10 +186,10 @@ func paintHeader(ctx *paintengine2d.Context, lk style.LookAndFeel, r paintengine
 			arrow.LineTo(x, y-2*d)
 		}
 		arrow.Close()
-		ctx.DrawPath(&arrow, paintengine2d.Fill(paintengine2d.RGB(.2, .3, .4)))
+		ctx.DrawPath(&arrow, paint2d.Fill(paint2d.RGB(.2, .3, .4)))
 		r.Max.X -= 14 * d
 	}
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 11)), r.Inset(style.Dip(lk, 4)), label, paintengine2d.RGB(.1, .12, .14), style.AlignStart)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 11)), r.Inset(style.Dip(lk, 4)), label, paint2d.RGB(.1, .12, .14), style.AlignStart)
 	return true
 }
 func (b *body) sync() {
@@ -228,58 +229,58 @@ func (b *body) sync() {
 	b.list.Invalidate()
 	b.Invalidate()
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
-	header, _ := style.SkinSlotRect(b.Look(), LayoutMain, "header", b.LocalBounds())
-	rows, _ := style.SkinSlotRect(b.Look(), LayoutMain, "rows", b.LocalBounds())
+	header, _ := uiskins.SkinSlotRect(b.Look(), LayoutMain, "header", b.LocalBounds())
+	rows, _ := uiskins.SkinSlotRect(b.Look(), LayoutMain, "rows", b.LocalBounds())
 	header.Min.X, header.Max.X = rows.Min.X, rows.Max.X
 	for i, cell := range columnRects(header, b.Look()) {
 		b.headers[i].Arrange(cell)
 	}
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	ctx.DrawRect(box, paintengine2d.Paint{Color: paintengine2d.White, Blend: paintengine2d.BlendDestOut})
-	style.DrawSkinLayout(lk, ctx, box, LayoutMain)
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, slot, box); return r }
+	ctx.DrawRect(box, paint2d.Paint{Color: paint2d.White, Blend: paint2d.BlendDestOut})
+	uiskins.DrawSkinLayout(lk, ctx, box, LayoutMain)
+	at := func(slot string) paint2d.Rect { r, _ := uiskins.SkinSlotRect(lk, LayoutMain, slot, box); return r }
 	for _, slot := range []string{"controlwell", "lcd"} {
-		style.DrawSkinSlot(lk, ctx, at(slot), LayoutMain, slot, 0)
+		uiskins.DrawSkinSlot(lk, ctx, at(slot), LayoutMain, slot, 0)
 	}
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 12)), at("title"), "Music Player", paintengine2d.RGB(.09, .1, .11), style.AlignCenter)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 12)), at("title"), "Music Player", paint2d.RGB(.09, .1, .11), style.AlignCenter)
 	side := at("sidebar")
-	ctx.DrawRect(side, paintengine2d.Fill(paintengine2d.White))
-	ctx.DrawRect(side, paintengine2d.StrokePaint(paintengine2d.RGB(.46, .5, .52), style.Dip(lk, 1)))
+	ctx.DrawRect(side, paint2d.Fill(paint2d.White))
+	ctx.DrawRect(side, paint2d.StrokePaint(paint2d.RGB(.46, .5, .52), style.Dip(lk, 1)))
 	paintHeader(ctx, lk, at("sourceheader"), "Source", false, false, 0)
 	if b.p.Host.Model.PlaylistVisible {
 		table := at("list")
-		ctx.DrawRect(table, paintengine2d.Fill(paintengine2d.White))
-		ctx.DrawRect(table, paintengine2d.StrokePaint(paintengine2d.RGB(.48, .5, .53), style.Dip(lk, 1)))
+		ctx.DrawRect(table, paint2d.Fill(paint2d.White))
+		ctx.DrawRect(table, paint2d.StrokePaint(paint2d.RGB(.48, .5, .53), style.Dip(lk, 1)))
 		paintHeader(ctx, lk, at("header"), "", false, false, 0)
 		if b.list.Count == 0 {
 			text := "Drop music files or folders here"
 			if b.list.query != "" {
 				text = "No matching songs"
 			}
-			players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 12)), table, text, paintengine2d.RGB(.45, .47, .5), style.AlignCenter)
+			players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 12)), table, text, paint2d.RGB(.45, .47, .5), style.AlignCenter)
 		}
 	}
 	if !b.analyser.Visible() {
-		style.DrawSkinSprite(lk, ctx, at("logo"), "app.icon", paintengine2d.Color{})
+		uiskins.DrawSkinSprite(lk, ctx, at("logo"), "app.icon", paint2d.Color{})
 	}
 	drawDisplay(ctx, lk, at("display"), b.p, false)
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), at("searchlabel"), "Search Library", paintengine2d.RGB(.23, .25, .27), style.AlignCenter)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), at("searchlabel"), "Search Library", paint2d.RGB(.23, .25, .27), style.AlignCenter)
 	status := fmt.Sprintf("%d songs · %s · volume %d%%", b.list.Count, players.Clock(b.p.Transport.List.Total()), int(b.p.Transport.Volume*100+.5))
 	if b.p.Host.Model.Error != "" {
 		status = b.p.Host.StatusText()
 	}
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), at("status"), status, paintengine2d.RGB(.15, .17, .18), style.AlignCenter)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), at("status"), status, paint2d.RGB(.15, .17, .18), style.AlignCenter)
 }
-func drawDisplay(ctx *paintengine2d.Context, lk style.LookAndFeel, r paintengine2d.Rect, p *Player, mini bool) {
+func drawDisplay(ctx *paint2d.Context, lk style.LookAndFeel, r paint2d.Rect, p *Player, mini bool) {
 	title := p.Transport.Track().Label()
 	if title == "" {
 		title = "Music Player"
@@ -293,10 +294,10 @@ func drawDisplay(ctx *paintengine2d.Context, lk style.LookAndFeel, r paintengine
 		players.DrawTextIn(ctx, f, r, title, lcdInk(), style.AlignCenter)
 		return
 	}
-	players.DrawTextIn(ctx, f, paintengine2d.XYWH(r.Min.X, r.Min.Y, r.Dx(), h), title, lcdInk(), style.AlignCenter)
-	players.DrawTextIn(ctx, f, paintengine2d.XYWH(r.Min.X, r.Min.Y+h, r.Dx(), h), p.Transport.State.String()+" · "+players.Clock(p.Transport.Pos)+" / "+players.Clock(p.Transport.Length()), lcdInk(), style.AlignCenter)
+	players.DrawTextIn(ctx, f, paint2d.XYWH(r.Min.X, r.Min.Y, r.Dx(), h), title, lcdInk(), style.AlignCenter)
+	players.DrawTextIn(ctx, f, paint2d.XYWH(r.Min.X, r.Min.Y+h, r.Dx(), h), p.Transport.State.String()+" · "+players.Clock(p.Transport.Pos)+" / "+players.Clock(p.Transport.Length()), lcdInk(), style.AlignCenter)
 }
-func (b *body) contextMenu(from widget.Component, at paintengine2d.Point) {
+func (b *body) contextMenu(from widget.Component, at paint2d.Point) {
 	h, t := b.p.Host, b.p.Transport
 	remove := widgets.Item("Remove current track", h.RemoveTrack)
 	remove.Disabled = t.List.Len() == 0

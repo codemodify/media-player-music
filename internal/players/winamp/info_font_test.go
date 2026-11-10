@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // Windows98 has white source glyphs for its main display and cyan playlist
@@ -29,7 +29,7 @@ func testPlaylistReadoutInk(t *testing.T, skin string, want [3]uint8) {
 			a, p := open(t, skin, scale)
 			p.Pose(97 * time.Second)
 			a.PumpOnce()
-			sk, ok := style.LoadSkin(skin)
+			sk, ok := skins.LoadSkin(skin)
 			if !ok || sk.Sprites["font.31"] == nil || sk.Sprites["font.31"].Tint || sk.Sprites["info.font.31"] == nil || !sk.Sprites["info.font.31"].Tint {
 				t.Fatal("main source font or optional readout alpha masks are missing")
 			}
@@ -64,9 +64,9 @@ func TestPlaylistInfoFontFallsBackWithoutChangingClassicArtwork(t *testing.T) {
 			if got := pixInfoWidth(lk, text); got != width {
 				t.Fatalf("fallback width=%g want %g", got, width)
 			}
-			paint := func(info bool) *paintengine2d.Image {
-				im := paintengine2d.NewImage(200, 30)
-				ctx := paintengine2d.NewContext(im)
+			paint := func(info bool) *paint2d.Image {
+				im := paint2d.NewImage(200, 30)
+				ctx := paint2d.NewContext(im)
 				if info {
 					pixInfoText(lk, ctx, .25, .5, text, rgb(0x23, 0xdd, 0x91))
 				} else {

@@ -10,16 +10,17 @@ import (
 	"os"
 	"testing/fstest"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
-	asset := paintengine2d.NewImage(8, 8)
-	paintengine2d.NewContext(asset).DrawRect(paintengine2d.XYWH(0, 0, 8, 8), paintengine2d.Fill(paintengine2d.RGB(1, 0, 1)))
+	asset := paint2d.NewImage(8, 8)
+	paint2d.NewContext(asset).DrawRect(paint2d.XYWH(0, 0, 8, 8), paint2d.Fill(paint2d.RGB(1, 0, 1)))
 	var png bytes.Buffer
 	if err := asset.WritePNG(&png); err != nil {
 		panic(err)
@@ -29,16 +30,16 @@ func main() {
 		"bar.png":   {Data: png.Bytes()},
 	}
 	const id = "public-menu-bar-skin-probe"
-	if err := style.RegisterSkinFS(fsys, id); err != nil {
+	if err := skins.RegisterSkinFS(fsys, id); err != nil {
 		panic(err)
 	}
-	sk, ok := style.LoadSkin(id)
+	sk, ok := skins.LoadSkin(id)
 	if !ok || sk.Parts["bar"] == nil {
 		panic("public bar part did not load")
 	}
 	os.Setenv(style.ThemeEnv, id)
 	for _, scale := range []float32{1, 1.75} {
-		a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+		a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 		w, err := a.NewWindow(platform.WindowOptions{Title: "Bar probe", Width: 240, Height: 60, Headless: true, Decorations: platform.DecorationsNone})
 		if err != nil {
 			panic(err)
@@ -46,8 +47,8 @@ func main() {
 		m := widgets.NewMenuBar(widgets.NewMenu("File", widgets.Item("Open", func() {})))
 		w.SetContent(m)
 		a.PumpOnce()
-		control := paintengine2d.NewImage(int(240*scale), int(60*scale))
-		if !style.DrawSkinSprite(w.Look(), paintengine2d.NewContext(control), paintengine2d.XYWH(0, 0, float32(control.Width), float32(control.Height)), "bar", paintengine2d.Color{}) {
+		control := paint2d.NewImage(int(240*scale), int(60*scale))
+		if !skins.DrawSkinSprite(w.Look(), paint2d.NewContext(control), paint2d.XYWH(0, 0, float32(control.Width), float32(control.Height)), "bar", paint2d.Color{}) {
 			panic("public bar sprite did not draw")
 		}
 		x, y := int(220*scale), int(30*scale)

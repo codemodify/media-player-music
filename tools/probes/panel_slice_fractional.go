@@ -11,20 +11,21 @@ import (
 	"math"
 	"testing/fstest"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
 	for _, pixelated := range []bool{true, false} {
 		id := fmt.Sprintf("panel-slice-public-%t", pixelated)
 		sheet := func(scale int) []byte {
-			im := paintengine2d.NewImage(273*scale, 211*scale)
+			im := paint2d.NewImage(273*scale, 211*scale)
 			for y := 0; y < im.Height; y++ {
 				for x := 0; x < im.Width; x++ {
-					c := paintengine2d.RGB(0, 0, 1)
+					c := paint2d.RGB(0, 0, 1)
 					if y >= (211-38)*scale {
-						c = paintengine2d.RGB(1, 0, 0)
+						c = paint2d.RGB(1, 0, 0)
 					}
 					im.SetColor(x, y, c)
 				}
@@ -37,7 +38,7 @@ func main() {
 		}
 		doc := fmt.Sprintf(`{"skin":1,"label":"Public panel slice probe","base":"dark","design":{"pixelated":%t},"sheets":{"chrome":{"1x":"one.png","2x":"two.png"}},"sprites":{"face":{"at":[0,0,273,211],"slice":[0,148,38,124]}},"layouts":{"panel":{"size":[273,211],"art":"face","slots":{"footer":{"at":[0,0,0,38],"stretchX":true,"fromBottom":true}}}}}`, pixelated)
 		fsys := fstest.MapFS{"skin.json": {Data: []byte(doc)}, "one.png": {Data: sheet(1)}, "two.png": {Data: sheet(2)}}
-		if err := style.RegisterSkinFS(fsys, id); err != nil {
+		if err := skins.RegisterSkinFS(fsys, id); err != nil {
 			panic(err)
 		}
 		p, ok := style.LoadTheme(id)
@@ -47,9 +48,9 @@ func main() {
 		for _, scale := range []float32{1, 1.25, 1.5, 1.75, 2} {
 			for _, size := range [][2]float32{{273, 211}, {420, 320}} {
 				w, h := size[0]*scale, size[1]*scale
-				im := paintengine2d.NewImage(int(math.Ceil(float64(w))), int(math.Ceil(float64(h))))
+				im := paint2d.NewImage(int(math.Ceil(float64(w))), int(math.Ceil(float64(h))))
 				lk := style.WithScale(p.Look(), scale)
-				if !style.DrawSkinLayout(lk, paintengine2d.NewContext(im), paintengine2d.XYWH(0, 0, w, h), "panel") {
+				if !skins.DrawSkinLayout(lk, paint2d.NewContext(im), paint2d.XYWH(0, 0, w, h), "panel") {
 					panic("layout did not draw")
 				}
 				x := int(w / 2)
@@ -64,7 +65,7 @@ func main() {
 						last = y
 					}
 				}
-				r, ok := style.SkinSlotRect(lk, "panel", "footer", paintengine2d.XYWH(0, 0, w, h))
+				r, ok := skins.SkinSlotRect(lk, "panel", "footer", paint2d.XYWH(0, 0, w, h))
 				if !ok {
 					panic("footer slot did not resolve")
 				}

@@ -4,26 +4,27 @@ import (
 	"fmt"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type playlistPane struct {
 	widget.Base
 	p       *Player
-	slots   *widget.Slots
+	slots   *skins.Slots
 	list    *playlistList
 	buttons map[string]*players.GlyphButton
 	footer  *playlistStatus
 }
 
 func newPlaylistPane(p *Player) *playlistPane {
-	b := &playlistPane{p: p, slots: widget.NewSlots(LayoutPlaylist), buttons: make(map[string]*players.GlyphButton)}
+	b := &playlistPane{p: p, slots: skins.NewSlots(LayoutPlaylist), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Half Life 2 playlist")
@@ -45,22 +46,22 @@ func newPlaylistPane(p *Player) *playlistPane {
 	// light dropdown and columns above the original orange-on-black rows.
 	dropdown := players.NewGlyphButton(players.GlyphNone, "Now Playing playlist options", nil)
 	dropdown.OnClick = func() { b.options(dropdown) }
-	dropdown.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, _ style.ControlState) bool {
+	dropdown.Art = func(ctx *paint2d.Context, r paint2d.Rect, _ style.ControlState) bool {
 		lk := dropdown.Look()
-		ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.RGB(.84, .84, .84)))
+		ctx.DrawRect(r, paint2d.Fill(paint2d.RGB(.84, .84, .84)))
 		f := players.ScaledFace(lk.Font(), style.Dip(lk, 11))
 		text := r
 		text.Min.X += style.Dip(lk, 3)
 		text.Max.X -= style.Dip(lk, 18)
-		ink := paintengine2d.RGB(.18, .18, .18)
+		ink := paint2d.RGB(.18, .18, .18)
 		players.DrawTextIn(ctx, f, text, "Now Playing", ink, style.AlignStart)
 		cx, cy := r.Max.X-style.Dip(lk, 9), (r.Min.Y+r.Max.Y)/2
-		arrow := paintengine2d.NewPath()
+		arrow := paint2d.NewPath()
 		arrow.MoveTo(cx-style.Dip(lk, 3), cy-style.Dip(lk, 1))
 		arrow.LineTo(cx+style.Dip(lk, 3), cy-style.Dip(lk, 1))
 		arrow.LineTo(cx, cy+style.Dip(lk, 3))
 		arrow.Close()
-		ctx.DrawPath(arrow, paintengine2d.Fill(ink))
+		ctx.DrawPath(arrow, paint2d.Fill(ink))
 		return true
 	}
 	b.buttons["playlist.dropdown"] = dropdown
@@ -69,14 +70,14 @@ func newPlaylistPane(p *Player) *playlistPane {
 	header := players.NewGlyphButton(players.GlyphNone, "Title, Artist, Album, Type, Length", nil)
 	header.SetAccessibleDescription("Open playlist options")
 	header.OnClick = func() { b.options(header) }
-	header.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, _ style.ControlState) bool {
+	header.Art = func(ctx *paint2d.Context, r paint2d.Rect, _ style.ControlState) bool {
 		lk := header.Look()
-		ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.White))
+		ctx.DrawRect(r, paint2d.Fill(paint2d.White))
 		f, pad := players.ScaledFace(lk.Font(), style.Dip(lk, 11)), style.Dip(lk, 2)
 		for i, cell := range playlistColumnRects(r, lk) {
-			players.DrawTextIn(ctx, f, cell.Inset(pad), [...]string{"Title", "Artist", "Album", "Type", "Length"}[i], paintengine2d.RGB(.2, .2, .2), style.AlignStart)
+			players.DrawTextIn(ctx, f, cell.Inset(pad), [...]string{"Title", "Artist", "Album", "Type", "Length"}[i], paint2d.RGB(.2, .2, .2), style.AlignStart)
 		}
-		ctx.DrawRect(paintengine2d.XYWH(r.Min.X, r.Max.Y-1, r.Dx(), 1), paintengine2d.Fill(paintengine2d.RGB(.2, .2, .2)))
+		ctx.DrawRect(paint2d.XYWH(r.Min.X, r.Max.Y-1, r.Dx(), 1), paint2d.Fill(paint2d.RGB(.2, .2, .2)))
 		return true
 	}
 	b.buttons["playlist.header"] = header
@@ -98,7 +99,7 @@ func newPlaylistPane(p *Player) *playlistPane {
 }
 func (b *playlistPane) options(from widget.Component) {
 	o := widget.DeviceOrigin(from)
-	b.contextMenu(from, paintengine2d.Pt(o.X, o.Y+from.Bounds().Dy()))
+	b.contextMenu(from, paint2d.Pt(o.X, o.Y+from.Bounds().Dy()))
 }
 func (b *playlistPane) sync() {
 	b.buttons["shuffle"].SetChecked(b.p.Transport.Random)
@@ -108,16 +109,16 @@ func (b *playlistPane) sync() {
 	b.list.Invalidate()
 	b.Invalidate()
 }
-func (b *playlistPane) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *playlistPane) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *playlistPane) Arrange(r paintengine2d.Rect) {
+func (b *playlistPane) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *playlistPane) Paint(ctx *paintengine2d.Context) {
-	style.DrawSkinLayout(b.Look(), ctx, b.LocalBounds(), LayoutPlaylist)
+func (b *playlistPane) Paint(ctx *paint2d.Context) {
+	skins.DrawSkinLayout(b.Look(), ctx, b.LocalBounds(), LayoutPlaylist)
 }
 func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 	if e.Button == platform.ButtonRight {
@@ -131,7 +132,7 @@ func (b *playlistPane) MousePress(e widget.MouseEvent) bool {
 	}
 	return false
 }
-func (b *playlistPane) contextMenu(from widget.Component, at paintengine2d.Point) {
+func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 	h, t := b.p.Host, b.p.Transport
 	remove := widgets.Item("Remove current track", h.RemoveTrack)
 	remove.Disabled = t.List.Len() == 0
@@ -185,13 +186,13 @@ func (s *playlistStatus) text() (selected, total string) {
 	return selected, "Total Time: " + duration
 }
 
-func (s *playlistStatus) Paint(ctx *paintengine2d.Context) {
+func (s *playlistStatus) Paint(ctx *paint2d.Context) {
 	lk, r := s.Look(), s.LocalBounds()
-	ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.Black))
+	ctx.DrawRect(r, paint2d.Fill(paint2d.Black))
 	f, pad := players.ScaledFace(lk.Font(), style.Dip(lk, 10)), style.Dip(lk, 2)
 	selected, total := s.text()
-	left := paintengine2d.XYWH(r.Min.X+pad, r.Min.Y, r.Dx()/2-pad, r.Dy())
-	right := paintengine2d.XYWH(r.Min.X+r.Dx()/2, r.Min.Y, r.Dx()/2-pad, r.Dy())
+	left := paint2d.XYWH(r.Min.X+pad, r.Min.Y, r.Dx()/2-pad, r.Dy())
+	right := paint2d.XYWH(r.Min.X+r.Dx()/2, r.Min.Y, r.Dx()/2-pad, r.Dy())
 	players.DrawTextIn(ctx, f, left, selected, orange(), style.AlignStart)
 	players.DrawTextIn(ctx, f, right, total, orange(), style.AlignEnd)
 }
@@ -206,7 +207,7 @@ type resizeGrip struct {
 	p *Player
 }
 
-func (g *resizeGrip) Paint(*paintengine2d.Context) {}
+func (g *resizeGrip) Paint(*paint2d.Context) {}
 func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false

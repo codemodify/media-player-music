@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // Exercise the actual toolkit caption with a leading window-menu control as

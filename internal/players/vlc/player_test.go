@@ -13,16 +13,16 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
 	vlcsource "github.com/codemodify/media-player-music/internal/skins/sources/vlc"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	plan := plans.VLC()
@@ -31,11 +31,11 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	if err := plans.Write(dir, plan); err != nil {
 		t.Fatal(err)
 	}
-	if err := style.RegisterSkinFS(os.DirFS(filepath.Join(dir, plan.Name)), plan.Name); err != nil {
+	if err := skins.RegisterSkinFS(os.DirFS(filepath.Join(dir, plan.Name)), plan.Name); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv(style.ThemeEnv, plan.Name)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = func() []string { return []string{plan.Name} }
 	h.ShowSettings = func() {}
@@ -48,15 +48,15 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	p.Advance(0)
 	return a, p
 }
-func click(w *app.Window, at paintengine2d.Point) {
+func click(w *ui.Window, at paint2d.Point) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: at})
 }
-func center(c widget.Component) paintengine2d.Point {
-	return widget.DeviceOrigin(c).Add(paintengine2d.Pt(c.Bounds().Dx()/2, c.Bounds().Dy()/2))
+func center(c widget.Component) paint2d.Point {
+	return widget.DeviceOrigin(c).Add(paint2d.Pt(c.Bounds().Dx()/2, c.Bounds().Dy()/2))
 }
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -128,7 +128,7 @@ func TestVLCRealPointerKeyboardAndAccessibleQueueActivation(t *testing.T) {
 			p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
 			commands := []players.Command{}
 			p.Host.Run = func(c players.Command) { commands = append(commands, c); p.Transport.Do(c) }
-			at := widget.DeviceOrigin(l).Add(paintengine2d.Pt(20*scale, 52*scale))
+			at := widget.DeviceOrigin(l).Add(paint2d.Pt(20*scale, 52*scale))
 			click(p.Main, at)
 			a.PumpOnce()
 			p.Advance(70 * time.Millisecond)
@@ -255,7 +255,7 @@ func TestVLCActualClassicToolbarPaletteAndCaptures(t *testing.T) {
 				c := p.body.buttons[item.button]
 				o := widget.DeviceOrigin(c)
 				size := 16 * scale
-				r := paintengine2d.XYWH(o.X+(c.Bounds().Dx()-size)/2, o.Y+(c.Bounds().Dy()-size)/2, size, size)
+				r := paint2d.XYWH(o.X+(c.Bounds().Dx()-size)/2, o.Y+(c.Bounds().Dy()-size)/2, size, size)
 				for y := int(r.Min.Y + .5); y < int(r.Max.Y); y++ {
 					for x := int(r.Min.X + .5); x < int(r.Max.X); x++ {
 						got := image.NRGBAAt(x, y)
@@ -265,10 +265,10 @@ func TestVLCActualClassicToolbarPaletteAndCaptures(t *testing.T) {
 					}
 				}
 			}
-			if sk, ok := style.LoadSkin(style.LookAppearance(p.Main.Look()).Name); !ok {
+			if sk, ok := skins.LoadSkin(style.LookAppearance(p.Main.Look()).Name); !ok {
 				t.Fatal("private VLC pack cannot load")
 			} else {
-				for _, warning := range style.LintSkin(sk) {
+				for _, warning := range skins.LintSkin(sk) {
 					if warning.Key != "sprites" {
 						t.Errorf("private VLC pack: %s", warning)
 					}
@@ -320,7 +320,7 @@ func TestVLCSecondarySliderPressOpensContextWithoutEditing(t *testing.T) {
 			p.Host.SyncPlayback = func() { updates++ }
 			for _, s := range []*sourceSlider{p.body.seek, p.body.volume, p.body.eq.balance, p.body.eq.preamp, p.body.eq.bands[3]} {
 				before, pos := s.Value, p.Transport.Pos
-				at := widget.DeviceOrigin(s).Add(paintengine2d.Pt(2*scale, 2*scale))
+				at := widget.DeviceOrigin(s).Add(paint2d.Pt(2*scale, 2*scale))
 				p.Main.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 				p.Main.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonRight, Pos: at})
 				p.Main.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonRight, Pos: at})
@@ -335,7 +335,7 @@ func TestVLCSecondarySliderPressOpensContextWithoutEditing(t *testing.T) {
 			}
 			// Primary input, keyboard and accessibility still edit the stock
 			// slider after dismissing a secondary-click menu.
-			click(p.Main, widget.DeviceOrigin(p.body.volume).Add(paintengine2d.Pt(p.body.volume.Bounds().Dx()-2*scale, p.body.volume.Bounds().Dy()/2)))
+			click(p.Main, widget.DeviceOrigin(p.body.volume).Add(paint2d.Pt(p.body.volume.Bounds().Dx()-2*scale, p.body.volume.Bounds().Dy()/2)))
 			a.PumpOnce()
 			if updates == 0 || p.Transport.Volume < .9 {
 				t.Fatal("primary volume input stopped working")

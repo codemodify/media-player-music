@@ -1,24 +1,24 @@
 package players
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
-func openQueueView(t *testing.T) (*uitoolkit.Application, *app.Window, *Host, *QueueView, *int) {
+func openQueueView(t *testing.T) (*ui.Application, *ui.Window, *Host, *QueueView, *int) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, "dark")
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: 1.75, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: 1.75, DisableLookWatch: true})
 	w, err := a.NewWindow(platform.WindowOptions{Width: 240, Height: 200, Headless: true, Decorations: platform.DecorationsNone})
 	if err != nil {
 		t.Fatal(err)
@@ -36,14 +36,14 @@ func openQueueView(t *testing.T) (*uitoolkit.Application, *app.Window, *Host, *Q
 	q := NewQueueView(h)
 	q.RowGeo = func(lk style.LookAndFeel) *widgets.RowGeometry {
 		b, d := q.LocalBounds(), style.Dip(lk, 1)
-		return &widgets.RowGeometry{Rows: paintengine2d.XYWH(8*d, 8*d, b.Dx()-36*d, b.Dy()-16*d), Bar: paintengine2d.XYWH(b.Dx()-22*d, 8*d, 14*d, b.Dy()-16*d), RowHeight: 18 * d}
+		return &widgets.RowGeometry{Rows: paint2d.XYWH(8*d, 8*d, b.Dx()-36*d, b.Dy()-16*d), Bar: paint2d.XYWH(b.Dx()-22*d, 8*d, 14*d, b.Dy()-16*d), RowHeight: 18 * d}
 	}
 	w.SetContent(q)
 	a.PumpOnce()
 	return a, w, h, q, plays
 }
 
-func queueClick(w *app.Window, at paintengine2d.Point, button platform.MouseButton) {
+func queueClick(w *ui.Window, at paint2d.Point, button platform.MouseButton) {
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Pos: at, Button: button})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Pos: at, Button: button})
 }
@@ -83,7 +83,7 @@ func TestQueueViewDoubleClickAndInterruptedGestures(t *testing.T) {
 	at := q.AccessibleItems()[1].Bounds.Center()
 	queueClick(w, at, platform.ButtonLeft)
 	a.PumpOnce()
-	w.Inject(platform.Event{Kind: platform.EventScroll, Pos: at, Scroll: paintengine2d.Pt(0, 1)})
+	w.Inject(platform.Event{Kind: platform.EventScroll, Pos: at, Scroll: paint2d.Pt(0, 1)})
 	a.PumpOnce()
 	queueClick(w, at, platform.ButtonLeft)
 	a.PumpOnce()
@@ -110,7 +110,7 @@ func TestQueueViewGutterAndFilteredRefreshInterruptPointerActivation(t *testing.
 	queueClick(w, at, platform.ButtonLeft)
 	a.PumpOnce()
 	g := q.RowGeo(q.Look())
-	gutter := widget.DeviceOrigin(q).Add(paintengine2d.Pt(g.Rows.Min.X-2, g.Rows.Min.Y+g.RowHeight/2))
+	gutter := widget.DeviceOrigin(q).Add(paint2d.Pt(g.Rows.Min.X-2, g.Rows.Min.Y+g.RowHeight/2))
 	queueClick(w, gutter, platform.ButtonLeft)
 	a.PumpOnce()
 	queueClick(w, at, platform.ButtonLeft)
@@ -124,5 +124,60 @@ func TestQueueViewGutterAndFilteredRefreshInterruptPointerActivation(t *testing.
 	a.PumpOnce()
 	if *plays != 0 {
 		t.Fatal("row reordering retained a stale double-click")
+	}
+}
+
+func TestQueueViewScrollbarCannotExportRowsAndDropsUseTheAuthoredViewport(t *testing.T) {
+	a, w, h, q, plays := openQueueView(t)
+	var tracks []Track
+	for i := 0; i < 20; i++ {
+		tracks = append(tracks, Track{Title: fmt.Sprintf("Track %02d", i)})
+	}
+	h.Model.Transport.List = NewPlaylist(tracks...)
+	q.Sync()
+	q.RowGeo = func(lk style.LookAndFeel) *widgets.RowGeometry {
+		b, d := q.LocalBounds(), style.Dip(lk, 1)
+		return &widgets.RowGeometry{Rows: paint2d.XYWH(8*d, 44*d, b.Dx()-36*d, b.Dy()-52*d), Bar: paint2d.XYWH(b.Dx()-22*d, 44*d, 14*d, b.Dy()-52*d), RowHeight: 18 * d}
+	}
+	q.OffsetY = 18 * 1.75
+	q.Selected = 1
+	a.PumpOnce()
+	g := q.RowGeo(q.Look())
+	drags := 0
+	q.OnDrag = func(rows []int) *widget.Drag {
+		drags++
+		if len(rows) != 1 || rows[0] != 1 {
+			t.Fatal("row export lost selection identity")
+		}
+		return &widget.Drag{Types: []string{"text/plain"}, Payload: rows}
+	}
+	// This uses the inherited stock DragSource entry point, which is called
+	// separately from our application MousePress gesture guard.
+	for x := g.Rows.Max.X; x < q.LocalBounds().Max.X; x++ {
+		if q.DragAt(paint2d.Pt(x, g.Rows.Min.Y+g.RowHeight/3)) != nil {
+			t.Fatal("scrollbar/gutter exported the row at the same height")
+		}
+	}
+	if drags != 0 || *plays != 0 || q.Selected != 1 {
+		t.Fatal("non-row drag changed selection/playback")
+	}
+	if q.DragAt(g.Rows.Min.Add(paint2d.Pt(5, g.RowHeight/3))) == nil || drags != 1 {
+		t.Fatal("valid selected-row drag no longer reaches the stock source")
+	}
+	loads, index := 0, -1
+	h.DropFiles = func(paths []string) {
+		loads++
+		if len(paths) != 1 || paths[0] != "/tmp/queue viewport.mp3" {
+			t.Fatal("file-drop decoding changed")
+		}
+	}
+	accept := q.OnDropAt
+	q.OnDropAt = func(i int, e widget.DropEvent) bool { index = i; return accept(i, e) }
+	off := w.Surface().(*platform.Offscreen)
+	pos := widget.DeviceOrigin(q).Add(g.Rows.Min).Add(paint2d.Pt(5, g.RowHeight*.1))
+	off.SimulateDropAction(pos, map[string][]byte{"text/uri-list": []byte("file:///tmp/queue%20viewport.mp3\r\n")}, platform.DragCopy, platform.DragCopy)
+	a.PumpOnce()
+	if taken := off.DropTaken(); taken == nil || !*taken || loads != 1 || index != 1 || *plays != 0 {
+		t.Fatalf("drop missed authored origin/offset: accepted%v loads%d index%d plays%d", taken, loads, index, *plays)
 	}
 }

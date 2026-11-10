@@ -93,12 +93,12 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/fandom"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	uiskins "goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -117,7 +117,7 @@ func main() {
 }
 
 func probe(scale float32) {
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
 	p, err := fandom.New(players.NewHost(a), fandom.Options{Scale: scale})
 	if err != nil {
 		panic(err)
@@ -158,7 +158,7 @@ func probe(scale float32) {
 	verify(p.List, p.Main, scale, 310, 356, 155, 178, 270, 300, true)
 }
 
-func nativeID(w *app.Window) uint64 {
+func nativeID(w *ui.Window) uint64 {
 	parent := w.PortalParent()
 	if !strings.HasPrefix(parent, "x11:") {
 		panic("native X11 surface unavailable: " + parent)
@@ -170,7 +170,7 @@ func nativeID(w *app.Window) uint64 {
 	return id
 }
 
-func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY, extraX, extraY int, extraInside bool) {
+func verify(w, owner *ui.Window, scale float32, width, height, insideX, insideY, extraX, extraY int, extraInside bool) {
 	px := func(v int) int { return int(math.Round(float64(v) * float64(scale))) }
 	id := nativeID(w)
 	frame := platform.FrameOf(w.Surface()).Frame()
@@ -227,25 +227,25 @@ func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY
 
 // Match partially covered source edges after actual native rendering. A binary
 // window extent must not flatten or apply the source artwork alpha twice.
-func verifySoftAlpha(w *app.Window, capture *paintengine2d.Image, settingsVisible bool) {
+func verifySoftAlpha(w *ui.Window, capture *paint2d.Image, settingsVisible bool) {
 	pw, ph := w.PixelSize()
-	raw := paintengine2d.NewImage(pw, ph)
-	ctx := paintengine2d.NewContext(raw)
-	ctx.Clear(paintengine2d.Transparent)
-	box := paintengine2d.XYWH(0, 0, float32(pw), float32(ph))
+	raw := paint2d.NewImage(pw, ph)
+	ctx := paint2d.NewContext(raw)
+	ctx.Clear(paint2d.Transparent)
+	box := paint2d.XYWH(0, 0, float32(pw), float32(ph))
 	slots := []string{"shape.main"}
 	if settingsVisible {
 		slots = append(slots, "shape.settings")
 	}
 	for _, slot := range slots {
-		r, ok := style.SkinSlotRect(w.Look(), fandom.LayoutMain, slot, box)
-		if !ok || !style.DrawSkinSlot(w.Look(), ctx, r, fandom.LayoutMain, slot, 0) {
+		r, ok := uiskins.SkinSlotRect(w.Look(), fandom.LayoutMain, slot, box)
+		if !ok || !uiskins.DrawSkinSlot(w.Look(), ctx, r, fandom.LayoutMain, slot, 0) {
 			panic("native soft-alpha fixture art missing")
 		}
 	}
-	var overlays []paintengine2d.Rect
+	var overlays []paint2d.Rect
 	for _, slot := range []string{"header", "settings.title", "metadata", "status", "status.eq", "analyser", "eq.balance.label"} {
-		if r, ok := style.SkinSlotRect(w.Look(), fandom.LayoutMain, slot, box); ok {
+		if r, ok := uiskins.SkinSlotRect(w.Look(), fandom.LayoutMain, slot, box); ok {
 			overlays = append(overlays, r)
 		}
 	}
@@ -256,7 +256,7 @@ func verifySoftAlpha(w *app.Window, capture *paintengine2d.Image, settingsVisibl
 			if alpha == 0 || alpha == 255 {
 				continue
 			}
-			at := paintengine2d.Pt(float32(x)+.5, float32(y)+.5)
+			at := paint2d.Pt(float32(x)+.5, float32(y)+.5)
 			covered := false
 			for _, r := range overlays {
 				if r.Contains(at) {

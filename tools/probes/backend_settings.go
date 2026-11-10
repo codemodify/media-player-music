@@ -11,9 +11,9 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 			name          string
 			width, height int
 		}{{"preferred", 600, 470}, {"minimum", 560, 440}} {
-			a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+			a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 			ap := style.LookAppearance(a.Look())
 			ap.Name, ap.FollowDesktop = players.Themed, false
 			a.SetLook(style.WithAppearance(a.Look(), ap))

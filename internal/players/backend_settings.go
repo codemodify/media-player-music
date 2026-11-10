@@ -3,13 +3,13 @@ package players
 import (
 	"strings"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const (
@@ -129,19 +129,19 @@ func (p *BackendSettingsPanel) SetState(state BackendSettingsState) {
 	p.Invalidate()
 }
 
-func (p *BackendSettingsPanel) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(p.Look(), BackendSettingsWidth), style.Dip(p.Look(), BackendSettingsHeight)))
+func (p *BackendSettingsPanel) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(p.Look(), BackendSettingsWidth), style.Dip(p.Look(), BackendSettingsHeight)))
 }
 
-func (p *BackendSettingsPanel) Arrange(r paintengine2d.Rect) {
+func (p *BackendSettingsPanel) Arrange(r paint2d.Rect) {
 	p.SetBounds(r)
 	b, lk := p.LocalBounds(), p.Look()
 	d := func(v float32) float32 { return style.Dip(lk, v) }
 	x, w, y := d(16), max(0, b.Dx()-d(32)), d(12)
-	p.title.Arrange(paintengine2d.XYWH(x, y, w, d(26)))
+	p.title.Arrange(paint2d.XYWH(x, y, w, d(26)))
 	y += d(28)
 	hintH := p.hint.Measure(layout.Loose(w, d(42))).Y
-	p.hint.Arrange(paintengine2d.XYWH(x, y, w, hintH))
+	p.hint.Arrange(paint2d.XYWH(x, y, w, hintH))
 	y += hintH + d(10)
 	actionH := max(lk.Metrics().ControlH, d(28))
 	footerH := max(actionH, d(48))
@@ -150,16 +150,16 @@ func (p *BackendSettingsPanel) Arrange(r paintengine2d.Rect) {
 		rowH = min(rowH, max(0, b.Dy()-y-footerH-d(18))/float32(len(p.rows)))
 	}
 	for _, row := range p.rows {
-		row.Arrange(paintengine2d.XYWH(x, y, w, rowH))
+		row.Arrange(paint2d.XYWH(x, y, w, rowH))
 		y += rowH
 	}
 	actionY := max(y+d(6), b.Dy()-footerH-d(12))
-	p.refresh.Arrange(paintengine2d.XYWH(x+w-d(100), actionY+(footerH-actionH)/2, d(100), actionH))
-	p.status.Arrange(paintengine2d.XYWH(x, actionY, max(0, w-d(116)), footerH))
+	p.refresh.Arrange(paint2d.XYWH(x+w-d(100), actionY+(footerH-actionH)/2, d(100), actionH))
+	p.status.Arrange(paint2d.XYWH(x, actionY, max(0, w-d(116)), footerH))
 }
 
-func (p *BackendSettingsPanel) Paint(ctx *paintengine2d.Context) {
-	ctx.DrawRect(p.LocalBounds(), paintengine2d.Fill(p.Look().Palette().Background))
+func (p *BackendSettingsPanel) Paint(ctx *paint2d.Context) {
+	ctx.DrawRect(p.LocalBounds(), paint2d.Fill(p.Look().Palette().Background))
 }
 
 func (p *BackendSettingsPanel) Describe(n *a11y.Node) {
@@ -243,20 +243,20 @@ func (r *backendSettingsRow) setInfo(info BackendInfo, selected, busy bool) {
 	r.Invalidate()
 }
 
-func (r *backendSettingsRow) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(r.Look(), 568), style.Dip(r.Look(), 76)))
+func (r *backendSettingsRow) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(r.Look(), 568), style.Dip(r.Look(), 76)))
 }
 
-func (r *backendSettingsRow) Arrange(b paintengine2d.Rect) {
+func (r *backendSettingsRow) Arrange(b paint2d.Rect) {
 	r.SetBounds(b)
 	w, lk := r.LocalBounds().Dx(), r.Look()
 	d := func(v float32) float32 { return style.Dip(lk, v) }
 	h := max(lk.Metrics().ControlH, d(26))
-	r.radio.Arrange(paintengine2d.XYWH(0, 0, max(0, w-d(148)), h))
-	r.availability.Arrange(paintengine2d.XYWH(w-d(140), 0, d(20), h))
-	r.installed.Arrange(paintengine2d.XYWH(w-d(116), 0, d(116), h))
-	r.features.Arrange(paintengine2d.XYWH(d(4), h+d(2), w-d(4), d(19)))
-	r.executable.Arrange(paintengine2d.XYWH(d(4), h+d(21), w-d(4), d(18)))
+	r.radio.Arrange(paint2d.XYWH(0, 0, max(0, w-d(148)), h))
+	r.availability.Arrange(paint2d.XYWH(w-d(140), 0, d(20), h))
+	r.installed.Arrange(paint2d.XYWH(w-d(116), 0, d(116), h))
+	r.features.Arrange(paint2d.XYWH(d(4), h+d(2), w-d(4), d(19)))
+	r.executable.Arrange(paint2d.XYWH(d(4), h+d(21), w-d(4), d(18)))
 }
 
 func (r *backendSettingsRow) Describe(n *a11y.Node) {
@@ -316,23 +316,23 @@ type backendAvailabilityMark struct {
 	available bool
 }
 
-func (m *backendAvailabilityMark) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(m.Look(), 20), style.Dip(m.Look(), 26)))
+func (m *backendAvailabilityMark) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(m.Look(), 20), style.Dip(m.Look(), 26)))
 }
 
-func (m *backendAvailabilityMark) Arrange(r paintengine2d.Rect) { m.SetBounds(r) }
+func (m *backendAvailabilityMark) Arrange(r paint2d.Rect) { m.SetBounds(r) }
 
-func (m *backendAvailabilityMark) Paint(ctx *paintengine2d.Context) {
+func (m *backendAvailabilityMark) Paint(ctx *paint2d.Context) {
 	b := m.LocalBounds()
 	s := min(b.Dx(), b.Dy()) * .7
 	x, y := b.Center().X-s/2, b.Center().Y-s/2
-	color := paintengine2d.RGB(.95, .18, .2)
+	color := paint2d.RGB(.95, .18, .2)
 	if m.available {
-		color = paintengine2d.RGB(.12, .78, .32)
+		color = paint2d.RGB(.12, .78, .32)
 	}
-	stroke := paintengine2d.StrokePaint(color, style.Dip(m.Look(), 2))
-	stroke.Stroke.Cap, stroke.Stroke.Join = paintengine2d.CapRound, paintengine2d.JoinRound
-	p := paintengine2d.NewPath()
+	stroke := paint2d.StrokePaint(color, style.Dip(m.Look(), 2))
+	stroke.Stroke.Cap, stroke.Stroke.Join = paint2d.CapRound, paint2d.JoinRound
+	p := paint2d.NewPath()
 	if m.available {
 		p.MoveTo(x, y+s*.5)
 		p.LineTo(x+s*.35, y+s*.85)

@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistFolderDropCoverageAtFractionalScale(t *testing.T) {
@@ -31,13 +31,13 @@ func TestPlaylistFolderDropCoverageAtFractionalScale(t *testing.T) {
 				body := widget.DeviceBounds(l)
 				targets := []struct {
 					name string
-					at   paintengine2d.Point
+					at   paint2d.Point
 				}{
-					{"first row", origin.Add(rows.Min).Add(paintengine2d.Pt(20*scale, 3*scale))},
+					{"first row", origin.Add(rows.Min).Add(paint2d.Pt(20*scale, 3*scale))},
 					{"empty row area", origin.Add(rows.Center())},
 					{"scrollbar", origin.Add(scroll.Center())},
-					{"scroll arrow", origin.Add(paintengine2d.Pt(scroll.Center().X, scroll.Max.Y+4*scale))},
-					{"body chrome", body.Min.Add(paintengine2d.Pt(0.5*scale, 0.5*scale))},
+					{"scroll arrow", origin.Add(paint2d.Pt(scroll.Center().X, scroll.Max.Y+4*scale))},
+					{"body chrome", body.Min.Add(paint2d.Pt(0.5*scale, 0.5*scale))},
 				}
 				for _, control := range []struct {
 					name string
@@ -46,13 +46,13 @@ func TestPlaylistFolderDropCoverageAtFractionalScale(t *testing.T) {
 					{"footer info", l.foot}, {"list options", l.opts}} {
 					targets = append(targets, struct {
 						name string
-						at   paintengine2d.Point
+						at   paint2d.Point
 					}{control.name, widget.DeviceBounds(control.c).Center()})
 				}
 				for i, control := range l.mini {
 					targets = append(targets, struct {
 						name string
-						at   paintengine2d.Point
+						at   paint2d.Point
 					}{fmt.Sprintf("mini transport %d", i), widget.DeviceBounds(control).Center()})
 				}
 				off := p.List.Surface().(*platform.Offscreen)

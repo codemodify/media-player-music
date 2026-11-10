@@ -11,22 +11,22 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
 
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, players.FandomSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	h.ShowSettings = func() {}
@@ -40,12 +40,12 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	return a, p
 }
 
-func click(w *app.Window, button platform.MouseButton, at paintengine2d.Point) {
+func click(w *ui.Window, button platform.MouseButton, at paint2d.Point) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: at})
 }
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -59,7 +59,7 @@ func TestReferenceGeometryMasksAndEmbeddedSettingsVisibility(t *testing.T) {
 				t.Fatal("reference composition/sizing policy changed")
 			}
 			for _, item := range []struct {
-				w             *app.Window
+				w             *ui.Window
 				width, height int
 			}{{p.Main, 490, 330}, {p.List, 190, 246}} {
 				w, h := item.w.Size()
@@ -288,20 +288,20 @@ func TestSoftArtAlphaIsNotSquaredByWindowMask(t *testing.T) {
 			_, p := open(t, scale)
 			p.ShowSettingsPanel(false)
 			pw, ph := p.Main.PixelSize()
-			raw := paintengine2d.NewImage(pw, ph)
-			ctx := paintengine2d.NewContext(raw)
-			ctx.Clear(paintengine2d.Transparent)
-			box := paintengine2d.XYWH(0, 0, float32(pw), float32(ph))
-			r, ok := style.SkinSlotRect(p.Main.Look(), LayoutMain, "shape.main", box)
-			if !ok || !style.DrawSkinSlot(p.Main.Look(), ctx, r, LayoutMain, "shape.main", 0) {
+			raw := paint2d.NewImage(pw, ph)
+			ctx := paint2d.NewContext(raw)
+			ctx.Clear(paint2d.Transparent)
+			box := paint2d.XYWH(0, 0, float32(pw), float32(ph))
+			r, ok := skins.SkinSlotRect(p.Main.Look(), LayoutMain, "shape.main", box)
+			if !ok || !skins.DrawSkinSlot(p.Main.Look(), ctx, r, LayoutMain, "shape.main", 0) {
 				t.Fatal("main reference art unavailable")
 			}
 			capture := p.Main.CaptureSurface()
 			// Passive app text also legitimately contributes alpha. Compare
 			// the artwork edge outside both text slots and child controls.
-			var overlays []paintengine2d.Rect
+			var overlays []paint2d.Rect
 			for _, slot := range []string{"header", "settings.title", "metadata", "status", "status.eq", "analyser", "eq.balance.label"} {
-				if r, ok := style.SkinSlotRect(p.Main.Look(), LayoutMain, slot, box); ok {
+				if r, ok := skins.SkinSlotRect(p.Main.Look(), LayoutMain, slot, box); ok {
 					overlays = append(overlays, r)
 				}
 			}
@@ -312,7 +312,7 @@ func TestSoftArtAlphaIsNotSquaredByWindowMask(t *testing.T) {
 					if alpha == 0 || alpha == 255 {
 						continue
 					}
-					at := paintengine2d.Pt(float32(x)+.5, float32(y)+.5)
+					at := paint2d.Pt(float32(x)+.5, float32(y)+.5)
 					covered := false
 					for _, r := range overlays {
 						if r.Contains(at) {

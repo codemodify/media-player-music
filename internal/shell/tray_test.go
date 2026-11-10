@@ -8,14 +8,14 @@ import (
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestHeadlessScreenshotShellDoesNotCreateTray(t *testing.T) {
-	t.Setenv("UITK_TRAY", "fake")
+	t.Setenv("GOFRAMEWORK_DESKTOP_UI_TRAY", "fake")
 	for _, skin := range Appearances {
 		t.Run(skin, func(t *testing.T) {
 			a, s := open(t, skin)
@@ -26,15 +26,15 @@ func TestHeadlessScreenshotShellDoesNotCreateTray(t *testing.T) {
 	}
 }
 
-func openFakeTray(t *testing.T, skin string) (*uitoolkit.Application, *Shell, *platform.FakeStatusItem, *recordingBackend) {
+func openFakeTray(t *testing.T, skin string) (*ui.Application, *Shell, *platform.FakeStatusItem, *recordingBackend) {
 	t.Helper()
-	t.Setenv("UITK_TRAY", "fake")
+	t.Setenv("GOFRAMEWORK_DESKTOP_UI_TRAY", "fake")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(skin))
 	// The shell follows the live path, while the toolkit's public fake tray
 	// and offscreen windows keep this test away from the real desktop/audio.
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
-	a.SetIcon(paintengine2d.NewImage(16, 16), paintengine2d.NewImage(128, 128), paintengine2d.NewImage(32, 32))
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
+	a.SetIcon(paint2d.NewImage(16, 16), paint2d.NewImage(128, 128), paint2d.NewImage(32, 32))
 	b := &recordingBackend{events: make(chan playback.Event, 100)}
 	s, err := New(a, Options{Skin: skin, Backend: b})
 	if err != nil {
@@ -52,8 +52,8 @@ func openFakeTray(t *testing.T, skin string) (*uitoolkit.Application, *Shell, *p
 
 func TestTrayUsesApplicationLogoAndShowsCurrentWindowAcrossSkins(t *testing.T) {
 	a, s, tray, _ := openFakeTray(t, players.DefaultSkin)
-	if tray.Icon().Image != a.Icon()[1] || tray.Icon().Name != "media-player-music" {
-		t.Fatal("tray did not use the largest application-logo image and app-specific icon name")
+	if tray.Icon().Image != a.Icon()[1] || tray.Icon().Name != "" {
+		t.Fatal("tray did not request the largest application-logo raster without a competing icon name")
 	}
 	menu := tray.Menu()
 	if len(menu) != 2 || menu[0].Text != "Show player" || menu[1].Text != "Quit" {

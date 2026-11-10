@@ -2,12 +2,12 @@ package amarok
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type eqPane struct {
@@ -75,10 +75,10 @@ func (e *eqPane) sync() {
 	e.balance.Set(e.p.Transport.Pan)
 	e.Invalidate()
 }
-func (e *eqPane) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(e.Look(), 460), style.Dip(e.Look(), 190)))
+func (e *eqPane) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(e.Look(), 460), style.Dip(e.Look(), 190)))
 }
-func (e *eqPane) Arrange(r paintengine2d.Rect) {
+func (e *eqPane) Arrange(r paint2d.Rect) {
 	e.SetBounds(r)
 	b := e.LocalBounds()
 	d := func(n float32) float32 { return style.Dip(e.Look(), n) }
@@ -88,33 +88,33 @@ func (e *eqPane) Arrange(r paintengine2d.Rect) {
 		if c == e.presets {
 			w = d(74)
 		}
-		c.Arrange(paintengine2d.XYWH(x, d(27), w, d(24)))
+		c.Arrange(paint2d.XYWH(x, d(27), w, d(24)))
 		x += w + d(5)
 	}
-	e.balance.Arrange(paintengine2d.XYWH(b.Dx()-d(136), d(30), d(126), d(20)))
+	e.balance.Arrange(paint2d.XYWH(b.Dx()-d(136), d(30), d(126), d(20)))
 	each := (b.Dx() - d(16)) / 11
 	for i, c := range append([]*sourceSlider{e.preamp}, e.bands...) {
-		c.Arrange(paintengine2d.XYWH(d(8)+float32(i)*each, d(64), each, d(102)))
+		c.Arrange(paint2d.XYWH(d(8)+float32(i)*each, d(64), each, d(102)))
 	}
 }
-func (e *eqPane) Paint(ctx *paintengine2d.Context) {
+func (e *eqPane) Paint(ctx *paint2d.Context) {
 	lk, r := e.Look(), e.LocalBounds()
 	d := func(n float32) float32 { return style.Dip(lk, n) }
-	ctx.DrawRect(r, paintengine2d.Fill(chrome))
-	ctx.DrawRect(r.Inset(d(.5)), paintengine2d.StrokePaint(border, d(1)))
+	ctx.DrawRect(r, paint2d.Fill(chrome))
+	ctx.DrawRect(r.Inset(d(.5)), paint2d.StrokePaint(border, d(1)))
 	title := "Equalizer · " + e.p.Equaliser.Preset
 	if !e.p.Host.EqualizerAvailable() {
 		title = e.p.Host.FeatureTip("Equalizer", false)
 	}
-	players.DrawTextIn(ctx, font(lk, 11), paintengine2d.XYWH(d(6), d(2), r.Dx()-d(12), d(22)), title, ink, style.AlignStart)
-	players.DrawTextIn(ctx, font(lk, 9), paintengine2d.XYWH(e.balance.Bounds().Min.X, d(14), e.balance.Bounds().Dx(), d(14)), "Balance", muted, style.AlignCenter)
+	players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(d(6), d(2), r.Dx()-d(12), d(22)), title, ink, style.AlignStart)
+	players.DrawTextIn(ctx, font(lk, 9), paint2d.XYWH(e.balance.Bounds().Min.X, d(14), e.balance.Bounds().Dx(), d(14)), "Balance", muted, style.AlignCenter)
 	for i, f := range append([]*sourceSlider{e.preamp}, e.bands...) {
 		name := "Preamp"
 		if i > 0 {
 			name = players.EqBands[i-1]
 		}
 		rect := f.Bounds()
-		players.DrawTextIn(ctx, font(lk, 9), paintengine2d.XYWH(rect.Min.X, d(167), rect.Dx(), d(19)), name, muted, style.AlignCenter)
+		players.DrawTextIn(ctx, font(lk, 9), paint2d.XYWH(rect.Min.X, d(167), rect.Dx(), d(19)), name, muted, style.AlignCenter)
 	}
 }
 func (e *eqPane) Describe(n *a11y.Node) { n.Role, n.Name = a11y.RoleGroup, "Equalizer" }

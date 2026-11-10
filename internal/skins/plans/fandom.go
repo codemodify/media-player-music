@@ -8,7 +8,7 @@ import (
 
 	fdlayout "github.com/codemodify/media-player-music/internal/skins/fandom"
 	fdsource "github.com/codemodify/media-player-music/internal/skins/sources/fandom"
-	"github.com/codemodify/paintengine2d"
+	"goframework.io/graphics-paint2d"
 	"golang.org/x/image/draw"
 )
 
@@ -26,10 +26,10 @@ func Fandom() *Plan {
 	add := func(name string, im image.Image, w, h int, slice [4]int) {
 		l.row(h)
 		one, two := fandomRaster(im, w, h), fandomRaster(im, w*2, h*2)
-		images := []*paintengine2d.Image{paintengine2d.NewImageFromNRGBA(one), paintengine2d.NewImageFromNRGBA(two)}
-		l.cell(name, w, h, slice, "", false, func(ctx *paintengine2d.Context, cw, ch float32) {
+		images := []*paint2d.Image{paint2d.NewImageFromNRGBA(one), paint2d.NewImageFromNRGBA(two)}
+		l.cell(name, w, h, slice, "", false, func(ctx *paint2d.Context, cw, ch float32) {
 			scale := max(1, min(2, int(math.Round(float64(ctx.Matrix().ApproxScale())))))
-			ctx.DrawImageRectPaint(images[scale-1], paintengine2d.XYWH(0, 0, float32(w*scale), float32(h*scale)), paintengine2d.XYWH(0, 0, cw, ch), paintengine2d.Paint{Color: paintengine2d.White, Filter: paintengine2d.FilterNearest})
+			ctx.DrawImageRectPaint(images[scale-1], paint2d.XYWH(0, 0, float32(w*scale), float32(h*scale)), paint2d.XYWH(0, 0, cw, ch), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
 		})
 	}
 	// Crop only the selected chassis. Adjacent unrelated panels and stray

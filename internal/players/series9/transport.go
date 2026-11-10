@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type transportPane struct {
@@ -46,7 +46,7 @@ func (b *transportPane) addTransportControls() {
 	b.button("settings", "Appearance and settings", players.GlyphSkin, func() {
 		c := b.buttons["settings"]
 		o := widget.DeviceOrigin(c)
-		p.Host.ContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()))
+		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	})
 	b.button("logo", "Audio backend settings", players.GlyphNone, p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
 	b.volume = newSourceSlider(false, 0, 100, p.Transport.Volume*100, "Volume", func(v float32) { p.Host.SetVolume(v / 100) }, "volume")
@@ -107,12 +107,12 @@ func newCompactPane(p *Player) *compactPane {
 	b.button("close", "Close to tray", players.GlyphNone, p.Main.RequestClose)
 	return b
 }
-func (b *compactPane) Paint(ctx *paintengine2d.Context) {
+func (b *compactPane) Paint(ctx *paint2d.Context) {
 	eraseFrame(ctx, b.LocalBounds(), b.p)
 	b.pane.Paint(ctx)
 	lk, box := b.Look(), b.LocalBounds()
-	at := func(slot string) paintengine2d.Rect {
-		r, _ := style.SkinSlotRect(lk, LayoutCompact, slot, box)
+	at := func(slot string) paint2d.Rect {
+		r, _ := skins.SkinSlotRect(lk, LayoutCompact, slot, box)
 		return r
 	}
 	drawStatus(ctx, lk, at("metadata"), at("time"), b.p)

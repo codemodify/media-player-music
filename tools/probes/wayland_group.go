@@ -5,15 +5,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 	"time"
 )
 
 func main() {
-	a := app.New(app.Options{Backend: "wayland", Look: style.DarkLook(), DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "wayland", Look: style.DarkLook(), DisableLookWatch: true})
 	main, e := a.NewWindow(platform.WindowOptions{Title: "Wayland group probe", Width: 300, Height: 120})
 	if e != nil {
 		panic(e)

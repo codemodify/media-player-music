@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // The two windows that stick to the strip.
@@ -36,7 +37,7 @@ type eqPane struct {
 	bands   []*players.Fader
 
 	// slots is where each control goes in a panel face.
-	slots *widget.Slots
+	slots *skins.Slots
 }
 
 func newEqPane(p *Player) *eqPane {
@@ -66,7 +67,7 @@ func newEqPane(p *Player) *eqPane {
 		e.bands = append(e.bands, f)
 	}
 
-	e.slots = widget.NewSlots(layoutEqualiser).
+	e.slots = skins.NewSlots(layoutEqualiser).
 		Bind("on", e.on).Bind("auto", e.auto).Bind("presets", e.presets).Bind("preamp", e.preamp)
 	for i, f := range e.bands {
 		e.slots.Bind("band."+string(rune('0'+i)), f)
@@ -99,7 +100,7 @@ func (e *eqPane) presetMenu() {
 			func() { e.p.Equaliser.Apply(name) }))
 	}
 	o := widget.DeviceOrigin(e.presets)
-	widgets.ShowContextMenu(e.presets, paintengine2d.Pt(o.X, o.Y+e.presets.Bounds().Dy()), items...)
+	widgets.ShowContextMenu(e.presets, paint2d.Pt(o.X, o.Y+e.presets.Bounds().Dy()), items...)
 }
 
 // sync puts the shared model's equaliser settings into the controls.
@@ -127,53 +128,53 @@ func (e *eqPane) sync() {
 	e.Invalidate()
 }
 
-func (e *eqPane) Measure(c layout.Constraints) paintengine2d.Point {
+func (e *eqPane) Measure(c layout.Constraints) paint2d.Point {
 	lk := e.Look()
 	if sz, ok := e.slots.Measure(lk, c); ok {
 		return sz
 	}
-	return c.Constrain(paintengine2d.Pt(style.Dip(lk, StripW), style.Dip(lk, EqH)))
+	return c.Constrain(paint2d.Pt(style.Dip(lk, StripW), style.Dip(lk, EqH)))
 }
 
-func (e *eqPane) Arrange(r paintengine2d.Rect) {
+func (e *eqPane) Arrange(r paint2d.Rect) {
 	e.SetBounds(r)
 	e.slots.Arrange(e.Look(), e.LocalBounds())
 }
 
-func (e *eqPane) Paint(ctx *paintengine2d.Context) {
+func (e *eqPane) Paint(ctx *paint2d.Context) {
 	lk, b := e.Look(), e.LocalBounds()
 	if len(e.bands) == 0 {
 		return
 	}
 	if f := faceOf(lk); f.panelled() {
-		style.DrawSkinLayout(lk, ctx, b, layoutEqualiser)
+		skins.DrawSkinLayout(lk, ctx, b, layoutEqualiser)
 		e.paintCurve(ctx, lk, slotRect(lk, layoutEqualiser, "graph", b), f.ink(lk))
 		return
 	}
 	pal := lk.Palette()
 	first := e.bands[0].Bounds()
 	y := (first.Min.Y + first.Max.Y) / 2
-	ctx.DrawRect(paintengine2d.XYWH(b.Min.X, y, b.Dx(), max(style.Dip(lk, 1), 1)),
-		paintengine2d.Fill(pal.Divider))
+	ctx.DrawRect(paint2d.XYWH(b.Min.X, y, b.Dx(), max(style.Dip(lk, 1), 1)),
+		paint2d.Fill(pal.Divider))
 
 	// The frequencies, under the faders they belong to. Nine design pixels
 	// is small, and it is what the row of a control this size is: the
 	// numbers are a scale, not a label anybody reads one of.
 	tiny := players.ScaledFace(lk.Font(), style.Dip(lk, 9))
-	row := paintengine2d.XYWH(0, first.Max.Y+style.Dip(lk, 1), 0, style.Dip(lk, 10))
+	row := paint2d.XYWH(0, first.Max.Y+style.Dip(lk, 1), 0, style.Dip(lk, 10))
 	pre := e.preamp.Bounds()
-	players.DrawTextIn(ctx, tiny, paintengine2d.XYWH(pre.Min.X, row.Min.Y, pre.Dx(), row.Dy()),
+	players.DrawTextIn(ctx, tiny, paint2d.XYWH(pre.Min.X, row.Min.Y, pre.Dx(), row.Dy()),
 		"pre", pal.TextMuted, style.AlignCenter)
 	for i, f := range e.bands {
 		fb := f.Bounds()
-		players.DrawTextIn(ctx, tiny, paintengine2d.XYWH(fb.Min.X, row.Min.Y, fb.Dx(), row.Dy()),
+		players.DrawTextIn(ctx, tiny, paint2d.XYWH(fb.Min.X, row.Min.Y, fb.Dx(), row.Dy()),
 			players.EqBands[i], pal.TextMuted, style.AlignCenter)
 	}
 }
 
 // paintCurve draws the response the ten bands make across the graph well g,
 // a design pixel at a time so it sits on the panel's grid.
-func (e *eqPane) paintCurve(ctx *paintengine2d.Context, lk style.LookAndFeel, g paintengine2d.Rect, in *ink) {
+func (e *eqPane) paintCurve(ctx *paint2d.Context, lk style.LookAndFeel, g paint2d.Rect, in *ink) {
 	d := style.Dip(lk, 1)
 	n := int(g.Dx()/d+0.5) - 4
 	if n < 2 {
@@ -182,14 +183,14 @@ func (e *eqPane) paintCurve(ctx *paintengine2d.Context, lk style.LookAndFeel, g 
 	pts := e.p.Equaliser.Curve(n)
 	mid := g.Min.Y + g.Dy()/2
 	amp := g.Dy()/2 - 2*d
-	col := paintengine2d.Fill(in.curve)
+	col := paint2d.Fill(in.curve)
 	if !e.p.Equaliser.On {
-		col = paintengine2d.Fill(style.Mix(in.curve, paintengine2d.RGB(0.4, 0.4, 0.45), 0.35))
+		col = paint2d.Fill(style.Mix(in.curve, paint2d.RGB(0.4, 0.4, 0.45), 0.35))
 	}
 	for i, v := range pts {
 		x := g.Min.X + 2*d + float32(i)*d
 		y := g.Min.Y + snapDesign(mid-g.Min.Y-v*amp, d)
-		ctx.DrawRect(paintengine2d.XYWH(x, y, d, d), col)
+		ctx.DrawRect(paint2d.XYWH(x, y, d, d), col)
 	}
 }
 
@@ -205,7 +206,7 @@ func (e *eqPane) MousePress(ev widget.MouseEvent) bool {
 
 func (e *eqPane) KeyPress(ev widget.KeyEvent) bool { return e.p.Keys(e.p.Eq, ev) }
 
-func (e *eqPane) CaptionAt(paintengine2d.Point) bool { return true }
+func (e *eqPane) CaptionAt(paint2d.Point) bool { return true }
 
 func (e *eqPane) Describe(n *a11y.Node) {
 	n.Role = a11y.RoleGroup
@@ -230,7 +231,7 @@ type listPane struct {
 	mini                      [6]*players.GlyphButton
 
 	// slots is where each control goes in a panel face.
-	slots *widget.Slots
+	slots *skins.Slots
 }
 
 func newListPane(p *Player) *listPane {
@@ -256,14 +257,14 @@ func newListPane(p *Player) *listPane {
 	// the main window's context menu.
 	l.misc = players.NewGlyphButton(players.GlyphNone, "Skins", func() {
 		o := widget.DeviceOrigin(l.misc)
-		p.skinMenu(l.misc, paintengine2d.Pt(o.X, o.Y+l.misc.Bounds().Dy()))
+		p.skinMenu(l.misc, paint2d.Pt(o.X, o.Y+l.misc.Bounds().Dy()))
 	})
 	l.opts = players.NewGlyphButton(players.GlyphNone, "List options", func() {
 		l.menu(l.opts,
 			widgets.MenuItem{Text: "Play the first track", Disabled: p.Transport.List.Len() == 0, OnClick: func() { p.Host.SelectTrack(0) }},
 			widgets.MenuItem{Text: "Close the playlist", OnClick: func() { p.toggle(p.iList) }})
 	})
-	l.slots = widget.NewSlots(layoutPlaylist).Bind("list", l.list).Bind("info", l.foot)
+	l.slots = skins.NewSlots(layoutPlaylist).Bind("list", l.list).Bind("info", l.foot)
 	for b, slot := range map[*players.GlyphButton]string{
 		l.add: "add", l.rem: "rem", l.sel: "sel", l.misc: "misc", l.opts: "opts",
 	} {
@@ -332,7 +333,7 @@ func (l *listPane) menu(under *players.GlyphButton, items ...widgets.MenuItem) {
 		rows[i] = &items[i]
 	}
 	o := widget.DeviceOrigin(under)
-	widgets.ShowContextMenu(under, paintengine2d.Pt(o.X, o.Y+under.Bounds().Dy()), rows...)
+	widgets.ShowContextMenu(under, paint2d.Pt(o.X, o.Y+under.Bounds().Dy()), rows...)
 }
 
 // sync updates the queue and status without discarding a browsed selection.
@@ -346,15 +347,15 @@ func (l *listPane) sync() {
 	}
 }
 
-func (l *listPane) Measure(c layout.Constraints) paintengine2d.Point {
+func (l *listPane) Measure(c layout.Constraints) paint2d.Point {
 	lk := l.Look()
 	if sz, ok := l.slots.Measure(lk, c); ok {
 		return sz
 	}
-	return c.Constrain(paintengine2d.Pt(style.Dip(lk, StripW), style.Dip(lk, ListH)))
+	return c.Constrain(paint2d.Pt(style.Dip(lk, StripW), style.Dip(lk, ListH)))
 }
 
-func (l *listPane) Arrange(r paintengine2d.Rect) {
+func (l *listPane) Arrange(r paint2d.Rect) {
 	l.SetBounds(r)
 	l.arrangePanel()
 }
@@ -362,13 +363,13 @@ func (l *listPane) Arrange(r paintengine2d.Rect) {
 func (l *listPane) arrangePanel() {
 	lk, b := l.Look(), l.LocalBounds()
 	l.slots.Arrange(lk, b)
-	at := func(slot string) paintengine2d.Rect { return slotRect(lk, layoutPlaylist, slot, b) }
+	at := func(slot string) paint2d.Rect { return slotRect(lk, layoutPlaylist, slot, b) }
 	// In the list's own coordinates: its box is whole pixels, and the rows
 	// are drawn where the skin's rects are.
 	o := l.list.Bounds().Min
 	l.list.geo = &listGeo{
-		rows: at("rows").Translate(paintengine2d.Pt(-o.X, -o.Y)),
-		bar:  at("scroll").Translate(paintengine2d.Pt(-o.X, -o.Y)),
+		rows: at("rows").Translate(paint2d.Pt(-o.X, -o.Y)),
+		bar:  at("scroll").Translate(paint2d.Pt(-o.X, -o.Y)),
 		rowH: at("row").Dy(),
 	}
 	l.list.Arrange(l.list.Bounds())
@@ -376,16 +377,16 @@ func (l *listPane) arrangePanel() {
 
 // Paint is the panel, in a panel face, and over it the small display — the
 // playing track's length over the queue's — and the small clock.
-func (l *listPane) Paint(ctx *paintengine2d.Context) {
+func (l *listPane) Paint(ctx *paint2d.Context) {
 	lk := l.Look()
 	f := faceOf(lk)
 	if !f.panelled() {
 		return
 	}
 	b := l.LocalBounds()
-	style.DrawSkinLayout(lk, ctx, b, layoutPlaylist)
+	skins.DrawSkinLayout(lk, ctx, b, layoutPlaylist)
 	for _, slot := range []string{"well.rows", "well.scroll", "well.info", "well.clock", "scroll.arrows"} {
-		style.DrawSkinSlot(lk, ctx, slotRect(lk, layoutPlaylist, slot, b), layoutPlaylist, slot, style.ControlState(0))
+		skins.DrawSkinSlot(lk, ctx, slotRect(lk, layoutPlaylist, slot, b), layoutPlaylist, slot, style.ControlState(0))
 	}
 	in := f.ink(lk)
 	t := l.p.Transport
@@ -411,7 +412,7 @@ func (l *listPane) MousePress(e widget.MouseEvent) bool {
 
 func (l *listPane) KeyPress(e widget.KeyEvent) bool { return l.p.Keys(l.p.List, e) }
 
-func (l *listPane) CaptionAt(paintengine2d.Point) bool { return true }
+func (l *listPane) CaptionAt(paint2d.Point) bool { return true }
 
 func (l *listPane) Describe(n *a11y.Node) {
 	n.Role = a11y.RoleGroup
@@ -426,11 +427,11 @@ type foot struct {
 	p *Player
 }
 
-func (f *foot) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(f.Look(), 120), style.Dip(f.Look(), 32)))
+func (f *foot) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(f.Look(), 120), style.Dip(f.Look(), 32)))
 }
 
-func (f *foot) Arrange(b paintengine2d.Rect) { f.SetBounds(b) }
+func (f *foot) Arrange(b paint2d.Rect) { f.SetBounds(b) }
 
 // Paint is two lines: what the queue holds, and what this application is.
 //
@@ -442,17 +443,17 @@ func (f *foot) Arrange(b paintengine2d.Rect) { f.SetBounds(b) }
 // well, where a window this small is read rather than looked at. A panel
 // face prints its small display here instead, and says what it is in its
 // title bar.
-func (f *foot) Paint(ctx *paintengine2d.Context) {
+func (f *foot) Paint(ctx *paint2d.Context) {
 	lk, b := f.Look(), f.LocalBounds()
 	if faceOf(lk).panelled() {
 		return
 	}
 	pal := lk.Palette()
 	half := b.Dy() / 2
-	lk.DrawLabel(ctx, paintengine2d.XYWH(b.Min.X, b.Min.Y, b.Dx(), half),
+	lk.DrawLabel(ctx, paint2d.XYWH(b.Min.X, b.Min.Y, b.Dx(), half),
 		f.count(), pal.TextMuted, style.AlignStart)
 	tiny := players.ScaledFace(lk.Font(), style.Dip(lk, 10))
-	players.DrawTextIn(ctx, tiny, paintengine2d.XYWH(b.Min.X, b.Min.Y+half, b.Dx(), half),
+	players.DrawTextIn(ctx, tiny, paint2d.XYWH(b.Min.X, b.Min.Y+half, b.Dx(), half),
 		f.p.Host.StatusText(), style.Mix(pal.TextMuted, pal.Background, 0.2), style.AlignStart)
 }
 

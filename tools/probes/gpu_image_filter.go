@@ -7,30 +7,31 @@ package main
 import (
 	"fmt"
 
-	"github.com/codemodify/paintengine2d"
+	"goframework.io/graphics-paint2d"
+	"goframework.io/graphics-paint2d-gpu-gles"
 )
 
 func main() {
-	for _, first := range []paintengine2d.FilterMode{paintengine2d.FilterBilinear, paintengine2d.FilterNearest} {
-		dev, err := paintengine2d.NewGPUDevice(40, 20)
+	for _, first := range []paint2d.FilterMode{paint2d.FilterBilinear, paint2d.FilterNearest} {
+		dev, err := gles.NewDevice(40, 20)
 		if err != nil {
 			fmt.Printf("GPU unavailable: %v\n", err)
 			return
 		}
-		src := paintengine2d.NewImage(4, 4)
+		src := paint2d.NewImage(4, 4)
 		for y := range 4 {
 			for x := range 4 {
-				c := paintengine2d.Black
+				c := paint2d.Black
 				if (x+y)%2 == 0 {
-					c = paintengine2d.White
+					c = paint2d.White
 				}
 				src.SetColor(x, y, c)
 			}
 		}
-		ctx := paintengine2d.NewContextDevice(dev)
-		ctx.Clear(paintengine2d.Black)
-		ctx.DrawImageRectPaint(src, paintengine2d.XYWH(0, 0, 4, 4), paintengine2d.XYWH(0, 0, 16, 16), paintengine2d.Paint{Filter: first})
-		ctx.DrawImageRectPaint(src, paintengine2d.XYWH(0, 0, 4, 4), paintengine2d.XYWH(20, 0, 16, 16), paintengine2d.Paint{Filter: paintengine2d.FilterNearest})
+		ctx := paint2d.NewContextDevice(dev)
+		ctx.Clear(paint2d.Black)
+		ctx.DrawImageRectPaint(src, paint2d.XYWH(0, 0, 4, 4), paint2d.XYWH(0, 0, 16, 16), paint2d.Paint{Filter: first})
+		ctx.DrawImageRectPaint(src, paint2d.XYWH(0, 0, 4, 4), paint2d.XYWH(20, 0, 16, 16), paint2d.Paint{Filter: paint2d.FilterNearest})
 		im := dev.Snapshot()
 		blended := 0
 		for y := 2; y < 14; y++ {

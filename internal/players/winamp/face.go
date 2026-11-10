@@ -7,9 +7,9 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 // The panel layouts belong to the application's packs. Controls bind to
@@ -40,7 +40,7 @@ const (
 // strip's layout. Silver keeps its legacy fallback ink; other panel skins
 // start with classic ink. A pack's named text roles override those defaults.
 func faceOf(lk style.LookAndFeel) face {
-	if _, ok := style.SkinLayoutOf(lk, layoutStrip); !ok {
+	if _, ok := skins.SkinLayoutOf(lk, layoutStrip); !ok {
 		return faceWidgets
 	}
 	if style.LookAppearance(lk).Name == SkinSilver {
@@ -59,9 +59,9 @@ func (f face) panelled() bool { return f != faceWidgets }
 // equaliser's curve, the analyser's bars. These defaults preserve older
 // packs; named player.* text roles in the skin supply its original colours.
 type ink struct {
-	text, row, current, selected, selectedText, info paintengine2d.Color
-	curve, peak                                      paintengine2d.Color
-	ramp                                             []paintengine2d.Color
+	text, row, current, selected, selectedText, info paint2d.Color
+	curve, peak                                      paint2d.Color
+	ramp                                             []paint2d.Color
 	// rowSize is the size the playlist's rows are set at, in design
 	// pixels, and rowBold their weight.
 	rowSize float32
@@ -80,11 +80,11 @@ func (f face) ink(lk style.LookAndFeel) *ink {
 	}
 	// App-painted text and analyser colours use the pack's named text roles.
 	// Older and external packs without these roles retain their baseline ink.
-	sk, ok := style.LoadSkin(style.LookAppearance(lk).Name)
+	sk, ok := skins.LoadSkin(style.LookAppearance(lk).Name)
 	if !ok {
 		return &in
 	}
-	color := func(name string, dst *paintengine2d.Color) {
+	color := func(name string, dst *paint2d.Color) {
 		if role := sk.Text["player."+name]; role != nil {
 			*dst = role.Color
 		}
@@ -103,7 +103,7 @@ func (f face) ink(lk style.LookAndFeel) *ink {
 		}
 		in.rowBold = role.Bold
 	}
-	var ramp []paintengine2d.Color
+	var ramp []paint2d.Color
 	for i := 0; ; i++ {
 		role := sk.Text["player.ramp."+strconv.Itoa(i)]
 		if role == nil {
@@ -130,7 +130,7 @@ var classicInk = ink{
 	rowBold:      true,
 	// Green at the floor, then yellow, then orange at the very top: the
 	// climb an analyser of the era drew, one colour per row.
-	ramp: []paintengine2d.Color{
+	ramp: []paint2d.Color{
 		rgb(0x10, 0x9c, 0x10), rgb(0x14, 0xa8, 0x14), rgb(0x18, 0xb4, 0x18), rgb(0x1c, 0xc0, 0x1c),
 		rgb(0x20, 0xcc, 0x20), rgb(0x28, 0xd4, 0x20), rgb(0x40, 0xdc, 0x20), rgb(0x60, 0xe0, 0x20),
 		rgb(0x88, 0xe0, 0x20), rgb(0xb0, 0xdc, 0x20), rgb(0xd0, 0xd4, 0x20), rgb(0xe0, 0xc0, 0x20),
@@ -150,8 +150,8 @@ var silverInk = ink{
 	rowSize:      11,
 	// A dot-matrix bar: lit rows with a dark row between each, so a bar
 	// reads as a stack of dots rather than as a solid block.
-	ramp: func() []paintengine2d.Color {
-		out := make([]paintengine2d.Color, 0, 16)
+	ramp: func() []paint2d.Color {
+		out := make([]paint2d.Color, 0, 16)
 		for i := 0; i < 8; i++ {
 			out = append(out, rgb(0xd8, 0xe4, 0xfa), rgb(0x2a, 0x48, 0x88))
 		}
@@ -159,24 +159,24 @@ var silverInk = ink{
 	}(),
 }
 
-func rgb(r, g, b uint8) paintengine2d.Color {
-	return paintengine2d.RGB(float32(r)/255, float32(g)/255, float32(b)/255)
+func rgb(r, g, b uint8) paint2d.Color {
+	return paint2d.RGB(float32(r)/255, float32(g)/255, float32(b)/255)
 }
 
 // ---- painting a panel --------------------------------------------------------------
 
 // slotRect is where a slot of a layout is in a component's own coordinates,
 // the component's box being the whole layout.
-func slotRect(lk style.LookAndFeel, layout, slot string, box paintengine2d.Rect) paintengine2d.Rect {
-	r, _ := style.SkinSlotRect(lk, layout, slot, box)
+func slotRect(lk style.LookAndFeel, layout, slot string, box paint2d.Rect) paint2d.Rect {
+	r, _ := skins.SkinSlotRect(lk, layout, slot, box)
 	return r
 }
 
 // art paints a panel sprite into a rect of the component's own, at the
 // sprite's own size. It reports false when the look has no such sprite, so
 // the caller can fall back.
-func art(lk style.LookAndFeel, ctx *paintengine2d.Context, r paintengine2d.Rect, name string) bool {
-	return style.DrawSkinSprite(lk, ctx, r, name, paintengine2d.Color{})
+func art(lk style.LookAndFeel, ctx *paint2d.Context, r paint2d.Rect, name string) bool {
+	return skins.DrawSkinSprite(lk, ctx, r, name, paint2d.Color{})
 }
 
 // paintAsKey makes a glyph button paint as the art its slot in a panel's
@@ -184,18 +184,18 @@ func art(lk style.LookAndFeel, ctx *paintengine2d.Context, r paintengine2d.Rect,
 // and take the pointer only on that art. A helper without panel artwork
 // falls back to the toolkit's normal control painting.
 func paintAsKey(b *players.GlyphButton, layout, slot string) {
-	b.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+	b.Painter = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 		lk := b.Look()
 		if !faceOf(lk).panelled() {
 			return false
 		}
-		return style.DrawSkinSlot(lk, ctx, widget.SlotArtRect(b, layout, slot), layout, slot, st)
+		return skins.DrawSkinSlot(lk, ctx, skins.SlotArtRect(b, layout, slot), layout, slot, st)
 	}
-	b.Shaper = func(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
+	b.Shaper = func(lk style.LookAndFeel, size paint2d.Point) *style.Silhouette {
 		if !faceOf(lk).panelled() {
 			return nil
 		}
-		return style.SkinSlotShape(lk, size, widget.SlotArtRect(b, layout, slot), layout, slot)
+		return skins.SkinSlotShape(lk, size, skins.SlotArtRect(b, layout, slot), layout, slot)
 	}
 }
 
@@ -205,9 +205,9 @@ func paintAsKey(b *players.GlyphButton, layout, slot string) {
 // pointer and the picture agree about where the ends are. An optional track
 // frame sequence follows the same value before the thumb is painted.
 func paintAsThumb(f *players.Fader, name, layout, slot string) {
-	f.Painter = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, t float32, st style.ControlState) bool {
+	f.Painter = func(ctx *paint2d.Context, _ paint2d.Rect, t float32, st style.ControlState) bool {
 		lk := f.Look()
-		w, h, ok := style.SkinSpriteSize(lk, name)
+		w, h, ok := skins.SkinSpriteSize(lk, name)
 		if !faceOf(lk).panelled() || !ok {
 			// Travel is read by the pointer, which always comes after a
 			// paint, so the paint is where the face's answer is kept.
@@ -216,7 +216,7 @@ func paintAsThumb(f *players.Fader, name, layout, slot string) {
 		}
 		// The groove's own rect, on the face's grid rather than the
 		// fader's whole-pixel box.
-		r := widget.SlotArtRect(f, layout, slot)
+		r := skins.SlotArtRect(f, layout, slot)
 		frames, frameT := "", t
 		switch {
 		case slot == "volume":
@@ -234,19 +234,19 @@ func paintAsThumb(f *players.Fader, name, layout, slot string) {
 		// The thumb moves in whole design pixels, so it stays on the grid
 		// the face under it is drawn on.
 		d := style.Dip(lk, 1)
-		var thumb paintengine2d.Rect
+		var thumb paint2d.Rect
 		if !f.Vertical {
 			f.Travel = w / 2
 			x := snapDesign(t*(r.Dx()-tw), d)
-			thumb = paintengine2d.XYWH(r.Min.X+x, r.Min.Y+snapDesign((r.Dy()-th)/2, d), tw, th)
+			thumb = paint2d.XYWH(r.Min.X+x, r.Min.Y+snapDesign((r.Dy()-th)/2, d), tw, th)
 		} else {
 			f.Travel = h / 2
 			y := snapDesign((1-t)*(r.Dy()-th), d)
-			thumb = paintengine2d.XYWH(r.Min.X+snapDesign((r.Dx()-tw)/2, d), r.Min.Y+y, tw, th)
+			thumb = paint2d.XYWH(r.Min.X+snapDesign((r.Dx()-tw)/2, d), r.Min.Y+y, tw, th)
 		}
 		sprite := name
 		if st.Pressed() {
-			if _, _, ok := style.SkinSpriteSize(lk, name+".down"); ok {
+			if _, _, ok := skins.SkinSpriteSize(lk, name+".down"); ok {
 				sprite += ".down"
 			}
 		}
@@ -257,13 +257,13 @@ func paintAsThumb(f *players.Fader, name, layout, slot string) {
 // paintTrackFrame accepts any contiguous optional prefix.frame.N sequence.
 // Its first and last frames describe the range endpoints; existing packs
 // without the sequence keep their groove on the panel background.
-func paintTrackFrame(lk style.LookAndFeel, ctx *paintengine2d.Context, r paintengine2d.Rect, prefix string, t float32) bool {
+func paintTrackFrame(lk style.LookAndFeel, ctx *paint2d.Context, r paint2d.Rect, prefix string, t float32) bool {
 	if prefix == "" {
 		return false
 	}
 	count := 0
 	for {
-		if _, _, ok := style.SkinSpriteSize(lk, prefix+".frame."+strconv.Itoa(count)); !ok {
+		if _, _, ok := skins.SkinSpriteSize(lk, prefix+".frame."+strconv.Itoa(count)); !ok {
 			break
 		}
 		count++
@@ -302,17 +302,17 @@ func snapDev(v float32) float32 {
 //
 // The glyphs are the skin's and the line is the app's: this is the display
 // printing the track, which a skin cannot know and an app cannot draw.
-func pixText(lk style.LookAndFeel, ctx *paintengine2d.Context, x, y float32, s string, col paintengine2d.Color) float32 {
+func pixText(lk style.LookAndFeel, ctx *paint2d.Context, x, y float32, s string, col paint2d.Color) float32 {
 	return pixTextWithPrefix(lk, ctx, x, y, s, col, "")
 }
 
 // Playlist readouts may use the original font's shapes as alpha masks with
 // their own ink. Packs without those optional glyphs keep the ordinary font.
-func pixInfoText(lk style.LookAndFeel, ctx *paintengine2d.Context, x, y float32, s string, col paintengine2d.Color) float32 {
+func pixInfoText(lk style.LookAndFeel, ctx *paint2d.Context, x, y float32, s string, col paint2d.Color) float32 {
 	return pixTextWithPrefix(lk, ctx, x, y, s, col, "info.")
 }
 
-func pixTextWithPrefix(lk style.LookAndFeel, ctx *paintengine2d.Context, x, y float32, s string, col paintengine2d.Color, prefix string) float32 {
+func pixTextWithPrefix(lk style.LookAndFeel, ctx *paint2d.Context, x, y float32, s string, col paint2d.Color, prefix string) float32 {
 	d := func(v float32) float32 { return style.Dip(lk, v) }
 	x0 := x
 	for _, r := range strings.ToUpper(s) {
@@ -323,7 +323,7 @@ func pixTextWithPrefix(lk style.LookAndFeel, ctx *paintengine2d.Context, x, y fl
 			}
 		}
 		if ctx != nil {
-			style.DrawSkinSprite(lk, ctx, paintengine2d.XYWH(x, y, d(w), d(h)), name, col)
+			skins.DrawSkinSprite(lk, ctx, paint2d.XYWH(x, y, d(w), d(h)), name, col)
 		}
 		x += d(w + 1)
 	}
@@ -332,21 +332,21 @@ func pixTextWithPrefix(lk style.LookAndFeel, ctx *paintengine2d.Context, x, y fl
 
 func textGlyph(lk style.LookAndFeel, r rune, prefix string) (name string, w, h float32, ok bool) {
 	name = prefix + glyphName(r)
-	w, h, ok = style.SkinSpriteSize(lk, name)
+	w, h, ok = skins.SkinSpriteSize(lk, name)
 	if !ok && prefix != "" {
 		name = glyphName(r)
-		w, h, ok = style.SkinSpriteSize(lk, name)
+		w, h, ok = skins.SkinSpriteSize(lk, name)
 	}
 	return
 }
 
 // pixWidth is how wide pixText would set s.
 func pixWidth(lk style.LookAndFeel, s string) float32 {
-	return pixText(lk, nil, 0, 0, s, paintengine2d.Color{})
+	return pixText(lk, nil, 0, 0, s, paint2d.Color{})
 }
 
 func pixInfoWidth(lk style.LookAndFeel, s string) float32 {
-	return pixInfoText(lk, nil, 0, 0, s, paintengine2d.Color{})
+	return pixInfoText(lk, nil, 0, 0, s, paint2d.Color{})
 }
 
 func glyphName(r rune) string {
@@ -364,7 +364,7 @@ func glyphName(r rune) string {
 // pixScroll sets a line that is wider than its box sliding back and forth
 // inside it, on the same rests and pace as the shared scrolling title
 // (players.ScrollK), clipped to the box.
-func pixScroll(lk style.LookAndFeel, ctx *paintengine2d.Context, b paintengine2d.Rect, s string, col paintengine2d.Color, p *Player) {
+func pixScroll(lk style.LookAndFeel, ctx *paint2d.Context, b paint2d.Rect, s string, col paint2d.Color, p *Player) {
 	w := pixWidth(lk, s)
 	over := w - b.Dx()
 	x := b.Min.X
@@ -381,7 +381,7 @@ func pixScroll(lk style.LookAndFeel, ctx *paintengine2d.Context, b paintengine2d
 
 // ledClock paints the clock in the skin's segmented digits, in the strip's
 // digit and colon slots inside box.
-func ledClock(lk style.LookAndFeel, ctx *paintengine2d.Context, box paintengine2d.Rect, clock string) {
+func ledClock(lk style.LookAndFeel, ctx *paint2d.Context, box paint2d.Rect, clock string) {
 	// "m:ss" or "mm:ss" to four digits: the era's clock showed minutes and
 	// seconds in two digits each, with a leading zero.
 	digits := strings.ReplaceAll(clock, ":", "")

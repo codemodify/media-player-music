@@ -8,14 +8,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func backendSettingsFixture() BackendSettingsState {
@@ -65,7 +65,7 @@ func TestBackendSettingsControlsHaveDistinctSelectionAvailabilityAndRealActions(
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			t.Setenv(style.ThemeEnv, Themed)
-			a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+			a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 			w, err := a.NewWindow(platform.WindowOptions{Headless: true, Decorations: platform.DecorationsServer, Width: BackendSettingsWidth, Height: BackendSettingsHeight})
 			if err != nil {
 				t.Fatal(err)
@@ -177,9 +177,9 @@ func TestBackendAvailabilityMarksAreGreenAndRedVectorPaths(t *testing.T) {
 		m := &backendAvailabilityMark{available: available}
 		m.Init(m)
 		m.SetLook(style.DarkLook())
-		m.Arrange(paintengine2d.XYWH(0, 0, 32, 32))
-		im := paintengine2d.NewImage(32, 32)
-		m.Paint(paintengine2d.NewContext(im))
+		m.Arrange(paint2d.XYWH(0, 0, 32, 32))
+		im := paint2d.NewImage(32, 32)
+		m.Paint(paint2d.NewContext(im))
 		pixels := 0
 		for y := 0; y < im.Height; y++ {
 			for x := 0; x < im.Width; x++ {
@@ -200,7 +200,7 @@ func TestMPG123FormatScopeIsVisibleBeforeAndAfterSelection(t *testing.T) {
 		for _, size := range [][2]int{{BackendSettingsWidth, BackendSettingsHeight}, {560, 440}} {
 			t.Run(fmt.Sprintf("%gx/%dx%d", scale, size[0], size[1]), func(t *testing.T) {
 				t.Setenv(style.ThemeEnv, Themed)
-				a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+				a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 				w, err := a.NewWindow(platform.WindowOptions{Headless: true, Decorations: platform.DecorationsServer, Width: size[0], Height: size[1]})
 				if err != nil {
 					t.Fatal(err)
@@ -240,7 +240,7 @@ func TestMPG123FormatScopeIsVisibleBeforeAndAfterSelection(t *testing.T) {
 
 func TestSelectedBackendCanBeRetriedAfterAnError(t *testing.T) {
 	t.Setenv(style.ThemeEnv, Themed)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	w, err := a.NewWindow(platform.WindowOptions{Headless: true, Width: BackendSettingsWidth, Height: BackendSettingsHeight})
 	if err != nil {
 		t.Fatal(err)
@@ -267,7 +267,7 @@ func TestSelectedBackendCanBeRetriedAfterAnError(t *testing.T) {
 			w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
 		case "mouse":
 			o, b := widget.DeviceOrigin(radio), radio.LocalBounds()
-			at := paintengine2d.Pt(o.X+b.Dx()/2, o.Y+b.Dy()/2)
+			at := paint2d.Pt(o.X+b.Dx()/2, o.Y+b.Dy()/2)
 			w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: at})
 			w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: at})
 		case "accessibility":
@@ -302,7 +302,7 @@ func TestSelectedBackendCanBeRetriedAfterAnError(t *testing.T) {
 
 func TestContextMenuAddsAccessibleSettingsWithoutChangingSkinChoices(t *testing.T) {
 	t.Setenv(style.ThemeEnv, "dark")
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	w, err := a.NewWindow(platform.WindowOptions{Headless: true, Width: 400, Height: 320})
 	if err != nil {
 		t.Fatal(err)
@@ -316,7 +316,7 @@ func TestContextMenuAddsAccessibleSettingsWithoutChangingSkinChoices(t *testing.
 	count := len(h.SkinItems())
 	hits := 0
 	h.ShowSettings = func() { hits++ }
-	h.ContextMenu(from, paintengine2d.Pt(8, 8))
+	h.ContextMenu(from, paint2d.Pt(8, 8))
 	a.PumpOnce()
 	menu := w.Popup().(*widgets.PopupMenu)
 	items := menu.AccessibleItems()

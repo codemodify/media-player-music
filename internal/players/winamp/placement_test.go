@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
 )
 
 func TestSatelliteWindowsRequestAnAuxiliaryRoleWithoutMinimize(t *testing.T) {
@@ -18,7 +18,7 @@ func TestSatelliteWindowsRequestAnAuxiliaryRoleWithoutMinimize(t *testing.T) {
 			for _, look := range []string{skin, otherPanelSkin(skin)} {
 				p.Host.ApplySkin(look)
 				a.PumpOnce()
-				for name, window := range map[string]*app.Window{"main": p.Main, "equaliser": p.Eq, "playlist": p.List} {
+				for name, window := range map[string]*ui.Window{"main": p.Main, "equaliser": p.Eq, "playlist": p.List} {
 					wantRole := platform.RoleUtility
 					if name == "main" {
 						wantRole = platform.RoleNormal

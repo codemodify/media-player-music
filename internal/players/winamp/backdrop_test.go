@@ -12,8 +12,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 // An independently authored pack can put each optional backdrop at its own
@@ -24,7 +25,7 @@ func TestStripPaintsExternalBackdropSlotsAtTheirAuthoredLocations(t *testing.T) 
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			_, p := open(t, Skin, scale)
 			const custom = "winamp-external-backdrops"
-			dir := style.UserSkinDir(custom)
+			dir := skins.UserSkinDir(custom)
 			source := os.DirFS(filepath.Join("..", "..", "skins", "packs", Skin))
 			if err := fs.WalkDir(source, ".", func(path string, entry fs.DirEntry, err error) error {
 				if err != nil {
@@ -42,7 +43,7 @@ func TestStripPaintsExternalBackdropSlotsAtTheirAuthoredLocations(t *testing.T) 
 			}); err != nil {
 				t.Fatal(err)
 			}
-			manifest := filepath.Join(dir, style.SkinFile)
+			manifest := filepath.Join(dir, skins.SkinFile)
 			raw, err := os.ReadFile(manifest)
 			if err != nil {
 				t.Fatal(err)
@@ -81,21 +82,21 @@ func TestStripPaintsExternalBackdropSlotsAtTheirAuthoredLocations(t *testing.T) 
 			if err != nil || closeErr != nil {
 				t.Fatalf("write backdrop: %v %v", err, closeErr)
 			}
-			style.InvalidateSkinCache()
-			t.Cleanup(style.InvalidateSkinCache)
+			skins.InvalidateSkinCache()
+			t.Cleanup(skins.InvalidateSkinCache)
 			p.SetSkin(custom)
 			for _, extra := range []float32{0, 40 * scale} {
 				b := p.strip.LocalBounds()
 				b.Max.X += extra
 				p.strip.SetBounds(b)
-				shot := paintengine2d.NewImage(int(math.Ceil(float64(b.Dx()))), int(math.Ceil(float64(b.Dy()))))
-				p.strip.Paint(paintengine2d.NewContext(shot))
+				shot := paint2d.NewImage(int(math.Ceil(float64(b.Dx()))), int(math.Ceil(float64(b.Dy()))))
+				p.strip.Paint(paint2d.NewContext(shot))
 				for i, name := range names {
 					x := float32(6+9*i) * scale
 					if i == 4 {
 						x = b.Dx() - float32(6+9*i+5)*scale
 					}
-					at := paintengine2d.Pt(x+2.5*scale, 53.5*scale)
+					at := paint2d.Pt(x+2.5*scale, 53.5*scale)
 					r, g, bl, a := shot.PremulAt(int(at.X), int(at.Y))
 					if [4]uint8{r, g, bl, a} != [4]uint8{0xf1, 0x0b, 0xb9, 255} {
 						t.Errorf("%s extra=%g: authored source pixel at %v is #%02x%02x%02x/%d", name, extra, at, r, g, bl, a)
@@ -124,7 +125,7 @@ func TestProtectedReadoutAndEQSpritesKeepOriginalPixels(t *testing.T) {
 		for _, scale := range []float32{1.75, 2} {
 			t.Run(fmt.Sprintf("%s@%gx", id, scale), func(t *testing.T) {
 				lk := style.WithScale(pack.Look(), scale)
-				sk, _ := style.LoadSkin(id)
+				sk, _ := skins.LoadSkin(id)
 				names := []string{"eq.face", "backdrop.display", "backdrop.title", "backdrop.rate", "backdrop.freq", "backdrop.labels", "led.0", "led.1", "led.8", "led.colon", "state.stop", "lamp.stereo", "font.41"}
 				info, _, _, ok := textGlyph(lk, '1', "info.")
 				if !ok {
@@ -150,11 +151,11 @@ func TestProtectedReadoutAndEQSpritesKeepOriginalPixels(t *testing.T) {
 						}
 						images[path] = source
 					}
-					w, h, _ := style.SkinSpriteSize(lk, name)
-					shot := paintengine2d.NewImage(int(math.Ceil(float64(w*scale)))+4, int(math.Ceil(float64(h*scale)))+4)
-					ctx := paintengine2d.NewContext(shot)
+					w, h, _ := skins.SkinSpriteSize(lk, name)
+					shot := paint2d.NewImage(int(math.Ceil(float64(w*scale)))+4, int(math.Ceil(float64(h*scale)))+4)
+					ctx := paint2d.NewContext(shot)
 					ctx.Translate(.125, .375)
-					if !style.DrawSkinSprite(lk, ctx, paintengine2d.XYWH(.25, .5, w*scale, h*scale), name, paintengine2d.White) {
+					if !skins.DrawSkinSprite(lk, ctx, paint2d.XYWH(.25, .5, w*scale, h*scale), name, paint2d.White) {
 						t.Fatalf("could not draw %s", name)
 					}
 					for y := 0; y < shot.Height; y++ {

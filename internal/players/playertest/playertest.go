@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // Main gives UI tests the same app-owned skin packs as the executable.
@@ -29,7 +29,7 @@ func Main(m *testing.M) int {
 // Audit runs a11y.Check over a window's tree and fails the test with
 // everything a screen reader would stumble over. It returns the tree so a
 // caller can ask its own questions of it.
-func Audit(t *testing.T, name string, w *app.Window) *a11y.Node {
+func Audit(t *testing.T, name string, w *ui.Window) *a11y.Node {
 	t.Helper()
 	tree := w.AccessibleTree()
 	if tree == nil || len(tree.Children) == 0 {
@@ -72,7 +72,7 @@ func Names(tree *a11y.Node, role a11y.Role) []string {
 
 // FocusRing is every stop Tab visits in a window, in order, until it comes
 // back to where it started. A window nothing can focus gives nil.
-func FocusRing(t *testing.T, a *app.Application, w *app.Window) []widget.Component {
+func FocusRing(t *testing.T, a *ui.Application, w *ui.Window) []widget.Component {
 	t.Helper()
 	tab := func() {
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
@@ -98,7 +98,7 @@ func FocusRing(t *testing.T, a *app.Application, w *app.Window) []widget.Compone
 
 // RingNames is what a screen reader would call each stop of a focus ring,
 // in order.
-func RingNames(w *app.Window, ring []widget.Component) []string {
+func RingNames(w *ui.Window, ring []widget.Component) []string {
 	tree := w.AccessibleTree()
 	out := make([]string, 0, len(ring))
 	for _, c := range ring {
@@ -136,7 +136,7 @@ func Reaches(ring []widget.Component, c widget.Component) bool {
 // the outline *is* — a strip that narrows at the bottom, a stadium that is
 // widest in the middle — and they can be compared between scales after
 // dividing out, which a picture cannot.
-func Profile(w *app.Window, step int) []int {
+func Profile(w *ui.Window, step int) []int {
 	s := w.Shape()
 	if s == nil {
 		return nil
@@ -177,7 +177,7 @@ func coverage(r *platform.ShapeRaster, y int) int {
 // against the window gives the same fractions at 1 and at 1.75, while a
 // bitmap stretched to fit does not. A test compares two of these rather
 // than two pictures, so a failure says which row is wrong.
-func Outline(w *app.Window, n int) []float64 {
+func Outline(w *ui.Window, n int) []float64 {
 	s := w.Shape()
 	if s == nil || n < 2 {
 		return nil
@@ -223,7 +223,7 @@ func OutlineDiff(a, b []float64) float64 {
 // It is what an *asymmetric* outline needs: a skirt swept round on one
 // corner and square on the other has the same coverage as one swept half as
 // much on both, and only the two insets tell them apart.
-func Insets(w *app.Window, at float64) (left, right int) {
+func Insets(w *ui.Window, at float64) (left, right int) {
 	s := w.Shape()
 	if s == nil {
 		return 0, 0

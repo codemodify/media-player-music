@@ -7,24 +7,24 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
 )
 
 func TestFandomRequiresItsPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
 	a, s := open(t, players.HalfLife2Skin)
 	w, model := s.MainWindow(), s.Host.Model
-	dir := style.UserSkinDir(players.FandomSkin)
+	dir := skins.UserSkinDir(players.FandomSkin)
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
 	manifest := `{"skin":1,"label":"Incomplete Fandom","base":"dark","layouts":{"fandom.main":{"size":[490,330]}}}`
-	if err := os.WriteFile(filepath.Join(dir, style.SkinFile), []byte(manifest), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), []byte(manifest), 0600); err != nil {
 		t.Fatal(err)
 	}
-	style.InvalidateSkinCache()
-	t.Cleanup(style.InvalidateSkinCache)
+	skins.InvalidateSkinCache()
+	t.Cleanup(skins.InvalidateSkinCache)
 	if err := s.SetSkin(players.FandomSkin); err == nil || !strings.Contains(err.Error(), `missing layout "fandom.playlist"`) {
 		t.Fatalf("incomplete Fandom override: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestFandomRequiresItsPlaylistLayoutBeforeReplacingPresentation(t *testing.T
 func TestFandomSkinKeysCycleFromHalfLife2AndRememberChoice(t *testing.T) {
 	a, s := open(t, players.HalfLife2Skin)
 	model := s.Host.Model
-	key := func(w *app.Window, mods platform.Modifiers) {
+	key := func(w *ui.Window, mods platform.Modifiers) {
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Mods: mods})
 		a.PumpOnce()
 		a.PumpOnce()

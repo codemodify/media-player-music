@@ -1,6 +1,6 @@
 # media-player-music
 
-A Go desktop music player with one default layout and twenty optional skins.
+A Go desktop music player with one default layout and twenty-one optional skins.
 Real audio playback uses a selected external mpv, VLC, MPlayer or mpg123 process. Headless screenshots and
 presentation tests retain invented tracks and a synthetic analyser for
 repeatable pictures.
@@ -151,7 +151,18 @@ controls, with original transport artwork where available:
 | --- | --- | --- |
 | ![VLC - Classic](docs/screenshots/vlc-main.png) | ![RealPlayer - Classic](docs/screenshots/realplayer-main.png) | ![KDE - Amarok 1.4](docs/screenshots/amarok-main.png) |
 
-Each appearance has one resizable window and uses the shared playback backend,
+**Fancy** adapts the supplied blue player reference into three shaped windows:
+a 420 × 220 main player, a separate equalizer and a resizable playlist.
+Ctrl+Shift+M switches the same main window between the full player and its
+420 × 40 compact mode while playback continues.
+The panels and compact mode use the shared queue, audio backend and tray behavior.
+The app draws the artwork and defines the layout from the supplied reference.
+
+![Fancy](docs/screenshots/fancy-main.png)
+
+![Fancy compact player](docs/screenshots/fancy-compact.png)
+
+The three classic desktop appearances each have one resizable window and use the shared playback backend,
 queue, file and folder drops, double-click/Enter playback and close-to-tray
 behavior. Appearance and audio backend are independent: choosing the VLC skin
 does not change the selected audio backend. Original network services and
@@ -163,12 +174,13 @@ display patterns keep their original pixel rendering. Silver retains its
 existing artwork and rendering.
 
 The app defines its model, windows, controls, actions, layouts, and all skin
-packs, including their artwork inputs and generators. [uitoolkit v0.23.4](https://github.com/codemodify/uitoolkit/tree/v0.23.4)
+packs, including their artwork inputs and generators. goframework.io's desktop-ui (built from a local
+workspace until its v0.0.4 release; see [setup](#building-against-goframeworkio))
 provides the widgets, skin interpretation, rendering, input, focus,
 accessibility, and platform windows through its public API. The
 [architecture documentation](docs/faces.md) explains that boundary and the
-remaining toolkit integration gaps. The [v0.23.4 gap report](uitoolkit-gaps.md)
-contains reproducible findings and requests for the toolkit owner.
+remaining toolkit integration gaps. The [goframework gap report](goframework-gaps.md)
+contains reproducible findings and requests for the framework owner.
 
 ## Build and run
 
@@ -196,6 +208,7 @@ go build .
 ./media-player-music -skin vlc               # classic VLC 0.8 wxWidgets appearance
 ./media-player-music -skin realplayer        # classic RealPlayer 8 appearance
 ./media-player-music -skin amarok            # KDE 3 Amarok 1.4 appearance
+./media-player-music -skin fancy             # blue shaped panels and compact player
 ./media-player-music -scale 1.75              # fractional display scale
 ./media-player-music -audio-backend vlc       # choose an installed backend
 ./media-player-music -skin default -shot /tmp/player-shots -at 1m37s
@@ -223,7 +236,7 @@ if the tray host disappears while hidden, the player returns to the desktop.
 The executable currently prefers available X11 on Linux, including
 XWayland, as a temporary workaround for the toolkit's missing portable
 window-group fallback. Platform selection should return entirely to the
-toolkit once it supplies that feature. Explicit `UITK_BACKEND` choices are
+toolkit once it supplies that feature. Explicit `GOFRAMEWORK_DESKTOP_UI_BACKEND` choices are
 honored and screenshots remain headless. Without X11/XWayland, native
 Wayland still renders the skins as separate windows, but group motion is
 unavailable. XWayland is not a required dependency.
@@ -233,11 +246,13 @@ owned utility windows through the toolkit; on X11 they have no taskbar or
 pager entries. The app refreshes ownership through the public API if Main's
 native window is recreated. Native Wayland exposes ownership but no explicit
 taskbar policy. These limits are documented in the
-[gap report](uitoolkit-gaps.md#12-utility-windows-have-no-owner-or-taskbar-visibility-api).
+uitoolkit gap report's item 12 (see the [goframework gap report](goframework-gaps.md#carried-over-from-uitoolkit)).
 
 The app remembers the audio backend, queue, selected track, playback offset, skin, panel
 visibility and window placement in
-`$XDG_CONFIG_HOME/uitoolkit/media-player-music.json`. Default keeps its own
+`$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json`; a file saved
+there under uitoolkit (`$XDG_CONFIG_HOME/uitoolkit/`) is read until the first
+save. Default keeps its own
 size and position; Winamp skins share panel positions, playlist size and
 snap relationships. Headspace keeps its own position and fixed 760 × 394
 layout. Xbox keeps its own main and playlist positions and playlist size.
@@ -254,21 +269,32 @@ files are skipped when restoring the queue. Without saved settings the app
 opens in Default, and legacy classic/silver skin preferences migrate to the
 current names. Screenshot runs neither restore nor save the live session.
 
-Era theme engines are optional toolkit build configurations. The plain
-build includes the application's skins and an ordinary dark fallback. To
-include all available era engines:
+Every build includes all of desktop-ui's era theme engines (imported in
+[internal/players/toolkit.go](internal/players/toolkit.go)) and font
+fallback, which lets native-font song/artist labels borrow missing glyphs
+for CJK and other supported scripts from installed fonts.
+A covering font must be installed;
+`GOFRAMEWORK_DESKTOP_UI_SYSTEM_FONTS=0` disables that lookup. The original Winamp bitmap title
+alphabet retains its source-art character limits. The plain build does not shape
+or reorder complex scripts. The player's own optional `font_emoji` tag adds
+desktop-ui-text-complex: complex-script shaping and colour emoji with
+installed covering fonts (`font_complex` shapes without colour emoji):
 
 ```bash
-go build -tags theme_engine_all .
+go build -tags font_emoji .
 ```
 
-For only the original Win95, Luna and Breeze base themes:
+### Building against goframework.io
 
-```bash
-go build -tags 'theme_engine_win95,theme_engine_luna,theme_engine_breeze' .
-```
+Until desktop-ui v0.0.4 is published, go.mod replaces every goframework
+module with the local workspace at `~/go/src/goframework.io` (the block
+written by its `tools/app-workspace.py --go-mod`). Build with
+`GOPROXY=off` so a module missing from the workspace fails instead of
+being fetched. Once it is published, `python3
+~/go/src/goframework.io/tools/app-workspace.py --remove --go-mod .` takes
+the block out; see the workspace's `desktop-ui-porting.md`.
 
-The app embeds all twenty skin packs in every build. To regenerate their
+The app embeds all twenty-one skin packs in every build. To regenerate their
 manifests and artwork from the app's Go design sources:
 
 ```bash
@@ -340,9 +366,13 @@ one model and one clock.
 Where the desktop permits positioning, movement events make the main strip
 carry its snapped equaliser and playlist as the desktop reports its position. Dragging a satellite away unsnaps it;
 bringing it back to an edge rejoins the group. This also works while
-playback is paused or stopped. A guarded follower preserves the links and
-stationary placement of another group when Main rejoins it. The toolkit's
-event batching and pending-move wake-up still need work; see the gap report.
+playback is paused or stopped. The toolkit preserves the links and stationary
+placement of another group when Main rejoins it, and follows a burst of moves
+once on the next loop turn. The toolkit now handles the original refused
+re-show, closing-satellite and staggered-deadline cases, including direct
+requests. The app's pending-geometry flag and pulse are removed. Startup,
+saved placement, resizing, captures and backends without movement events
+retain their explicit follow behavior.
 
 ```text
 Space         play / pause     Z / B          previous / next
@@ -362,7 +392,7 @@ available from the Skin control and context menus. Default keeps its name;
 Winamp choices use **WinAmp -** followed by their skin name, with the
 original Winamp listed as **WinAmp - classic**. Scroll with the wheel
 or arrow keys to reach the full list in compact windows.
-The [skin catalogue](docs/faces.md#one-default-layout-twenty-skins) lists all
+The [skin catalogue](docs/faces.md#one-default-layout-twenty-one-skins) lists all
 command-line IDs.
 
 ## Tests
@@ -372,8 +402,8 @@ The UI tests open headless windows. Run them isolated from the desktop:
 ```bash
 tools/testenv.sh go test ./...
 tools/testenv.sh go test -race ./...
-tools/testenv.sh go test -tags theme_engine_all ./...
-tools/testenv.sh go test -race -tags theme_engine_all ./...
+tools/testenv.sh go test -tags font_complex ./...
+tools/testenv.sh go test -tags font_emoji ./...
 ```
 
 The helper supplies a private D-Bus session and XDG directories with no
@@ -410,7 +440,7 @@ For a file-manager drop that still fails, enable native transfer and app
 loader diagnostics while reproducing it on an unlocked desktop:
 
 ```bash
-UITK_XDND_DEBUG=1 MUSIC_PLAYER_DROP_DEBUG=1 ./media-player-music -skin winamp
+GOFRAMEWORK_DESKTOP_UI_XDND_DEBUG=1 MUSIC_PLAYER_DROP_DEBUG=1 ./media-player-music -skin winamp
 ```
 
 The trace on stderr records incoming drag positions and action negotiation,

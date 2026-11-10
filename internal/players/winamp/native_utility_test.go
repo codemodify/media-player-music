@@ -9,21 +9,20 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
 // Native inspection belongs to this opt-in test, not the application.
-func nativeWindowID(w *app.Window) string {
+func nativeWindowID(w *ui.Window) string {
 	if w == nil || w.Closed() {
 		return ""
 	}
 	return w.PortalParent()
 }
 
-func nativeUtilityStatus(w, owner *app.Window) (supported, ready bool) {
+func nativeUtilityStatus(w, owner *ui.Window) (supported, ready bool) {
 	id, parent := nativeWindowID(w), nativeWindowID(owner)
 	if !strings.HasPrefix(id, "x11:") || !strings.HasPrefix(parent, "x11:") {
 		return false, false
@@ -48,10 +47,10 @@ func TestNativeUtilityWindowsStayOffTaskbarAfterFrameRecreation(t *testing.T) {
 	}
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("UITK_BACKEND", "x11")
+			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
-			a := uitoolkit.New(uitoolkit.Options{Scale: 1, DisableLookWatch: true})
+			a := ui.New(ui.Options{Scale: 1, DisableLookWatch: true})
 			p, err := New(players.NewHost(a), Options{Scale: 1})
 			if err != nil {
 				t.Fatal(err)
@@ -111,9 +110,9 @@ func TestNativeUtilitySetterRestoresMappedPolicyWithoutIdentityChange(t *testing
 	}
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("UITK_BACKEND", "x11")
+			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
 			t.Setenv(style.ThemeEnv, skin)
-			a := uitoolkit.New(uitoolkit.Options{Scale: 1.75, DisableLookWatch: true})
+			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})
 			p, err := New(players.NewHost(a), Options{Scale: 1.75})
 			if err != nil {
 				t.Fatal(err)

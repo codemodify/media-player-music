@@ -8,9 +8,9 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	vlclayout "github.com/codemodify/media-player-music/internal/skins/vlc"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
 )
 
 const (
@@ -28,17 +28,17 @@ type Options struct {
 
 type Player struct {
 	Host      *players.Host
-	App       *app.Application
+	App       *ui.Application
 	Transport *players.Transport
 	Spectrum  *players.Spectrum
 	Equaliser *players.Equalizer
-	Main      *app.Window
+	Main      *ui.Window
 	body      *body
 	dropLook  func()
 }
 
 func New(h *players.Host, opts Options) (*Player, error) {
-	if _, ok := style.SkinLayoutOf(h.App.Look(), LayoutMain); !ok {
+	if _, ok := skins.SkinLayoutOf(h.App.Look(), LayoutMain); !ok {
 		return nil, fmt.Errorf("classic VLC requires skin layout %q", LayoutMain)
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
@@ -56,7 +56,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	return p, nil
 }
 
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}}
 }

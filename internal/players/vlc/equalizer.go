@@ -3,12 +3,12 @@ package vlc
 import (
 	"fmt"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type eqPane struct {
@@ -55,7 +55,7 @@ func (e *eqPane) presetMenu() {
 		name := p.Name
 		items = append(items, widgets.RadioItem(name, "preset", name == e.p.Equaliser.Preset, func() { e.p.Equaliser.Apply(name) }))
 	}
-	at := widget.DeviceOrigin(e.presets).Add(paintengine2d.Pt(0, e.presets.Bounds().Dy()))
+	at := widget.DeviceOrigin(e.presets).Add(paint2d.Pt(0, e.presets.Bounds().Dy()))
 	widgets.ShowContextMenu(e.presets, at, items...)
 }
 func (e *eqPane) sync() {
@@ -81,10 +81,10 @@ func (e *eqPane) sync() {
 	e.balance.Set(e.p.Transport.Pan)
 	e.Invalidate()
 }
-func (e *eqPane) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(e.Look(), 428), style.Dip(e.Look(), 116)))
+func (e *eqPane) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(e.Look(), 428), style.Dip(e.Look(), 116)))
 }
-func (e *eqPane) Arrange(r paintengine2d.Rect) {
+func (e *eqPane) Arrange(r paint2d.Rect) {
 	e.SetBounds(r)
 	b, lk := e.LocalBounds(), e.Look()
 	d := func(v float32) float32 { return style.Dip(lk, v) }
@@ -92,27 +92,27 @@ func (e *eqPane) Arrange(r paintengine2d.Rect) {
 		c    widget.Component
 		x, w float32
 	}{{e.on, 0, 74}, {e.auto, 78, 60}, {e.presets, 144, 98}, {e.reset, 248, 52}} {
-		item.c.Arrange(paintengine2d.XYWH(d(item.x), 0, d(item.w), d(23)))
+		item.c.Arrange(paint2d.XYWH(d(item.x), 0, d(item.w), d(23)))
 	}
-	e.balance.Arrange(paintengine2d.XYWH(d(357), 0, max(d(54), b.Dx()-d(357)), d(23)))
+	e.balance.Arrange(paint2d.XYWH(d(357), 0, max(d(54), b.Dx()-d(357)), d(23)))
 	each := b.Dx() / 11
 	for i, f := range append([]*sourceSlider{e.preamp}, e.bands...) {
-		f.Arrange(paintengine2d.XYWH(float32(i)*each, d(28), each, max(d(36), b.Dy()-d(47))))
+		f.Arrange(paint2d.XYWH(float32(i)*each, d(28), each, max(d(36), b.Dy()-d(47))))
 	}
 }
-func (e *eqPane) Paint(ctx *paintengine2d.Context) {
+func (e *eqPane) Paint(ctx *paint2d.Context) {
 	lk, b := e.Look(), e.LocalBounds()
 	d := func(v float32) float32 { return style.Dip(lk, v) }
 	font := players.ScaledFace(lk.Font(), d(9))
-	players.DrawTextIn(ctx, font, paintengine2d.XYWH(d(304), 0, d(50), d(23)), "Balance", paintengine2d.Black, style.AlignEnd)
+	players.DrawTextIn(ctx, font, paint2d.XYWH(d(304), 0, d(50), d(23)), "Balance", paint2d.Black, style.AlignEnd)
 	for i, f := range append([]*sourceSlider{e.preamp}, e.bands...) {
 		label := "Preamp"
 		if i > 0 {
 			label = players.EqBands[i-1]
 		}
 		r := f.Bounds()
-		players.DrawTextIn(ctx, font, paintengine2d.XYWH(r.Min.X, b.Dy()-d(17), r.Dx(), d(15)), label, paintengine2d.Black, style.AlignCenter)
+		players.DrawTextIn(ctx, font, paint2d.XYWH(r.Min.X, b.Dy()-d(17), r.Dx(), d(15)), label, paint2d.Black, style.AlignCenter)
 	}
-	ctx.DrawRect(paintengine2d.XYWH(0, b.Dy()-d(1), b.Dx(), d(1)), paintengine2d.Fill(paintengine2d.RGB(.5, .5, .5)))
+	ctx.DrawRect(paint2d.XYWH(0, b.Dy()-d(1), b.Dx(), d(1)), paint2d.Fill(paint2d.RGB(.5, .5, .5)))
 }
 func (e *eqPane) Describe(n *a11y.Node) { n.Role, n.Name = a11y.RoleGroup, "Equalizer" }

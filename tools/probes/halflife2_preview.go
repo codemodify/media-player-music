@@ -14,11 +14,11 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/halflife2"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 	os.Setenv(style.ThemeEnv, players.HalfLife2Skin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
 	p, err := halflife2.New(players.NewHost(a), halflife2.Options{Headless: true, Scale: float32(*scale)})
 	if err != nil {
 		panic(err)
@@ -42,7 +42,7 @@ func main() {
 	p.ShowEqualiser(true)
 	p.ShowPlaylist(true)
 	a.PumpOnce()
-	write := func(name string, im *paintengine2d.Image) {
+	write := func(name string, im *paint2d.Image) {
 		path := filepath.Join(*dir, "half-life-2-"+name+".png")
 		file, err := os.Create(path)
 		if err != nil {
@@ -63,14 +63,14 @@ func main() {
 	// Match the original composition: equalizer above the main window's
 	// right-hand side, playlist immediately below the equalizer.
 	d := float32(*scale)
-	composition := paintengine2d.NewImage(int(769*d+.5), int(465*d+.5))
-	ctx := paintengine2d.NewContext(composition)
-	ctx.Clear(paintengine2d.Transparent)
+	composition := paint2d.NewImage(int(769*d+.5), int(465*d+.5))
+	ctx := paint2d.NewContext(composition)
+	ctx.Clear(paint2d.Transparent)
 	for _, panel := range []struct {
-		im         *paintengine2d.Image
+		im         *paint2d.Image
 		x, y, w, h float32
 	}{{p.Main.CaptureSurface(), 0, 80, 339, 300}, {p.Eq.CaptureSurface(), 339, 0, 430, 239}, {p.List.CaptureSurface(), 339, 239, 393, 226}} {
-		ctx.DrawImageRectPaint(panel.im, paintengine2d.XYWH(0, 0, float32(panel.im.Bounds().Dx()), float32(panel.im.Bounds().Dy())), paintengine2d.XYWH(panel.x*d, panel.y*d, panel.w*d, panel.h*d), paintengine2d.Paint{Color: paintengine2d.White, Filter: paintengine2d.FilterNearest})
+		ctx.DrawImageRectPaint(panel.im, paint2d.XYWH(0, 0, float32(panel.im.Bounds().Dx()), float32(panel.im.Bounds().Dy())), paint2d.XYWH(panel.x*d, panel.y*d, panel.w*d, panel.h*d), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
 	}
 	write("group", composition)
 	for _, state := range []string{"inner-shutter", "outer-shutter"} {

@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
 )
 
 func TestDraggingMainToALooseSatelliteKeepsMainAsTheAnchor(t *testing.T) {

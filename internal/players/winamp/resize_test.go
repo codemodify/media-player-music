@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistResizeKeepsControlsUsableAtEveryScale(t *testing.T) {
@@ -39,10 +39,10 @@ func TestPlaylistResizeKeepsControlsUsableAtEveryScale(t *testing.T) {
 				box := p.List.WindowRect()
 				// The toolkit puts the band inside a shaped skin and in the
 				// shadow margin of a rectangular frame. Find its public hit.
-				at, resizeHit := paintengine2d.Point{}, false
+				at, resizeHit := paint2d.Point{}, false
 				for y := box.Max.Y - 3*scale; y < box.Max.Y+6*scale; y++ {
-					candidate := paintengine2d.Pt(box.Center().X, y)
-					if region, edge := p.List.NonClientHit(candidate); region == app.RegionResize && edge == platform.EdgeBottom {
+					candidate := paint2d.Pt(box.Center().X, y)
+					if region, edge := p.List.NonClientHit(candidate); region == ui.RegionResize && edge == platform.EdgeBottom {
 						at, resizeHit = candidate, true
 						break
 					}
@@ -217,7 +217,7 @@ func assertPlaylistWellColour(t *testing.T, p *Player, skin string, scale float3
 	t.Helper()
 	image := p.List.Capture()
 	rows := p.listPane.list.geo.rows
-	point := widget.LocalToWindow(p.listPane.list, paintengine2d.XYWH(rows.Max.X-60*scale, rows.Max.Y-4*scale, 1, 1)).Min
+	point := widget.LocalToWindow(p.listPane.list, paint2d.XYWH(rows.Max.X-60*scale, rows.Max.Y-4*scale, 1, 1)).Min
 	point = point.Sub(p.List.WindowRect().Min)
 	r, g, b, _ := image.PremulAt(int(point.X), int(point.Y))
 	if skin == Skin && (r > 40 || g > 40 || b > 40) {

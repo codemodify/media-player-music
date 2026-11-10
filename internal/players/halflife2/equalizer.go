@@ -4,19 +4,20 @@ import (
 	"fmt"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type equalizerPane struct {
 	widget.Base
 	p       *Player
-	slots   *widget.Slots
+	slots   *skins.Slots
 	buttons map[string]*players.GlyphButton
 	bands   []*players.Fader
 	balance *players.Fader
@@ -24,7 +25,7 @@ type equalizerPane struct {
 }
 
 func newEqualizerPane(p *Player) *equalizerPane {
-	b := &equalizerPane{p: p, slots: widget.NewSlots(LayoutEqualizer), buttons: make(map[string]*players.GlyphButton)}
+	b := &equalizerPane{p: p, slots: skins.NewSlots(LayoutEqualizer), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Half Life 2 equalizer")
@@ -53,8 +54,8 @@ func newEqualizerPane(p *Player) *equalizerPane {
 	}
 	preset := button("preset", "Equalizer presets and preamp", players.GlyphNone, b.presetMenu)
 	preset.Shaper = nil
-	preset.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, _ style.ControlState) bool {
-		players.DrawTextIn(ctx, players.ScaledFace(preset.Look().Font(), style.Dip(preset.Look(), 8)), r, p.Equaliser.Preset, paintengine2d.RGB(.1, .1, .1), style.AlignCenter)
+	preset.Art = func(ctx *paint2d.Context, r paint2d.Rect, _ style.ControlState) bool {
+		players.DrawTextIn(ctx, players.ScaledFace(preset.Look().Font(), style.Dip(preset.Look(), 8)), r, p.Equaliser.Preset, paint2d.RGB(.1, .1, .1), style.AlignCenter)
 		return true
 	}
 	for i, name := range players.EqBands {
@@ -96,31 +97,31 @@ func newEqualizerPane(p *Player) *equalizerPane {
 	return b
 }
 func paintBand(f *players.Fader) {
-	f.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, t float32, _ style.ControlState) bool {
+	f.Painter = func(ctx *paint2d.Context, r paint2d.Rect, t float32, _ style.ControlState) bool {
 		lk := f.Look()
-		style.DrawSkinSprite(lk, ctx, r, "band.track", paintengine2d.Color{})
+		skins.DrawSkinSprite(lk, ctx, r, "band.track", paint2d.Color{})
 		d := style.Dip(lk, 1)
-		thumb := paintengine2d.XYWH(r.Min.X, r.Min.Y+(1-t)*(r.Dy()-12*d), r.Dx(), 12*d)
+		thumb := paint2d.XYWH(r.Min.X, r.Min.Y+(1-t)*(r.Dy()-12*d), r.Dx(), 12*d)
 		// WMP's foregroundImage is a level fill, revealed only below the
 		// moving thumb. Its source thumb remains above that clipped fill.
 		ctx.Save()
-		ctx.ClipRect(paintengine2d.XYWH(r.Min.X, thumb.Min.Y+thumb.Dy()/2, r.Dx(), r.Max.Y-thumb.Min.Y-thumb.Dy()/2))
-		style.DrawSkinSprite(lk, ctx, r, "band.foreground", paintengine2d.Color{})
+		ctx.ClipRect(paint2d.XYWH(r.Min.X, thumb.Min.Y+thumb.Dy()/2, r.Dx(), r.Max.Y-thumb.Min.Y-thumb.Dy()/2))
+		skins.DrawSkinSprite(lk, ctx, r, "band.foreground", paint2d.Color{})
 		ctx.Restore()
-		return style.DrawSkinSprite(lk, ctx, thumb, "eq.thumb", paintengine2d.Color{})
+		return skins.DrawSkinSprite(lk, ctx, thumb, "eq.thumb", paint2d.Color{})
 	}
 }
 func paintHorizontal(f *players.Fader, prefix string) {
-	f.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, t float32, _ style.ControlState) bool {
+	f.Painter = func(ctx *paint2d.Context, r paint2d.Rect, t float32, _ style.ControlState) bool {
 		lk := f.Look()
-		style.DrawSkinSprite(lk, ctx, r, prefix+".track", paintengine2d.Color{})
+		skins.DrawSkinSprite(lk, ctx, r, prefix+".track", paint2d.Color{})
 		d := style.Dip(lk, 1)
-		thumb := paintengine2d.XYWH(r.Min.X+t*(r.Dx()-11*d), r.Min.Y+(r.Dy()-10*d)/2, 11*d, 10*d)
+		thumb := paint2d.XYWH(r.Min.X+t*(r.Dx()-11*d), r.Min.Y+(r.Dy()-10*d)/2, 11*d, 10*d)
 		ctx.Save()
-		ctx.ClipRect(paintengine2d.XYWH(r.Min.X, r.Min.Y, thumb.Min.X+thumb.Dx()/2-r.Min.X, r.Dy()))
-		style.DrawSkinSprite(lk, ctx, r, prefix+".foreground", paintengine2d.Color{})
+		ctx.ClipRect(paint2d.XYWH(r.Min.X, r.Min.Y, thumb.Min.X+thumb.Dx()/2-r.Min.X, r.Dy()))
+		skins.DrawSkinSprite(lk, ctx, r, prefix+".foreground", paint2d.Color{})
 		ctx.Restore()
-		return style.DrawSkinSprite(lk, ctx, thumb, "horizontal.thumb", paintengine2d.Color{})
+		return skins.DrawSkinSprite(lk, ctx, thumb, "horizontal.thumb", paint2d.Color{})
 	}
 }
 func (b *equalizerPane) stepPreset(next bool) {
@@ -157,7 +158,7 @@ func (b *equalizerPane) presetMenu() {
 		name := pr.Name
 		items = append(items, widgets.RadioItem(name, "preset", name == e.Preset, func() { e.Apply(name) }))
 	}
-	widgets.ShowContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
+	widgets.ShowContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
 }
 func (b *equalizerPane) sync() {
 	eq := b.p.Equaliser
@@ -178,21 +179,21 @@ func (b *equalizerPane) sync() {
 	b.balance.Tip = b.p.Host.FeatureTip("Balance", b.p.Host.BalanceAvailable())
 	b.Invalidate()
 }
-func (b *equalizerPane) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *equalizerPane) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *equalizerPane) Arrange(r paintengine2d.Rect) {
+func (b *equalizerPane) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *equalizerPane) Paint(ctx *paintengine2d.Context) {
+func (b *equalizerPane) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	style.DrawSkinLayout(lk, ctx, box, LayoutEqualizer)
+	skins.DrawSkinLayout(lk, ctx, box, LayoutEqualizer)
 	f := players.ScaledFace(lk.Font(), style.Dip(lk, 8))
-	col := paintengine2d.RGB(.1, .1, .1)
+	col := paint2d.RGB(.1, .1, .1)
 	for _, item := range []struct{ slot, text string }{{"balance.label", "Balance"}, {"srs.label", "SRS WOW Effects"}, {"speaker.label", "Normal Speakers"}, {"trubass.label", "TruBass"}, {"wow.label", "WOW Effect"}} {
-		r, _ := style.SkinSlotRect(lk, LayoutEqualizer, item.slot, box)
+		r, _ := skins.SkinSlotRect(lk, LayoutEqualizer, item.slot, box)
 		players.DrawTextIn(ctx, f, r, item.text, col, style.AlignStart)
 	}
 }

@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // The window sizes, in logical pixels. They are the design pixels the skin
@@ -33,14 +33,14 @@ const Skin = players.WinampSkin
 // another face leaves it exactly where it was.
 type Player struct {
 	Host *players.Host
-	App  *app.Application
+	App  *ui.Application
 	Desk *rack.Desk
 
 	Transport *players.Transport
 	Spectrum  *players.Spectrum
 	Equaliser *players.Equalizer
 
-	Main, Eq, List  *app.Window
+	Main, Eq, List  *ui.Window
 	strip           *strip
 	eqPane          *eqPane
 	listPane        *listPane
@@ -57,11 +57,8 @@ type Player struct {
 	tries   int
 	// restoredPlacement survives the desktop's initial mapping/configure.
 	// Once the requested arrangement arrives, ordinary dragging owns it again.
-	restoredPlacement     map[string]players.WindowPlacement
-	utilityOwnerID        string
-	followingWindows      bool
-	followWindowsAgain    bool
-	pendingWindowGeometry bool
+	restoredPlacement map[string]players.WindowPlacement
+	utilityOwnerID    string
 }
 
 // Options is what the command line passes in.
@@ -138,7 +135,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	p.Transport.Changed = p.refresh
 	p.Equaliser.Changed = p.refresh
 	// A look can change under the player from outside it too — Settings,
-	// an edited look.json, UITK_THEME on a watcher — and the titles and the
+	// an edited look.json, GOFRAMEWORK_DESKTOP_UI_THEME on a watcher — and the titles and the
 	// focus follow the face whichever way it changed.
 	p.dropLook = a.OnLookChange(p.restyle)
 	p.restyle()
@@ -155,7 +152,6 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	if p.listPane != nil {
 		p.List.RequestFocus(p.listPane.list)
 	}
-	p.watchWindowMoves()
 	return p, nil
 }
 
@@ -169,7 +165,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 // skin can dress one window differently from the others: Winamp Silver's
 // equaliser has a tab for a header where the other two have a band. A look
 // that says nothing about the role gives every window its one frame.
-func (p *Player) open(a *app.Application, opts Options, title, role string, w, h int) (*app.Window, error) {
+func (p *Player) open(a *ui.Application, opts Options, title, role string, w, h int) (*ui.Window, error) {
 	windowRole := platform.RoleNormal
 	if role != layoutStrip {
 		// Satellite panels belong to Main and stay out of the desktop's
@@ -207,7 +203,7 @@ func (p *Player) Close() {
 		p.dropLook()
 		p.dropLook = nil
 	}
-	for _, w := range []*app.Window{p.List, p.Eq, p.Main} {
+	for _, w := range []*ui.Window{p.List, p.Eq, p.Main} {
 		if w != nil {
 			w.Close()
 		}
@@ -228,7 +224,7 @@ func (p *Player) Windows() []players.NamedWindow {
 }
 
 // MainWindow is the window the application's clock wakes on.
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 
 func (p *Player) ShowEqualiser(on bool) { p.showWindow(p.iEq, on) }
 func (p *Player) ShowPlaylist(on bool)  { p.showWindow(p.iList, on) }
@@ -246,8 +242,8 @@ func (p *Player) Pose(pos time.Duration) {
 	p.refresh()
 }
 
-// Advance settles startup and maintains resized or unacknowledged geometry.
-// Desktop move events follow the group independently of the playback clock;
+// Advance settles startup and maintains resized geometry. Desk handles native
+// move bursts and request deadlines independently of the playback clock;
 // backends without those events retain polling. A zero-duration call explicitly
 // observes geometry, as capture/restore and scripted callers expect.
 func (p *Player) Advance(dt time.Duration) {
@@ -309,7 +305,7 @@ const settleTries = 20
 func (p *Player) placed() bool {
 	for i := 0; i < p.Desk.Rack.Len(); i++ {
 		pane, w := p.Desk.Rack.Pane(i), p.Desk.Window(i)
-		if pane == nil || w == nil || !pane.Shown {
+		if pane == nil || w == nil || w.Closed() || !pane.Shown {
 			continue
 		}
 		if x, y, ok := w.Position(); !ok || x != pane.Box.X || y != pane.Box.Y {
@@ -350,7 +346,7 @@ func (p *Player) Command(c players.Command) { p.Host.Command(c) }
 // It is handed the window the key came from rather than reading the main
 // one: the guard below asks what has the keyboard, and in a player with
 // three windows that is a different answer in each.
-func (p *Player) Keys(w *app.Window, e widget.KeyEvent) bool {
+func (p *Player) Keys(w *ui.Window, e widget.KeyEvent) bool {
 	if p.skinKeys(w, e, w.Content()) {
 		return true
 	}
@@ -410,7 +406,7 @@ func (p *Player) configureUtilityWindows() {
 	if ownerID == "" || ownerID == p.utilityOwnerID {
 		return
 	}
-	for _, window := range []*app.Window{p.Eq, p.List} {
+	for _, window := range []*ui.Window{p.Eq, p.List} {
 		if window != nil && !window.Closed() {
 			window.SetOwner(p.Main)
 		}
@@ -421,7 +417,7 @@ func (p *Player) configureUtilityWindows() {
 // keepFocus moves a window's focus to fallback when the control that had it
 // is no longer shown. A face that hides the key the keyboard was on hands the
 // keyboard to the obvious next thing rather than to nothing.
-func keepFocus(w *app.Window, fallback widget.Component) {
+func keepFocus(w *ui.Window, fallback widget.Component) {
 	if w == nil {
 		return
 	}

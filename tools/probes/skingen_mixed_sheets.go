@@ -9,9 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/skingen"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skingen"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -25,15 +25,15 @@ func main() {
 		name      string
 		pixelated bool
 	}{{"pixel", true}, {"smooth", false}} {
-		plan.Sheets = append(plan.Sheets, &skingen.Sheet{Name: spec.name, W: 12, H: 12, Pixelated: spec.pixelated, Cells: []skingen.Cell{{Name: spec.name + ".face", W: 12, H: 12, Draw: func(ctx *paintengine2d.Context, w, h float32) {
-			ctx.DrawRect(paintengine2d.XYWH(0, 0, w, h), paintengine2d.Fill(paintengine2d.RGB(1, 0, 0)))
+		plan.Sheets = append(plan.Sheets, &skingen.Sheet{Name: spec.name, W: 12, H: 12, Pixelated: spec.pixelated, Cells: []skingen.Cell{{Name: spec.name + ".face", W: 12, H: 12, Draw: func(ctx *paint2d.Context, w, h float32) {
+			ctx.DrawRect(paint2d.XYWH(0, 0, w, h), paint2d.Fill(paint2d.RGB(1, 0, 0)))
 		}}}})
 	}
 	if err := skingen.Write(dir, plan); err != nil {
 		panic(err)
 	}
 	fsys := os.DirFS(filepath.Join(dir, plan.Name))
-	raw, err := os.ReadFile(filepath.Join(dir, plan.Name, style.SkinFile))
+	raw, err := os.ReadFile(filepath.Join(dir, plan.Name, skins.SkinFile))
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func main() {
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		panic(err)
 	}
-	sk, err := style.LoadSkinFS(fsys, plan.Name)
+	sk, err := skins.LoadSkinFS(fsys, plan.Name)
 	if err != nil {
 		panic(err)
 	}

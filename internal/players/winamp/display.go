@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 // ---- the display -------------------------------------------------------------
@@ -27,11 +27,11 @@ func newReadout(p *Player) *readout {
 	return r
 }
 
-func (r *readout) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(r.Look(), 200), style.Dip(r.Look(), 38)))
+func (r *readout) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(r.Look(), 200), style.Dip(r.Look(), 38)))
 }
 
-func (r *readout) Arrange(b paintengine2d.Rect) { r.SetBounds(b) }
+func (r *readout) Arrange(b paint2d.Rect) { r.SetBounds(b) }
 
 // Describe is the display as a screen reader meets it: one label whose name
 // is everything the well says, so a reader announces the track and the time

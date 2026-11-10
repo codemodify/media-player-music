@@ -10,20 +10,19 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, players.RealPlayerSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	p, err := New(h, Options{Headless: true, Scale: scale})
@@ -34,20 +33,20 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	settle(a, p)
 	return a, p
 }
-func settle(a *uitoolkit.Application, p *Player) {
+func settle(a *ui.Application, p *Player) {
 	for i := 0; i < 3; i++ {
 		a.PumpOnce()
 		p.Advance(70 * time.Millisecond)
 	}
 }
-func click(a *uitoolkit.Application, w *app.Window, c widget.Component) {
+func click(a *ui.Application, w *ui.Window, c widget.Component) {
 	at := widget.DeviceOrigin(c).Add(c.LocalBounds().Center())
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: at})
 	a.PumpOnce()
 }
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()

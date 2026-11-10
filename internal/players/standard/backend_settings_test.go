@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 func TestSettingsButtonWorksWithoutAMenuAndFitsMinimumLayout(t *testing.T) {

@@ -11,11 +11,11 @@ import (
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 )
 
 type recordingBackend struct {
@@ -40,11 +40,11 @@ func (b *recordingBackend) Close() error {
 	return nil
 }
 
-func liveShell(t *testing.T, skin string) (*uitoolkit.Application, *Shell, *recordingBackend) {
+func liveShell(t *testing.T, skin string) (*ui.Application, *Shell, *recordingBackend) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(skin))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	b := &recordingBackend{events: make(chan playback.Event, 100)}
 	s, err := New(a, Options{Skin: skin, Headless: true, Backend: b})
 	if err != nil {

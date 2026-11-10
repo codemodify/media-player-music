@@ -6,7 +6,7 @@
 // bitmap artwork; its source archive and authors' notices live in sources.
 package plans
 
-import "github.com/codemodify/uitoolkit/skingen"
+import "goframework.io/desktop-ui-skingen"
 
 type (
 	Plan        = skingen.Plan
@@ -24,5 +24,5 @@ var Hex = skingen.Hex
 
 // Plans returns fresh plans for the skins shipped with the player.
 func Plans() []*skingen.Plan {
-	return append(append([]*skingen.Plan{Winamp(), WinampSilver(), WinampClassified()}, ImportedPlans()...), Headspace(), Xbox(), HalfLife2(), Fandom(), ITunes(), Series9(), VLC(), RealPlayer(), Amarok())
+	return append(append([]*skingen.Plan{Winamp(), WinampSilver(), WinampClassified()}, ImportedPlans()...), Headspace(), Xbox(), HalfLife2(), Fandom(), ITunes(), Series9(), VLC(), RealPlayer(), Amarok(), Fancy())
 }

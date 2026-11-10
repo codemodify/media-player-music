@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const (
@@ -37,11 +37,11 @@ type Options struct {
 
 type Player struct {
 	Host                        *players.Host
-	App                         *app.Application
+	App                         *ui.Application
 	Transport                   *players.Transport
 	Spectrum                    *players.Spectrum
 	Equaliser                   *players.Equalizer
-	Main                        *app.Window
+	Main                        *ui.Window
 	body                        *body
 	compact                     *compactPane
 	mode                        string
@@ -55,7 +55,7 @@ type Player struct {
 
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutTransport, LayoutEqualizer, LayoutPlaylist, LayoutCompact} {
-		if _, ok := style.SkinLayoutOf(h.App.Look(), role); !ok {
+		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
 			return nil, fmt.Errorf("Series 9 requires skin layout %q", role)
 		}
 	}
@@ -87,7 +87,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	return p, nil
 }
 
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}}
 }
@@ -160,11 +160,11 @@ func (p *Player) userMoved(name string) {
 	}
 }
 
-type panelGeometry struct{ Main, Transport, Equalizer, Playlist paintengine2d.Rect }
+type panelGeometry struct{ Main, Transport, Equalizer, Playlist paint2d.Rect }
 
 // panelRects keeps the original drawer offsets in device coordinates. Base
 // dimensions exclude the additional space occupied by either open drawer.
-func (p *Player) panelRects(box paintengine2d.Rect) panelGeometry {
+func (p *Player) panelRects(box paint2d.Rect) panelGeometry {
 	scale := p.Main.Scale()
 	mainX := float32(0)
 	if p.drawPlaylist {
@@ -175,20 +175,20 @@ func (p *Player) panelRects(box paintengine2d.Rect) panelGeometry {
 		baseH -= EqualizerTravel * scale
 	}
 	return panelGeometry{
-		Main:      paintengine2d.XYWH(box.Min.X+mainX, box.Min.Y, baseW, baseH-55*scale),
-		Transport: paintengine2d.XYWH(box.Min.X+mainX+12*scale, box.Max.Y-60*scale, baseW-12*scale, 60*scale),
-		Equalizer: paintengine2d.XYWH(box.Min.X+mainX+12*scale, box.Max.Y-183*scale, baseW-12*scale, 123*scale),
-		Playlist:  paintengine2d.XYWH(box.Min.X, box.Min.Y+33*scale, 263*scale, baseH-107*scale),
+		Main:      paint2d.XYWH(box.Min.X+mainX, box.Min.Y, baseW, baseH-55*scale),
+		Transport: paint2d.XYWH(box.Min.X+mainX+12*scale, box.Max.Y-60*scale, baseW-12*scale, 60*scale),
+		Equalizer: paint2d.XYWH(box.Min.X+mainX+12*scale, box.Max.Y-183*scale, baseW-12*scale, 123*scale),
+		Playlist:  paint2d.XYWH(box.Min.X, box.Min.Y+33*scale, 263*scale, baseH-107*scale),
 	}
 }
 func (p *Player) updateShape() {
 	if p.Main == nil || p.Main.Closed() {
 		return
 	}
-	p.Main.SetShapeFunc(func(size paintengine2d.Point, _ float32) *platform.Shape {
-		mask := paintengine2d.NewImage(int(size.X+.5), int(size.Y+.5))
-		ctx := paintengine2d.NewContext(mask)
-		ctx.Clear(paintengine2d.Transparent)
+	p.Main.SetShapeFunc(func(size paint2d.Point, _ float32) *platform.Shape {
+		mask := paint2d.NewImage(int(size.X+.5), int(size.Y+.5))
+		ctx := paint2d.NewContext(mask)
+		ctx.Clear(paint2d.Transparent)
 		p.drawShape(ctx, size)
 		// The art carries its own alpha; this mask supplies its extent only.
 		for at := 3; at < len(mask.Pix); at += 4 {
@@ -199,23 +199,23 @@ func (p *Player) updateShape() {
 		return platform.NewShapeImage(mask)
 	})
 }
-func (p *Player) drawShape(ctx *paintengine2d.Context, size paintengine2d.Point) {
-	box := paintengine2d.XYWH(0, 0, size.X, size.Y)
+func (p *Player) drawShape(ctx *paint2d.Context, size paint2d.Point) {
+	box := paint2d.XYWH(0, 0, size.X, size.Y)
 	if p.Compact() {
-		style.DrawSkinSlot(p.Main.Look(), ctx, box, LayoutCompact, "shape.background", 0)
+		skins.DrawSkinSlot(p.Main.Look(), ctx, box, LayoutCompact, "shape.background", 0)
 		return
 	}
 	r := p.panelRects(box)
 	if p.drawPlaylist {
-		style.DrawSkinSlot(p.Main.Look(), ctx, r.Playlist, LayoutPlaylist, "shape.background", 0)
+		skins.DrawSkinSlot(p.Main.Look(), ctx, r.Playlist, LayoutPlaylist, "shape.background", 0)
 	}
 	if p.drawEqualizer {
-		style.DrawSkinSlot(p.Main.Look(), ctx, r.Equalizer, LayoutEqualizer, "shape.background", 0)
+		skins.DrawSkinSlot(p.Main.Look(), ctx, r.Equalizer, LayoutEqualizer, "shape.background", 0)
 	}
-	style.DrawSkinSlot(p.Main.Look(), ctx, r.Main, LayoutMain, "shape.background", 0)
-	style.DrawSkinSlot(p.Main.Look(), ctx, r.Transport, LayoutTransport, "shape.background", 0)
+	skins.DrawSkinSlot(p.Main.Look(), ctx, r.Main, LayoutMain, "shape.background", 0)
+	skins.DrawSkinSlot(p.Main.Look(), ctx, r.Transport, LayoutTransport, "shape.background", 0)
 }
-func (p *Player) keys(w *app.Window, e widget.KeyEvent) bool {
+func (p *Player) keys(w *ui.Window, e widget.KeyEvent) bool {
 	if e.Mods.Ctrl() {
 		switch e.Key {
 		case platform.KeyM:
@@ -243,7 +243,7 @@ func (p *Player) keys(w *app.Window, e widget.KeyEvent) bool {
 		at := widget.DeviceOrigin(from)
 		if c := w.Focus(); c != nil {
 			from = c
-			at = widget.DeviceOrigin(c).Add(paintengine2d.Pt(0, c.Bounds().Dy()))
+			at = widget.DeviceOrigin(c).Add(paint2d.Pt(0, c.Bounds().Dy()))
 		}
 		p.Host.ContextMenu(from, at)
 		return true

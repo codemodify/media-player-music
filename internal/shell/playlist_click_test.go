@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
 )
 
 func TestPlaylistClickSelectsAndDoubleClickStartsBackend(t *testing.T) {

@@ -94,11 +94,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -106,15 +106,15 @@ func main() {
 		panic("native X11 DISPLAY required")
 	}
 	os.Setenv(style.ThemeEnv, "dark")
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: 1, DisableLookWatch: true})
-	w, err := a.NewWindow(platform.WindowOptions{Title: "UITK public resize burst probe", Width: 596, Height: 468, Decorations: platform.DecorationsNone})
+	a := ui.New(ui.Options{Backend: "x11", Scale: 1, DisableLookWatch: true})
+	w, err := a.NewWindow(platform.WindowOptions{Title: "desktop-ui public resize burst probe", Width: 596, Height: 468, Decorations: platform.DecorationsNone})
 	if err != nil {
 		panic(err)
 	}
 	defer w.Close()
 	w.Hide()
 	w.SetContent(widgets.NewLabel("Hidden public resize probe"))
-	shape := func(size paintengine2d.Point, _ float32) *platform.Shape {
+	shape := func(size paint2d.Point, _ float32) *platform.Shape {
 		width, height := int(size.X+.5), int(size.Y+.5)
 		mask := make([]byte, width*height)
 		for at := range mask {

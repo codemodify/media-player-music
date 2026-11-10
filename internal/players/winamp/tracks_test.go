@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistPointerSelectsBeforeDoubleClickActivates(t *testing.T) {
@@ -92,7 +92,7 @@ func TestPlaylistPointerInterruptionsDoNotActivate(t *testing.T) {
 			case "focus-change":
 				p.List.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
 			case "wheel-at-end":
-				p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paintengine2d.Pt(0, 1)})
+				p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
 			}
 			inject()
 			a.PumpOnce()
@@ -353,11 +353,11 @@ func TestPlaylistScrollAndAccessibleRowsFollowTheSkin(t *testing.T) {
 				// Compare against the app's manifest slot, not ListView's
 				// implementation of its geometry hook.
 				rows = slotRect(list.Look(), layoutPlaylist, "rows", p.listPane.LocalBounds())
-				rows = rows.Translate(paintengine2d.Pt(-list.Bounds().Min.X, -list.Bounds().Min.Y))
+				rows = rows.Translate(paint2d.Pt(-list.Bounds().Min.X, -list.Bounds().Min.Y))
 			} else {
 				rows.Max.X -= style.ScrollGutter(list.Look())
 			}
-			want := widget.LocalToWindow(list, paintengine2d.XYWH(rows.Min.X, rows.Min.Y, rows.Dx(), list.RowHeightPx()))
+			want := widget.LocalToWindow(list, paint2d.XYWH(rows.Min.X, rows.Min.Y, rows.Dx(), list.RowHeightPx()))
 			items := list.AccessibleItems()
 			if items[0].Bounds != want {
 				t.Fatalf("first accessible row is at %+v, artwork row is at %+v", items[0].Bounds, want)
@@ -377,7 +377,7 @@ func TestPlaylistScrollAndAccessibleRowsFollowTheSkin(t *testing.T) {
 			}
 			list.ScrollTo(0)
 			pos := list.AccessibleItems()[0].Bounds.Center()
-			p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paintengine2d.Pt(0, 1)})
+			p.List.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
 			a.PumpOnce()
 			if list.OffsetY <= 0 {
 				t.Fatal("wheel event did not scroll the stock list")
@@ -398,7 +398,7 @@ func TestPlaylistScrollAndAccessibleRowsFollowTheSkin(t *testing.T) {
 				t.Fatalf("thumb drag did not scroll into the middle: offset=%f max=%f", list.OffsetY, list.MaxOffset())
 			}
 			list.ScrollTo(list.MaxOffset())
-			if list.MouseWheel(widget.MouseEvent{Scroll: paintengine2d.Pt(0, 1)}) {
+			if list.MouseWheel(widget.MouseEvent{Scroll: paint2d.Pt(0, 1)}) {
 				t.Fatal("wheel at the end should bubble to the parent")
 			}
 		})
@@ -427,13 +427,13 @@ func TestPlaylistAccessibleActivationResumesCurrentTrack(t *testing.T) {
 func TestPlaylistAccessibleBoundsFollowInsetRowsWhenScrolled(t *testing.T) {
 	_, p := open(t, Skin, 1.5)
 	list := p.listPane.list
-	rows := paintengine2d.XYWH(12, 20, 200, 80)
+	rows := paint2d.XYWH(12, 20, 200, 80)
 	list.geo = &listGeo{rows: rows, rowH: 10}
-	list.Arrange(paintengine2d.XYWH(40, 44, 240, 120))
+	list.Arrange(paint2d.XYWH(40, 44, 240, 120))
 	for _, offset := range []float32{0, 5, 20} {
 		list.ScrollTo(offset)
 		for i, n := range list.AccessibleItems() {
-			local := paintengine2d.XYWH(12, 20+float32(i)*10-offset, 200, 10)
+			local := paint2d.XYWH(12, 20+float32(i)*10-offset, 200, 10)
 			want := widget.LocalToWindow(list, local)
 			if n.Bounds != want {
 				t.Errorf("offset=%g row=%d: accessible bounds=%v, painted bounds=%v", offset, i, n.Bounds, want)
@@ -450,7 +450,7 @@ type playlistRowLook struct {
 	states []style.ControlState
 }
 
-func (lk *playlistRowLook) DrawListRow(ctx *paintengine2d.Context, row paintengine2d.Rect, st style.ControlState, text string) {
+func (lk *playlistRowLook) DrawListRow(ctx *paint2d.Context, row paint2d.Rect, st style.ControlState, text string) {
 	lk.states = append(lk.states, st)
 	lk.LookAndFeel.DrawListRow(ctx, row, st, text)
 }
@@ -469,7 +469,7 @@ func TestPlaylistPaintTracksOuterFocusAndPlayingRow(t *testing.T) {
 	paint := func() {
 		lk.states = nil
 		b := list.LocalBounds()
-		list.Paint(paintengine2d.NewContext(paintengine2d.NewImage(int(b.Dx()), int(b.Dy()))))
+		list.Paint(paint2d.NewContext(paint2d.NewImage(int(b.Dx()), int(b.Dy()))))
 	}
 	paint()
 	if len(lk.states) < 3 {
@@ -492,7 +492,7 @@ func TestPlaylistPaintTracksOuterFocusAndPlayingRow(t *testing.T) {
 
 // Exercise a helper's generic paint path without constructing a compact
 // unskinned app. The shell's default presentation is tested separately.
-func openPlaylist(t *testing.T, pack string, scale float32) (*uitoolkit.Application, *Player) {
+func openPlaylist(t *testing.T, pack string, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	if pack != Themed {
 		return open(t, pack, scale)

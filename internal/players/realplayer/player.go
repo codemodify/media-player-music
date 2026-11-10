@@ -8,10 +8,10 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	rplayout "github.com/codemodify/media-player-music/internal/skins/realplayer"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 const (
@@ -30,11 +30,11 @@ type Options struct {
 }
 type Player struct {
 	Host                 *players.Host
-	App                  *app.Application
+	App                  *ui.Application
 	Transport            *players.Transport
 	Spectrum             *players.Spectrum
 	Equaliser            *players.Equalizer
-	Main                 *app.Window
+	Main                 *ui.Window
 	body                 *body
 	dropLook, dropResize func()
 	placementReady       bool
@@ -43,7 +43,7 @@ type Player struct {
 
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutPlaylist, LayoutEqualizer} {
-		if _, ok := style.SkinLayoutOf(h.App.Look(), role); !ok {
+		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
 			return nil, fmt.Errorf("RealPlayer requires skin layout %q", role)
 		}
 	}
@@ -62,7 +62,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	w.RequestFocus(p.body.buttons["play"])
 	return p, nil
 }
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}}
 }

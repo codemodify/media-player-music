@@ -6,11 +6,11 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // The toolkit scrolls a long choice list inside the compact panel when a
@@ -77,7 +77,7 @@ func TestSkinMenuOffersTheSameChoicesOnEveryPopupBackend(t *testing.T) {
 	}
 }
 
-func menuChoice(t *testing.T, a *uitoolkit.Application, w interface{ Inject(platform.Event) }, pop *widgets.PopupMenu, choice int) {
+func menuChoice(t *testing.T, a *ui.Application, w interface{ Inject(platform.Event) }, pop *widgets.PopupMenu, choice int) {
 	t.Helper()
 	// A mouse-opened PopupMenu's first Down highlights row0; subsequent
 	// Down keys scroll the newly focused row into the constrained viewport.

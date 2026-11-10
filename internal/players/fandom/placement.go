@@ -2,7 +2,7 @@ package fandom
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/rack"
+	"goframework.io/desktop-ui-rack"
 )
 
 // CapturePlacement records the desk's logical positions and bonds, including

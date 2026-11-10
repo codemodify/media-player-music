@@ -9,11 +9,11 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	hslayout "github.com/codemodify/media-player-music/internal/skins/headspace"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const (
@@ -29,11 +29,11 @@ type Options struct {
 
 type Player struct {
 	Host                 *players.Host
-	App                  *app.Application
+	App                  *ui.Application
 	Transport            *players.Transport
 	Spectrum             *players.Spectrum
 	Equaliser            *players.Equalizer
-	Main                 *app.Window
+	Main                 *ui.Window
 	body                 *body
 	dropLook, dropResize func()
 	placementReady       bool
@@ -41,7 +41,7 @@ type Player struct {
 }
 
 func New(h *players.Host, opts Options) (*Player, error) {
-	if _, ok := style.SkinLayoutOf(h.App.Look(), LayoutMain); !ok {
+	if _, ok := skins.SkinLayoutOf(h.App.Look(), LayoutMain); !ok {
 		return nil, fmt.Errorf("Headspace requires a skin with layout %q", LayoutMain)
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
@@ -68,7 +68,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	return p, nil
 }
 
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}}
 }
@@ -132,14 +132,14 @@ func (p *Player) updateShape() {
 	// The pack supplies the union of the head, display and visible wings.
 	// Matching the alpha used for painting makes empty space click through.
 	slot := "shape." + p.wingState()
-	p.Main.SetShapeFunc(func(size paintengine2d.Point, _ float32) *platform.Shape {
+	p.Main.SetShapeFunc(func(size paint2d.Point, _ float32) *platform.Shape {
 		// SkinSlotShape is for controls and deliberately declines masks over
 		// 512² device pixels. A whole window paints its alpha through the public
 		// sprite API instead, then uses the platform's unrestricted image mask.
-		mask := paintengine2d.NewImage(int(size.X+.5), int(size.Y+.5))
-		ctx := paintengine2d.NewContext(mask)
-		ctx.Clear(paintengine2d.Transparent)
-		if !style.DrawSkinSlot(p.Main.Look(), ctx, paintengine2d.XYWH(0, 0, size.X, size.Y), LayoutMain, slot, 0) {
+		mask := paint2d.NewImage(int(size.X+.5), int(size.Y+.5))
+		ctx := paint2d.NewContext(mask)
+		ctx.Clear(paint2d.Transparent)
+		if !skins.DrawSkinSlot(p.Main.Look(), ctx, paint2d.XYWH(0, 0, size.X, size.Y), LayoutMain, slot, 0) {
 			return nil
 		}
 		return platform.NewShapeImage(mask)
@@ -166,11 +166,11 @@ func (p *Player) keys(e widget.KeyEvent) bool {
 	}
 	if e.Key == platform.KeyMenu || (e.Key == platform.KeyF10 && e.Mods.Shift()) {
 		from := widget.Component(p.body)
-		at := paintengine2d.Pt(320*p.Main.Scale(), 48*p.Main.Scale())
+		at := paint2d.Pt(320*p.Main.Scale(), 48*p.Main.Scale())
 		if f := p.Main.Focus(); f != nil {
 			from = f
 			o := widget.DeviceOrigin(f)
-			at = paintengine2d.Pt(o.X, o.Y+f.Bounds().Dy())
+			at = paint2d.Pt(o.X, o.Y+f.Bounds().Dy())
 		}
 		p.Host.ContextMenu(from, at)
 		return true

@@ -9,12 +9,12 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	fdlayout "github.com/codemodify/media-player-music/internal/skins/fandom"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const (
@@ -34,27 +34,26 @@ type Options struct {
 }
 
 type Player struct {
-	Host                                                        *players.Host
-	App                                                         *app.Application
-	Transport                                                   *players.Transport
-	Spectrum                                                    *players.Spectrum
-	Equaliser                                                   *players.Equalizer
-	Main, List                                                  *app.Window
-	body                                                        *body
-	listPane                                                    *playlistPane
-	dropLook                                                    func()
-	Desk                                                        *rack.Desk
-	iMain, iList                                                int
-	stacked                                                     bool
-	tries                                                       int
-	restoredPlacement                                           map[string]players.WindowPlacement
-	followingWindows, followWindowsAgain, pendingWindowGeometry bool
-	utilityOwnerID                                              string
+	Host              *players.Host
+	App               *ui.Application
+	Transport         *players.Transport
+	Spectrum          *players.Spectrum
+	Equaliser         *players.Equalizer
+	Main, List        *ui.Window
+	body              *body
+	listPane          *playlistPane
+	dropLook          func()
+	Desk              *rack.Desk
+	iMain, iList      int
+	stacked           bool
+	tries             int
+	restoredPlacement map[string]players.WindowPlacement
+	utilityOwnerID    string
 }
 
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutPlaylist} {
-		if _, ok := style.SkinLayoutOf(h.App.Look(), role); !ok {
+		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
 			return nil, fmt.Errorf("Fandom requires skin layout %q", role)
 		}
 	}
@@ -93,7 +92,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	return p, nil
 }
 
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}, {Name: "playlist", Window: p.List}}
 }
@@ -103,7 +102,7 @@ func (p *Player) Close() {
 		p.dropLook()
 		p.dropLook = nil
 	}
-	for _, w := range []*app.Window{p.List, p.Main} {
+	for _, w := range []*ui.Window{p.List, p.Main} {
 		if w != nil {
 			w.Close()
 		}
@@ -155,12 +154,12 @@ func (p *Player) updateShape() {
 	p.configureUtilityWindows()
 }
 
-func (p *Player) setShape(w *app.Window, role string) {
-	w.SetShapeFunc(func(size paintengine2d.Point, _ float32) *platform.Shape {
-		mask := paintengine2d.NewImage(int(size.X+.5), int(size.Y+.5))
-		ctx := paintengine2d.NewContext(mask)
-		ctx.Clear(paintengine2d.Transparent)
-		box := paintengine2d.XYWH(0, 0, size.X, size.Y)
+func (p *Player) setShape(w *ui.Window, role string) {
+	w.SetShapeFunc(func(size paint2d.Point, _ float32) *platform.Shape {
+		mask := paint2d.NewImage(int(size.X+.5), int(size.Y+.5))
+		ctx := paint2d.NewContext(mask)
+		ctx.Clear(paint2d.Transparent)
+		box := paint2d.XYWH(0, 0, size.X, size.Y)
 		slots := []string{"shape.playlist"}
 		if role == LayoutMain {
 			slots = []string{"shape.main"}
@@ -169,8 +168,8 @@ func (p *Player) setShape(w *app.Window, role string) {
 			}
 		}
 		for _, slot := range slots {
-			r, ok := style.SkinSlotRect(w.Look(), role, slot, box)
-			if !ok || !style.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
+			r, ok := skins.SkinSlotRect(w.Look(), role, slot, box)
+			if !ok || !skins.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
 				return nil
 			}
 		}
@@ -198,7 +197,7 @@ func (p *Player) configureUtilityWindows() {
 	}
 }
 
-func (p *Player) keys(w *app.Window, e widget.KeyEvent) bool {
+func (p *Player) keys(w *ui.Window, e widget.KeyEvent) bool {
 	if e.Mods.Ctrl() {
 		switch e.Key {
 		case platform.KeyE:
@@ -218,11 +217,11 @@ func (p *Player) keys(w *app.Window, e widget.KeyEvent) bool {
 	}
 	if e.Key == platform.KeyMenu || e.Key == platform.KeyF10 && e.Mods.Shift() {
 		from := w.Content()
-		at := paintengine2d.Pt(50*w.Scale(), 40*w.Scale())
+		at := paint2d.Pt(50*w.Scale(), 40*w.Scale())
 		if c := w.Focus(); c != nil {
 			from = c
 			o := widget.DeviceOrigin(c)
-			at = paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy())
+			at = paint2d.Pt(o.X, o.Y+c.Bounds().Dy())
 		}
 		if w == p.List {
 			p.listPane.contextMenu(from, at)

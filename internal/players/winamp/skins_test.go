@@ -8,13 +8,14 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // scales is every display scale the panels are checked at.
@@ -25,7 +26,7 @@ var scales = []float32{1, 1.25, 1.5, 1.75, 2}
 func TestThePanelSkinsAreThere(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	for _, id := range Skins {
-		sk, ok := style.LoadSkin(id)
+		sk, ok := skins.LoadSkin(id)
 		if !ok {
 			t.Fatalf("%s did not load", id)
 		}
@@ -33,11 +34,17 @@ func TestThePanelSkinsAreThere(t *testing.T) {
 			if !sh.Covers(2) {
 				t.Errorf("%s: sheet %s has no asset at 2x", id, sh.Name)
 			}
+			// Loaded sheet sampling includes any inherited design default.
+			// Polished chrome is smooth; the original bitmap readouts stay
+			// nearest on their own sheet. Silver is smooth throughout.
+			if want := id != SkinSilver && sh.Name == "pixels"; sh.Pixelated != want {
+				t.Errorf("%s: sheet %s pixelated = %v, want %v", id, sh.Name, sh.Pixelated, want)
+			}
+		}
+		if id != SkinSilver && sk.Sheets["pixels"] == nil {
+			t.Errorf("%s: no nearest-sampled original bitmap sheet", id)
 		}
 		if id == Skin || id == SkinSilver {
-			if got := sk.Design.Pixelated; got != (id == Skin) {
-				t.Errorf("%s: pixelated = %v", id, got)
-			}
 			shaped := sk.Window != nil && len(sk.Window.Shape) > 0
 			if shaped != (id == SkinSilver) {
 				t.Errorf("%s: declares a window shape = %v", id, shaped)
@@ -45,7 +52,7 @@ func TestThePanelSkinsAreThere(t *testing.T) {
 		}
 		p, _ := style.LoadTheme(id)
 		for _, name := range panelSprites() {
-			if _, _, ok := style.SkinSpriteSize(p.Look(), name); !ok {
+			if _, _, ok := skins.SkinSpriteSize(p.Look(), name); !ok {
 				t.Errorf("%s: no sprite %q, which the player paints", id, name)
 			}
 		}
@@ -87,7 +94,7 @@ func TestEverySkinPaintsEveryWindowAtEveryScale(t *testing.T) {
 			a.PumpOnce()
 			for _, w := range []struct {
 				name string
-				win  *app.Window
+				win  *ui.Window
 				h    int
 			}{{"strip", p.Main, panel.MainH}, {"equaliser", p.Eq, panel.EqH}, {"playlist", p.List, panel.ListH}} {
 				img := w.win.Capture()
@@ -124,7 +131,7 @@ func checkDisplay(t *testing.T, id string, scale float32, p *Player) {
 	// Capture crops the surface's shadow margin; DeviceOrigin includes it.
 	window := p.Main.WindowRect().Min
 	o.X, o.Y = o.X-window.X, o.Y-window.Y
-	d, ok := style.SkinSlotRect(p.strip.Look(), layoutStrip, "display", p.strip.LocalBounds())
+	d, ok := skins.SkinSlotRect(p.strip.Look(), layoutStrip, "display", p.strip.LocalBounds())
 	if !ok {
 		t.Fatalf("%s@%gx: the skin states no display slot", id, scale)
 	}
@@ -158,7 +165,7 @@ func TestTheSilverWindowsAreRoundAtEveryScale(t *testing.T) {
 		var base []float64
 		for _, scale := range scales {
 			_, p := open(t, SkinSilver, scale)
-			win := map[string]*app.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List}[w]
+			win := map[string]*ui.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List}[w]
 			if !win.ShapeActive() {
 				t.Fatalf("%s@%gx: not shaped", w, scale)
 			}
@@ -195,7 +202,7 @@ func TestTheSkinKeySelectsTheOtherPanel(t *testing.T) {
 	a, p := open(t, Skin, 1)
 	p.strip.skinBtn.AccessibleAction(0, a11y.ActionDefault)
 	a.PumpOnce()
-	for _, w := range []*app.Window{p.Main, p.Eq, p.List} {
+	for _, w := range []*ui.Window{p.Main, p.Eq, p.List} {
 		if got := style.LookAppearance(w.Look()).Name; got != SkinSilver {
 			t.Fatalf("after the skin key: %s wears %q, want %q", w.Title(), got, SkinSilver)
 		}
@@ -214,7 +221,7 @@ func TestTheSkinKeySelectsTheOtherPanel(t *testing.T) {
 
 func TestTheSkinSwitchIsOnTheKeyboard(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	for _, w := range []*app.Window{p.Main, p.Eq, p.List} {
+	for _, w := range []*ui.Window{p.Main, p.Eq, p.List} {
 		p.SetSkin(Skin)
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Rune: 'k', Mods: platform.ModCtrl})
 		a.PumpOnce()
@@ -244,7 +251,7 @@ func TestTheSkinMenuListsTheSkinsByName(t *testing.T) {
 	if p.strip.stop.MousePress(widget.MouseEvent{Button: platform.ButtonRight}) {
 		t.Error("a right-click pressed the stop key")
 	}
-	if !p.strip.MousePress(widget.MouseEvent{Button: platform.ButtonRight, Pos: paintengine2d.Pt(2, 60)}) {
+	if !p.strip.MousePress(widget.MouseEvent{Button: platform.ButtonRight, Pos: paint2d.Pt(2, 60)}) {
 		t.Fatal("the strip did not take a right-click")
 	}
 	a.PumpOnce()
@@ -320,7 +327,7 @@ func TestEveryPanelControlIsOnTheKeyboard(t *testing.T) {
 // the application's (players.Settings), and the face only asks for it.
 func auditAll(t *testing.T, id string, p *Player) {
 	t.Helper()
-	for name, w := range map[string]*app.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List} {
+	for name, w := range map[string]*ui.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List} {
 		playertest.Audit(t, id+" "+name, w)
 	}
 }

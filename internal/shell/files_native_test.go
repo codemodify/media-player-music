@@ -16,10 +16,9 @@ import (
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/style"
 )
 
 // This opt-in integration crosses the actual native XDND selection protocol,
@@ -59,12 +58,12 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 	if len(want.tracks) == 0 {
 		t.Fatal("native test folder has no playable entries")
 	}
-	t.Setenv("UITK_BACKEND", "x11")
+	t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
 	for _, skin := range []string{players.DefaultSkin, winamp.Skin, winamp.SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, LookFor(skin))
-			a := uitoolkit.New(uitoolkit.Options{Scale: 1.75, DisableLookWatch: true})
+			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})
 			backend := &recordingBackend{events: make(chan playback.Event, 100)}
 			s, err := New(a, Options{Skin: skin, Scale: 1.75, Backend: backend})
 			if err != nil {
@@ -124,7 +123,7 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 	}
 }
 
-func nativePlaylistWindow(s *Shell) *app.Window {
+func nativePlaylistWindow(s *Shell) *ui.Window {
 	for _, named := range s.Windows() {
 		if named.Name == "playlist" {
 			return named.Window
@@ -133,7 +132,7 @@ func nativePlaylistWindow(s *Shell) *app.Window {
 	return s.MainWindow()
 }
 
-func inspectNativeXDND(t *testing.T, sender string, window *app.Window, phase string) bool {
+func inspectNativeXDND(t *testing.T, sender string, window *ui.Window, phase string) bool {
 	t.Helper()
 	parent := window.PortalParent()
 	if !strings.HasPrefix(parent, "x11:") {
@@ -147,7 +146,7 @@ func inspectNativeXDND(t *testing.T, sender string, window *app.Window, phase st
 	return strings.Contains(string(output), "mapped=2 ")
 }
 
-func nativeXDND(t *testing.T, a *app.Application, sender, target string, x, y int, payload, preferred string) {
+func nativeXDND(t *testing.T, a *ui.Application, sender, target string, x, y int, payload, preferred string) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 12*time.Second)
 	defer cancel()

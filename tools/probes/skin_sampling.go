@@ -15,22 +15,23 @@ import (
 	"path/filepath"
 	"testing/fstest"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
 	for _, pixelated := range []bool{true, false} {
 		id := fmt.Sprintf("sampling-public-%t", pixelated)
 		asset := func(scale int) []byte {
-			im := paintengine2d.NewImage(8*scale, 8*scale)
+			im := paint2d.NewImage(8*scale, 8*scale)
 			for y := range im.Height {
 				for x := range im.Width {
-					c := paintengine2d.Black
+					c := paint2d.Black
 					if (x/scale+y/scale)%2 == 0 {
-						c = paintengine2d.RGB(0, 1, 0)
+						c = paint2d.RGB(0, 1, 0)
 						if scale == 2 {
-							c = paintengine2d.RGB(0, 0, 1)
+							c = paint2d.RGB(0, 0, 1)
 						}
 					}
 					im.SetColor(x, y, c)
@@ -44,13 +45,13 @@ func main() {
 		}
 		doc := fmt.Sprintf(`{"skin":1,"label":"Sampling probe","base":"dark","design":{"pixelated":%t},"sheets":{"chrome":{"1x":"one.png","2x":"two.png"}},"sprites":{"face":{"at":[0,0,8,8]}}}`, pixelated)
 		fsys := fstest.MapFS{"skin.json": {Data: []byte(doc)}, "one.png": {Data: asset(1)}, "two.png": {Data: asset(2)}}
-		if err := style.RegisterSkinFS(fsys, id); err != nil {
+		if err := skins.RegisterSkinFS(fsys, id); err != nil {
 			panic(err)
 		}
 		p, _ := style.LoadTheme(id)
 		for _, scale := range []float32{1, 1.75, 2} {
-			im := paintengine2d.NewImage(20, 20)
-			style.DrawSkinSprite(style.WithScale(p.Look(), scale), paintengine2d.NewContext(im), paintengine2d.XYWH(.25, .25, 8*scale, 8*scale), "face", paintengine2d.Color{})
+			im := paint2d.NewImage(20, 20)
+			skins.DrawSkinSprite(style.WithScale(p.Look(), scale), paint2d.NewContext(im), paint2d.XYWH(.25, .25, 8*scale, 8*scale), "face", paint2d.Color{})
 			green, blue, blended := 0, 0, 0
 			for y := 1; y < int(8*scale)-1; y++ {
 				for x := 1; x < int(8*scale)-1; x++ {
@@ -75,7 +76,7 @@ func main() {
 
 func inspectPack(id string) {
 	dir := filepath.Join("internal", "skins", "packs", id)
-	sk, err := style.LoadSkinFS(os.DirFS(dir), "sampling-"+id)
+	sk, err := skins.LoadSkinFS(os.DirFS(dir), "sampling-"+id)
 	if err != nil {
 		panic(err)
 	}
@@ -111,15 +112,15 @@ func inspectPack(id string) {
 			}
 		}
 	}
-	if err := style.RegisterSkinFS(os.DirFS(dir), "sampling-"+id); err != nil {
+	if err := skins.RegisterSkinFS(os.DirFS(dir), "sampling-"+id); err != nil {
 		panic(err)
 	}
 	p, _ := style.LoadTheme("sampling-" + id)
 	const scale float32 = 1.75
 	lk := style.WithScale(p.Look(), scale)
 	w, h := sp.W*scale, sp.H*scale
-	im := paintengine2d.NewImage(int(math.Ceil(float64(w))), int(math.Ceil(float64(h))))
-	style.DrawSkinSprite(lk, paintengine2d.NewContext(im), paintengine2d.XYWH(0, 0, w, h), "key.play", paintengine2d.Color{})
+	im := paint2d.NewImage(int(math.Ceil(float64(w))), int(math.Ceil(float64(h))))
+	skins.DrawSkinSprite(lk, paint2d.NewContext(im), paint2d.XYWH(0, 0, w, h), "key.play", paint2d.Color{})
 	colors := map[[4]uint32]bool{}
 	for y := one.Bounds().Min.Y; y < one.Bounds().Max.Y; y++ {
 		for x := one.Bounds().Min.X; x < one.Bounds().Max.X; x++ {
@@ -139,7 +140,7 @@ func inspectPack(id string) {
 	caption := sk.Text["caption.main"]
 	font := style.WeightFontOf(lk, style.WeightBold)
 	if caption != nil && caption.Size > 0 {
-		font = style.BakeFamily(font.Family, style.WeightBold, caption.Size*scale/sk.Design.Scale, paintengine2d.White)
+		font = style.BakeFamily(font.Family, style.WeightBold, caption.Size*scale/sk.Design.Scale, paint2d.White)
 	}
 	out, _ := json.Marshal(map[string]any{"pack": id, "play_sheet_pixelated": sp.Sheet.Pixelated, "2x_pixels_different_from_exact_1x_double": different, "opaque_1_75_pixels_outside_1x_source_palette": newColors, "caption_font_family": font.Family, "caption_font_size": font.Size, "caption_font_uses_outlines": font.Outline})
 	fmt.Println(string(out))

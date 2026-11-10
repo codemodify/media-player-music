@@ -3,7 +3,7 @@ package fandom
 import (
 	"time"
 
-	"github.com/codemodify/uitoolkit/rack"
+	"goframework.io/desktop-ui-rack"
 )
 
 func (p *Player) initGroup() {
@@ -12,7 +12,6 @@ func (p *Player) initGroup() {
 	p.iList = p.Desk.Add("playlist", p.List)
 	p.attachDefaultGroup()
 	p.Desk.Apply()
-	p.watchWindowMoves()
 }
 func (p *Player) attachDefaultGroup() {
 	p.Desk.Rack.Attach(p.iList, p.iMain, rack.SideRight)

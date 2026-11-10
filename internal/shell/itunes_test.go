@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
 )
 
 type miniPresentation interface {
@@ -35,7 +35,7 @@ func TestITunesRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) 
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.FandomSkin)
 			w, model := s.MainWindow(), s.Host.Model
-			dir := style.UserSkinDir(players.ITunesSkin)
+			dir := skins.UserSkinDir(players.ITunesSkin)
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				t.Fatal(err)
 			}
@@ -49,11 +49,11 @@ func TestITunesRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(filepath.Join(dir, style.SkinFile), data, 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), data, 0600); err != nil {
 				t.Fatal(err)
 			}
-			style.InvalidateSkinCache()
-			t.Cleanup(style.InvalidateSkinCache)
+			skins.InvalidateSkinCache()
+			t.Cleanup(skins.InvalidateSkinCache)
 			if err := s.SetSkin(players.ITunesSkin); err == nil || !strings.Contains(err.Error(), fmt.Sprintf("missing layout %q", missing)) {
 				t.Fatalf("incomplete iTunes override: %v", err)
 			}

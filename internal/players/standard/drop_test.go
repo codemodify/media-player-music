@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestNativePlaylistDropsReachTheApplicationAsCopies(t *testing.T) {
@@ -25,7 +25,7 @@ func TestNativePlaylistDropsReachTheApplicationAsCopies(t *testing.T) {
 			heading := widget.DeviceOrigin(q)
 			heading.X += q.Bounds().Dx() / 2
 			heading.Y += 10 * scale
-			for _, point := range []paintengine2d.Point{
+			for _, point := range []paint2d.Point{
 				widget.DeviceBounds(q.list).Center(), heading, widget.DeviceBounds(q.add).Center(),
 			} {
 				off.SimulateDropAction(point, map[string][]byte{
@@ -95,7 +95,7 @@ func TestNativePlaylistDropsRefuseUnsupportedOffersAndRemoteFiles(t *testing.T) 
 func TestFileDropOwnsItsPathsForDeferredLoading(t *testing.T) {
 	var received []string
 	h := &players.Host{DropFiles: func(paths []string) { received = paths }}
-	e := widget.NewDropEvent(paintengine2d.Point{}, "text/uri-list", []byte("file:///tmp/song.mp3"))
+	e := widget.NewDropEvent(paint2d.Point{}, "text/uri-list", []byte("file:///tmp/song.mp3"))
 	e.Action = platform.DragCopy
 	if !h.AcceptFileDrop(e) {
 		t.Fatal("local URI copy was rejected")

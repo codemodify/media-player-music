@@ -21,9 +21,9 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/headspace"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 	"os"
 	"strconv"
 	"strings"
@@ -36,7 +36,7 @@ func main() {
 	}
 	os.Setenv(style.ThemeEnv, players.HeadspaceSkin)
 	for _, scale := range []float32{1, 1.75} {
-		a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
+		a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
 		p, err := headspace.New(players.NewHost(a), headspace.Options{Scale: scale})
 		if err != nil {
 			panic(err)

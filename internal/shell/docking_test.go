@@ -6,13 +6,12 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
 )
 
 // Pump the actual UI timers and desktop events rather than calling Follow.
-func awaitDocking(t *testing.T, a *uitoolkit.Application, ready func() bool) {
+func awaitDocking(t *testing.T, a *ui.Application, ready func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
 	for {
@@ -27,7 +26,7 @@ func awaitDocking(t *testing.T, a *uitoolkit.Application, ready func() bool) {
 	}
 }
 
-func awaitPositions(t *testing.T, a *uitoolkit.Application, windows []*app.Window, positions [][2]int) {
+func awaitPositions(t *testing.T, a *ui.Application, windows []*ui.Window, positions [][2]int) {
 	t.Helper()
 	awaitDocking(t, a, func() bool {
 		for i, w := range windows {
@@ -62,7 +61,7 @@ func TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped(t *testing.T) {
 				_, mainH := main.Size()
 				_, eqH := eq.Size()
 				x, y, _ := main.Position()
-				all := []*app.Window{main, eq, list}
+				all := []*ui.Window{main, eq, list}
 				awaitPositions(t, a, all, [][2]int{{x, y}, {x, y + mainH}, {x, y + mainH + eqH}})
 				// Wait for its scheduled first tick before moving, because
 				// startup adoption intentionally takes the desktop's boxes.
@@ -73,7 +72,7 @@ func TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped(t *testing.T) {
 				// an application request and intentionally emits no such event.
 				// Stop the playback timer to prove dragging uses notifications.
 				s.Pulse().Stop()
-				move := func(w *app.Window, x, y int) {
+				move := func(w *ui.Window, x, y int) {
 					w.Surface().(*platform.Offscreen).SimulateDesktopMove(x, y)
 				}
 				move(main, 400, 260)

@@ -24,11 +24,11 @@ import "C"
 
 import (
 	"fmt"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 	"math"
 	"strconv"
 	"strings"
@@ -37,13 +37,13 @@ import (
 
 func main() {
 	for _, scale := range []float32{1, 1.75} {
-		a := app.New(app.Options{Backend: "x11", Scale: scale, Look: style.DarkLook(), DisableLookWatch: true})
+		a := ui.New(ui.Options{Backend: "x11", Scale: scale, Look: style.DarkLook(), DisableLookWatch: true})
 		w, e := a.NewWindow(platform.WindowOptions{Title: "shape audit", Width: 300, Height: 200, Decorations: platform.DecorationsClient})
 		if e != nil {
 			panic(e)
 		}
 		w.SetContent(widgets.NewLabel("shape"))
-		w.SetShapeFunc(func(size paintengine2d.Point, _ float32) *platform.Shape {
+		w.SetShapeFunc(func(size paint2d.Point, _ float32) *platform.Shape {
 			width, height := int(size.X), int(size.Y)
 			mask := make([]uint8, width*height)
 			for y := 0; y < height; y++ {

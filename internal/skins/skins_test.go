@@ -9,10 +9,11 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/skins/plans"
-	"github.com/codemodify/uitoolkit/style"
+	uiskins "goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
 )
 
-var packNames = []string{"amarok", "calculator", "dosamp", "fandom", "half-life-2", "headspace", "itunes", "quake-3-arena", "radar-amp", "realplayer", "series-9", "sony-cdx-mp3", "ti-82", "vlc", "winamp", "winamp-amber", "winamp-classified", "winamp-silver", "windows-98", "xbox"}
+var packNames = []string{"amarok", "calculator", "dosamp", "fancy", "fandom", "half-life-2", "headspace", "itunes", "quake-3-arena", "radar-amp", "realplayer", "series-9", "sony-cdx-mp3", "ti-82", "vlc", "winamp", "winamp-amber", "winamp-classified", "winamp-silver", "windows-98", "xbox"}
 
 var packLabels = map[string]string{
 	"calculator": "Calculator", "dosamp": "DOSamp", "quake-3-arena": "Quake 3 Arena", "radar-amp": "Radar Amp",
@@ -27,6 +28,7 @@ var packLabels = map[string]string{
 	"vlc":         "VLC - Classic",
 	"realplayer":  "RealPlayer - Classic",
 	"amarok":      "KDE - Amarok 1.4",
+	"fancy":       "Fancy",
 }
 
 func TestBundledPacksLoadAndLint(t *testing.T) {
@@ -47,7 +49,7 @@ func TestBundledPacksLoadAndLint(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			sk, err := style.LoadSkinFS(pack, name)
+			sk, err := uiskins.LoadSkinFS(pack, name)
 			if err != nil {
 				t.Fatalf("load bundled pack: %v", err)
 			}
@@ -86,6 +88,9 @@ func TestBundledPacksLoadAndLint(t *testing.T) {
 			if name == "amarok" {
 				layouts = []string{"amarok.main"}
 			}
+			if name == "fancy" {
+				layouts = []string{"fancy.main", "fancy.equalizer", "fancy.playlist", "fancy.compact"}
+			}
 			if len(sk.Layouts) != len(layouts) {
 				t.Errorf("layout count = %d, want %d", len(sk.Layouts), len(layouts))
 			}
@@ -94,7 +99,7 @@ func TestBundledPacksLoadAndLint(t *testing.T) {
 					t.Errorf("missing player layout %q", layout)
 				}
 			}
-			for _, w := range style.LintSkin(sk) {
+			for _, w := range uiskins.LintSkin(sk) {
 				// The app deliberately paints panel digits, letters, lamps,
 				// and sliders by sprite name instead of toolkit part binding.
 				if w.Key != "sprites" {
@@ -155,14 +160,14 @@ func TestRegistrationPreservesUserOverride(t *testing.T) {
 		t.Errorf("second registration changed search paths: %v", got)
 	}
 	listed := make(map[string]string)
-	for _, pack := range style.ListSkins() {
+	for _, pack := range uiskins.ListSkins() {
 		listed[pack.Name] = pack.Label
 	}
 	for _, name := range packNames {
 		if listed[name] != packLabels[name] {
 			t.Errorf("registered pack %s missing from skin enumeration: %q", name, listed[name])
 		}
-		sk, ok := style.LoadSkin(name)
+		sk, ok := uiskins.LoadSkin(name)
 		if !ok {
 			t.Errorf("registered pack %s does not load", name)
 			continue
@@ -172,12 +177,12 @@ func TestRegistrationPreservesUserOverride(t *testing.T) {
 		}
 		// Lint decodes every embedded PNG and checks sprite bounds,
 		// so successful manifest registration also proves its art is usable.
-		for _, w := range style.LintSkin(sk) {
+		for _, w := range uiskins.LintSkin(sk) {
 			if w.Key != "sprites" {
 				t.Errorf("registered pack: %s", w)
 			}
 		}
-		if sk.Dir != "" || sk.Path != "" || style.SkinSourceFile(name) != "" {
+		if sk.Dir != "" || sk.Path != "" || uiskins.SkinSourceFile(name) != "" {
 			t.Errorf("embedded %s unexpectedly has a filesystem source: %+v", name, sk)
 		}
 		if pack, ok := style.LoadTheme(name); !ok || pack.Label != sk.Label {
@@ -188,7 +193,7 @@ func TestRegistrationPreservesUserOverride(t *testing.T) {
 		t.Fatalf("registration wrote toolkit configuration: %v", err)
 	}
 
-	userDir := style.UserSkinDir("winamp")
+	userDir := uiskins.UserSkinDir("winamp")
 	if err := os.MkdirAll(userDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -196,21 +201,21 @@ func TestRegistrationPreservesUserOverride(t *testing.T) {
 	if err := os.WriteFile(userManifest, []byte(`{"skin":1,"label":"My Winamp","base":"win95"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	style.InvalidateSkinCache()
-	if sk, ok := style.LoadSkin("winamp"); !ok || sk.Label != "My Winamp" {
+	uiskins.InvalidateSkinCache()
+	if sk, ok := uiskins.LoadSkin("winamp"); !ok || sk.Label != "My Winamp" {
 		t.Fatalf("user skin did not override the app pack: %#v, %v", sk, ok)
 	}
 	if pack, ok := style.LoadTheme("winamp"); !ok || pack.Label != "My Winamp" {
 		t.Fatalf("user skin did not override the app theme: %+v, %v", pack, ok)
 	}
-	if got := style.SkinSourceFile("winamp"); got != userManifest {
+	if got := uiskins.SkinSourceFile("winamp"); got != userManifest {
 		t.Errorf("override source = %q, want %q", got, userManifest)
 	}
 	if err := os.RemoveAll(userDir); err != nil {
 		t.Fatal(err)
 	}
-	style.InvalidateSkinCache()
-	if sk, ok := style.LoadSkin("winamp"); !ok || sk.Label != "Winamp" {
+	uiskins.InvalidateSkinCache()
+	if sk, ok := uiskins.LoadSkin("winamp"); !ok || sk.Label != "Winamp" {
 		t.Fatalf("removing the override did not restore the embedded app skin: %#v, %v", sk, ok)
 	}
 }
@@ -230,7 +235,7 @@ func TestRegistrationNeedsNoWritableDirectory(t *testing.T) {
 		t.Fatalf("registration wrote configuration: %v", err)
 	}
 	for _, name := range packNames {
-		if sk, ok := style.LoadSkin(name); !ok || sk.Dir != "" {
+		if sk, ok := uiskins.LoadSkin(name); !ok || sk.Dir != "" {
 			t.Errorf("embedded %s was not available without disk extraction: %#v, %v", name, sk, ok)
 		}
 	}
@@ -239,9 +244,9 @@ func TestRegistrationNeedsNoWritableDirectory(t *testing.T) {
 func isolateSkinLookups(t *testing.T) {
 	t.Helper()
 	style.ResetSearchPathsForTest()
-	style.InvalidateSkinCache()
+	uiskins.InvalidateSkinCache()
 	t.Cleanup(func() {
 		style.ResetSearchPathsForTest()
-		style.InvalidateSkinCache()
+		uiskins.InvalidateSkinCache()
 	})
 }

@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
 )
 
 func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *testing.T) {
@@ -17,7 +17,7 @@ func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *tes
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.XboxSkin)
 			w, model := s.MainWindow(), s.Host.Model
-			dir := style.UserSkinDir(players.HalfLife2Skin)
+			dir := skins.UserSkinDir(players.HalfLife2Skin)
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				t.Fatal(err)
 			}
@@ -26,11 +26,11 @@ func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *tes
 				layouts += `,"halflife2.equalizer":{"size":[430,239]}`
 			}
 			manifest := `{"skin":1,"label":"Incomplete Half Life 2","base":"dark","layouts":{` + layouts + `}}`
-			if err := os.WriteFile(filepath.Join(dir, style.SkinFile), []byte(manifest), 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), []byte(manifest), 0600); err != nil {
 				t.Fatal(err)
 			}
-			style.InvalidateSkinCache()
-			t.Cleanup(style.InvalidateSkinCache)
+			skins.InvalidateSkinCache()
+			t.Cleanup(skins.InvalidateSkinCache)
 			if err := s.SetSkin(players.HalfLife2Skin); err == nil || !strings.Contains(err.Error(), `missing layout "`+missing+`"`) {
 				t.Fatalf("incomplete Half Life 2 override: %v", err)
 			}
@@ -52,7 +52,7 @@ func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *tes
 func TestHalfLife2SkinKeysCycleFromXboxAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.XboxSkin)
 	model := s.Host.Model
-	key := func(w *app.Window, mods platform.Modifiers) {
+	key := func(w *ui.Window, mods platform.Modifiers) {
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Mods: mods})
 		a.PumpOnce()
 		a.PumpOnce()

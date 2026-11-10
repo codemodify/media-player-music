@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
 )
 
 const (
@@ -28,6 +28,7 @@ const (
 	VLCSkin              = "vlc"
 	RealPlayerSkin       = "realplayer"
 	AmarokSkin           = "amarok"
+	FancySkin            = "fancy"
 )
 
 // panelSkins is the application-owned skin catalogue. Every entry uses the
@@ -57,7 +58,7 @@ func PanelSkins() []string {
 
 // SkinnedIDs returns all optional skins, including separate window families.
 func SkinnedIDs() []string {
-	return append(PanelSkins(), HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin)
+	return append(PanelSkins(), HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin, FancySkin)
 }
 
 // AppearanceIDs includes the ordinary UI followed by the optional skins.
@@ -75,19 +76,22 @@ func IsPanelSkin(id string) bool {
 
 // IsSkinned identifies an optional appearance in any presentation family.
 func IsSkinned(id string) bool {
-	return IsPanelSkin(id) || id == HeadspaceSkin || id == XboxSkin || id == HalfLife2Skin || id == FandomSkin || id == ITunesSkin || id == Series9Skin || id == VLCSkin || id == RealPlayerSkin || id == AmarokSkin
+	return IsPanelSkin(id) || id == HeadspaceSkin || id == XboxSkin || id == HalfLife2Skin || id == FandomSkin || id == ITunesSkin || id == Series9Skin || id == VLCSkin || id == RealPlayerSkin || id == AmarokSkin || id == FancySkin
 }
 
 // SkinChoices is the same catalogue expressed as command-line choices.
 func SkinChoices() string { return strings.Join(AppearanceIDs(), ", ") }
 
-// SkinLabel respects user-supplied pack labels and also names choices before
-// registration, when loading saved settings or displaying command-line help.
+// SkinLabel respects user-supplied pack labels, except Fancy's fixed display
+// name. It also names choices before registration, for saved settings and help.
 func SkinLabel(id string) string {
 	if id == DefaultSkin || id == Themed {
 		return "Default (no skin)"
 	}
-	if sk, ok := style.LoadSkin(id); ok && sk.Label != "" {
+	if id == FancySkin {
+		return "Fancy"
+	}
+	if sk, ok := skins.LoadSkin(id); ok && sk.Label != "" {
 		return formatAppearanceLabel(id, sk.Label)
 	}
 	if id == HeadspaceSkin {

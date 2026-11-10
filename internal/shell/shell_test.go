@@ -11,22 +11,23 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/players/standard"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 )
 
-func open(t *testing.T, skin string) (*uitoolkit.Application, *Shell) {
+func open(t *testing.T, skin string) (*ui.Application, *Shell) {
 	return openAtScale(t, skin, 0)
 }
 
-func openAtScale(t *testing.T, skin string, scale float32) (*uitoolkit.Application, *Shell) {
+func openAtScale(t *testing.T, skin string, scale float32) (*ui.Application, *Shell) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	opts := Options{Skin: skin, Headless: true, Scale: scale}
 	t.Setenv(style.ThemeEnv, LookFor(SkinFor(opts)))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	s, err := New(a, opts)
 	if err != nil {
 		t.Fatal(err)
@@ -41,14 +42,14 @@ func TestDefaultAndEverySkinOpenTheirCompleteUI(t *testing.T) {
 		t.Run(id, func(t *testing.T) {
 			_, s := open(t, id)
 			count := 1
-			if players.IsPanelSkin(id) || id == players.HalfLife2Skin {
+			if players.IsPanelSkin(id) || id == players.HalfLife2Skin || id == players.FancySkin {
 				count = 3
 			} else if id == players.XboxSkin || id == players.FandomSkin || id == players.ITunesSkin {
 				count = 2
 			}
 			if id == players.DefaultSkin {
 				count = 1
-				if _, ok := s.Presentation().(*standard.Player); !ok || style.IsSkin(s.Host.Worn()) {
+				if _, ok := s.Presentation().(*standard.Player); !ok || skins.IsSkin(s.Host.Worn()) {
 					t.Fatal("default did not use the ordinary unskinned UI")
 				}
 			}
@@ -253,10 +254,10 @@ func TestSkinKeysCycleEveryChoiceAndReturnToLastSkin(t *testing.T) {
 		}
 	}
 	key(platform.ModCtrl | platform.ModShift)
-	if s.Skin() != players.AmarokSkin {
+	if s.Skin() != players.FancySkin {
 		t.Fatal("Ctrl+Shift+K did not restore the last skin")
 	}
-	for _, last := range []string{players.AmarokSkin, players.RealPlayerSkin, players.VLCSkin, players.Series9Skin, players.ITunesSkin, players.FandomSkin, players.HalfLife2Skin, players.XboxSkin, players.HeadspaceSkin, players.WinampSilverSkin} {
+	for _, last := range []string{players.FancySkin, players.AmarokSkin, players.RealPlayerSkin, players.VLCSkin, players.Series9Skin, players.ITunesSkin, players.FandomSkin, players.HalfLife2Skin, players.XboxSkin, players.HeadspaceSkin, players.WinampSilverSkin} {
 		if err := s.SetSkin(last); err != nil {
 			t.Fatal(err)
 		}
@@ -284,7 +285,7 @@ func TestSinglePreferenceAndScreenshotIsolation(t *testing.T) {
 	}
 	opts := Options{Headless: true, Remember: true}
 	t.Setenv(style.ThemeEnv, LookFor(SkinFor(opts)))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	s, err := New(a, opts)
 	if err != nil {
 		t.Fatal(err)
@@ -331,15 +332,15 @@ func TestAnIncompleteOverrideKeepsTheDefaultAndLastWorkingSkin(t *testing.T) {
 			}
 			a.PumpOnce()
 			w := s.MainWindow()
-			dir := style.UserSkinDir(failedSkin)
+			dir := skins.UserSkinDir(failedSkin)
 			if err := os.MkdirAll(dir, 0o700); err != nil {
 				t.Fatal(err)
 			}
 			if err := os.WriteFile(filepath.Join(dir, "skin.json"), []byte(`{"skin":1,"label":"Incomplete","base":"dark"}`), 0o600); err != nil {
 				t.Fatal(err)
 			}
-			style.InvalidateSkinCache()
-			t.Cleanup(style.InvalidateSkinCache)
+			skins.InvalidateSkinCache()
+			t.Cleanup(skins.InvalidateSkinCache)
 			if err := s.SetSkin(failedSkin); err == nil {
 				t.Fatal("incomplete appearance override was accepted")
 			}

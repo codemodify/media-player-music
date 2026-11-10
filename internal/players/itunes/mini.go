@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // miniPane uses the original compact transport artwork, not scaled main buttons.
@@ -19,7 +20,7 @@ import (
 type miniPane struct {
 	widget.Base
 	p            *Player
-	slots        *widget.Slots
+	slots        *skins.Slots
 	buttons      map[string]*players.GlyphButton
 	play         *players.GlyphButton
 	seek, volume *sourceSlider
@@ -27,7 +28,7 @@ type miniPane struct {
 }
 
 func newMiniPane(p *Player) *miniPane {
-	b := &miniPane{p: p, slots: widget.NewSlots(LayoutMini), buttons: make(map[string]*players.GlyphButton), information: true}
+	b := &miniPane{p: p, slots: skins.NewSlots(LayoutMini), buttons: make(map[string]*players.GlyphButton), information: true}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("iTunes MiniPlayer")
@@ -86,11 +87,11 @@ func (b *miniPane) sync() {
 	b.seek.SetEnabled(t.Length() > 0)
 	b.Invalidate()
 }
-func (b *miniPane) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *miniPane) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *miniPane) Arrange(r paintengine2d.Rect) {
+func (b *miniPane) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.information = r.Dx() >= style.Dip(b.Look(), 300)
 	b.seek.SetVisible(b.information)
@@ -99,14 +100,14 @@ func (b *miniPane) Arrange(r paintengine2d.Rect) {
 	}
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *miniPane) Paint(ctx *paintengine2d.Context) {
+func (b *miniPane) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	ctx.DrawRect(box, paintengine2d.Paint{Color: paintengine2d.White, Blend: paintengine2d.BlendDestOut})
-	style.DrawSkinLayout(lk, ctx, box, LayoutMini)
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMini, slot, box); return r }
-	style.DrawSkinSlot(lk, ctx, at("controlwell"), LayoutMini, "controlwell", 0)
+	ctx.DrawRect(box, paint2d.Paint{Color: paint2d.White, Blend: paint2d.BlendDestOut})
+	skins.DrawSkinLayout(lk, ctx, box, LayoutMini)
+	at := func(slot string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMini, slot, box); return r }
+	skins.DrawSkinSlot(lk, ctx, at("controlwell"), LayoutMini, "controlwell", 0)
 	if b.information {
-		style.DrawSkinSlot(lk, ctx, at("lcd"), LayoutMini, "lcd", 0)
+		skins.DrawSkinSlot(lk, ctx, at("lcd"), LayoutMini, "lcd", 0)
 		drawDisplay(ctx, lk, at("display"), b.p, true)
 	}
 }
@@ -133,29 +134,29 @@ func (b *miniPane) Drop(e widget.DropEvent) bool { return b.p.Host.AcceptFileDro
 type resizeGrip struct {
 	widget.Base
 	p      *Player
-	window *app.Window
+	window *ui.Window
 	edges  platform.Edges
 }
 
-func newResizeGrip(p *Player, w *app.Window, edges platform.Edges) *resizeGrip {
+func newResizeGrip(p *Player, w *ui.Window, edges platform.Edges) *resizeGrip {
 	g := &resizeGrip{p: p, window: w, edges: edges}
 	g.Init(g)
 	g.SetAccessibleName("Resize Music Player")
 	return g
 }
-func (g *resizeGrip) Paint(ctx *paintengine2d.Context) {
+func (g *resizeGrip) Paint(ctx *paint2d.Context) {
 	r, lk := g.LocalBounds(), g.Look()
 	role := LayoutMain
 	if g.p.MiniPlayer() {
 		role = LayoutMini
 	}
-	if style.DrawSkinSlot(lk, ctx, r, role, "resize", 0) {
+	if skins.DrawSkinSlot(lk, ctx, r, role, "resize", 0) {
 		return
 	}
 	d := style.Dip(lk, 1)
-	ink := paintengine2d.RGB(.43, .46, .48)
+	ink := paint2d.RGB(.43, .46, .48)
 	for _, n := range []float32{3, 6, 9} {
-		ctx.DrawLine(paintengine2d.Pt(r.Max.X-n*d, r.Max.Y-2*d), paintengine2d.Pt(r.Max.X-2*d, r.Max.Y-n*d), paintengine2d.StrokePaint(ink, d))
+		ctx.DrawLine(paint2d.Pt(r.Max.X-n*d, r.Max.Y-2*d), paint2d.Pt(r.Max.X-2*d, r.Max.Y-n*d), paint2d.StrokePaint(ink, d))
 	}
 }
 func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {

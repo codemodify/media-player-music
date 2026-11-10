@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 )
 
 type moveDriver struct {
@@ -23,17 +23,17 @@ type moveDriver struct {
 func (c *moveDriver) KeyPress(widget.KeyEvent) bool { c.step(); return true }
 
 type rig struct {
-	a         *app.Application
+	a         *ui.Application
 	d         *rack.Desk
-	main, sat *app.Window
+	main, sat *ui.Window
 	mo, so    *platform.Offscreen
 	si        int
 	now       time.Time
 }
 
 func newRig() *rig {
-	r := &rig{a: app.New(app.Options{Headless: true, Look: style.DarkLook(), Scale: 1}), now: time.Unix(1000, 0)}
-	open := func(y int) *app.Window {
+	r := &rig{a: ui.New(ui.Options{Headless: true, Look: style.DarkLook(), Scale: 1}), now: time.Unix(1000, 0)}
+	open := func(y int) *ui.Window {
 		w, err := r.a.NewWindow(platform.WindowOptions{X: 0, Y: y, Width: 200, Height: 100, Headless: true, Decorations: platform.DecorationsNone})
 		if err != nil {
 			panic(err)
@@ -42,6 +42,7 @@ func newRig() *rig {
 	}
 	r.main, r.sat = open(0), open(100)
 	r.mo, r.so = r.main.Surface().(*platform.Offscreen), r.sat.Surface().(*platform.Offscreen)
+	r.a.PumpOnce()
 	r.a.PumpOnce()
 	r.d = rack.NewDesk(10)
 	r.d.SetClock(func() time.Time { return r.now })
@@ -53,7 +54,7 @@ func newRig() *rig {
 
 func (r *rig) close() { r.main.Close(); r.sat.Close() }
 
-func position(w *app.Window) [2]int {
+func position(w *ui.Window) [2]int {
 	x, y, ok := w.Position()
 	if !ok {
 		panic("fixture position unavailable")
@@ -84,7 +85,14 @@ func batch() {
 		r.main.Inject(platform.Event{Kind: platform.EventMove, Width: 10 * i, Height: 0})
 	}
 	r.a.PumpOnce()
-	fmt.Printf("single Pump: initiator events=4 changed follow passes=%d follower placements=%v final=%v\n", len(placements), placements, position(r.sat))
+	fmt.Printf("delivery Pump: initiator events=4 changed follow passes=%d follower placements=%v final=%v\n", len(placements), placements, position(r.sat))
+	// Since v0.23.6, a burst posts one follow pass for the next loop turn.
+	// PumpOnce drains posts before events, so deliver and settle separately.
+	r.a.PumpOnce()
+	fmt.Printf("following Pump: changed follow passes=%d follower placements=%v final=%v\n", len(placements), placements, position(r.sat))
+	if len(placements) != 1 {
+		panic("event burst was not coalesced to one changed follow pass")
+	}
 	if position(r.sat) != [2]int{40, 100} {
 		panic("final event-batch position was lost")
 	}
@@ -99,7 +107,8 @@ func precachedBatch() {
 		r.mo.SimulateDesktopMove(10*i, 0)
 	}
 	r.a.PumpOnce()
-	fmt.Printf("pre-cached offscreen control: initiator events=4 changed follow passes=%d final=%v (position was already final before dispatch)\n", passes, position(r.sat))
+	r.a.PumpOnce()
+	fmt.Printf("pre-cached offscreen control after delivery+following Pump: initiator events=4 changed follow passes=%d final=%v (position was already final before dispatch)\n", passes, position(r.sat))
 }
 
 func reentrant() {
@@ -116,6 +125,8 @@ func reentrant() {
 		}
 	}
 	r.mo.SimulateDesktopMove(300, 300)
+	r.a.PumpOnce()
+	r.a.PumpOnce()
 	r.a.PumpOnce()
 	fmt.Printf("reentrant final move: follower placements=%v final=%v\n", placements, position(r.sat))
 	if position(r.sat) != [2]int{350, 450} {
@@ -137,6 +148,7 @@ func deadline() {
 	r.so.Move(700, 700)
 	r.sat.Inject(platform.Event{Kind: platform.EventMove, Width: 700, Height: 700})
 	r.a.PumpOnce()
+	r.a.PumpOnce()
 	for i := 0; i < 100; i++ {
 		r.d.Follow()
 	}
@@ -155,7 +167,7 @@ func deadline() {
 		r.a.PumpOnce()
 	}
 	stale := r.d.Rack.Pane(r.si).Box
-	fmt.Printf("after251ms and3 idle Pumps: rack=%d,%d reported=%v bondedTo=%d\n", stale.X, stale.Y, position(r.sat), r.d.Rack.Pane(r.si).To)
+	fmt.Printf("simulated clock after251ms and3 idle Pumps (real timer has not elapsed): rack=%d,%d reported=%v bondedTo=%d\n", stale.X, stale.Y, position(r.sat), r.d.Rack.Pane(r.si).To)
 	changed := r.d.Follow()
 	after := r.d.Rack.Pane(r.si).Box
 	fmt.Printf("explicit Follow after deadline: changed=%t rack=%d,%d reported=%v bondedTo=%d\n", changed, after.X, after.Y, position(r.sat), r.d.Rack.Pane(r.si).To)
@@ -178,7 +190,9 @@ func acknowledgement() {
 	// drag cannot be hidden by the remainder of that old 250ms deadline.
 	r.so.SimulateDesktopMove(0, 100)
 	r.a.PumpOnce()
+	r.a.PumpOnce()
 	r.so.SimulateDesktopMove(800, 800)
+	r.a.PumpOnce()
 	r.a.PumpOnce()
 	p := r.d.Rack.Pane(r.si)
 	fmt.Printf("acknowledged then dragged at frozen clock: rack=%d,%d reported=%v bondedTo=%d\n", p.Box.X, p.Box.Y, position(r.sat), p.To)

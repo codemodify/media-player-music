@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistPointerSelectsBeforeDoubleClickActivates(t *testing.T) {
@@ -88,7 +88,7 @@ func TestPlaylistPointerInterruptionsDoNotActivate(t *testing.T) {
 			case "focus-change":
 				p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyTab})
 			case "wheel-at-end":
-				p.Main.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paintengine2d.Pt(0, 1)})
+				p.Main.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
 			}
 			inject()
 			a.PumpOnce()

@@ -39,6 +39,33 @@ func TestPreferencesMigrateOnlySupportedSkinLooks(t *testing.T) {
 	}
 }
 
+func TestSettingsSavedUnderUitoolkitCarryOverUntilTheFirstSave(t *testing.T) {
+	config := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", config)
+	old := filepath.Join(config, "uitoolkit", "media-player-music.json")
+	if err := os.MkdirAll(filepath.Dir(old), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(old, []byte(`{"skin":"winamp"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadSettings().Skin; got != WinampSkin {
+		t.Fatalf("uitoolkit's settings loaded %q, want %q", got, WinampSkin)
+	}
+	if err := (Settings{Skin: WinampSilverSkin}).Save(); err != nil {
+		t.Fatal(err)
+	}
+	if SettingsPath() == old {
+		t.Fatal("saved over uitoolkit's settings")
+	}
+	if got := LoadSettings().Skin; got != WinampSilverSkin {
+		t.Fatalf("after saving loaded %q, want %q", got, WinampSilverSkin)
+	}
+	if data, err := os.ReadFile(old); err != nil || string(data) != `{"skin":"winamp"}` {
+		t.Fatalf("uitoolkit's settings changed: %q, %v", data, err)
+	}
+}
+
 func TestSessionSettingsRoundTripAndPermissions(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	want := Settings{

@@ -98,10 +98,9 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/series9"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -121,7 +120,7 @@ func main() {
 	}
 }
 func probe(scale float32) {
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
 	p, err := series9.New(players.NewHost(a), series9.Options{Scale: scale})
 	if err != nil {
 		panic(err)
@@ -130,7 +129,7 @@ func probe(scale float32) {
 	p.Main.Hide()
 	p.Main.SetTitle("Series 9 native shape probe")
 	removeTrace := p.Main.OnResize(func(width, height int) {
-		if os.Getenv("UITK_PROBE_TRACE") == "1" {
+		if os.Getenv("MUSIC_PLAYER_PROBE_TRACE") == "1" {
 			fmt.Printf("resize scale=%g size=%dx%d compact=%t drawers=%t/%t state=%+v\n", scale, width, height, p.Compact(), p.Host.Model.PlaylistVisible, p.Host.Model.EqualizerVisible, p.CaptureState())
 		}
 	})
@@ -177,7 +176,7 @@ func probe(scale float32) {
 			if flags.eq {
 				height += 124
 			}
-			if os.Getenv("UITK_PROBE_TRACE") == "1" {
+			if os.Getenv("MUSIC_PLAYER_PROBE_TRACE") == "1" {
 				lw, lh := p.Main.Size()
 				pw, ph := p.Main.PixelSize()
 				fmt.Printf("scale=%g drawers=%t/%t requested=%dx%d logical=%dx%d device=%dx%d cachedBase=%+v\n", scale, flags.playlist, flags.eq, width, height, lw, lh, pw, ph, p.CaptureState().Sizes["full"])
@@ -211,7 +210,7 @@ func probe(scale float32) {
 }
 
 func probeStartup(scale float32, compact bool) {
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
 	p, err := series9.New(players.NewHost(a), series9.Options{Scale: scale})
 	if err != nil {
 		panic(err)
@@ -252,7 +251,7 @@ func probeStartup(scale float32, compact bool) {
 	}
 	fmt.Printf("scale=%g startupMode=%s stateBeforePlacement=true actualNativeSize=true savedPosition=true preservedBase=true\n", scale, mode)
 }
-func nativeID(w *app.Window) uint64 {
+func nativeID(w *ui.Window) uint64 {
 	parent := w.PortalParent()
 	if !strings.HasPrefix(parent, "x11:") {
 		panic("native X11 surface unavailable: " + parent)
@@ -264,7 +263,7 @@ func nativeID(w *app.Window) uint64 {
 	return id
 }
 
-func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY, extraX, extraY int, extraInside bool) {
+func verify(w, owner *ui.Window, scale float32, width, height, insideX, insideY, extraX, extraY int, extraInside bool) {
 	px := func(v int) int { return int(math.Round(float64(v) * float64(scale))) }
 	id := nativeID(w)
 	frame := platform.FrameOf(w.Surface()).Frame()
@@ -316,7 +315,7 @@ func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY
 	fmt.Printf("scale=%g size=%dx%d native=%dx%d visualRects=%d bounding=%d input=%d nativeMatchesFrame=true ARGB32=true transparentCorners=true bodyInput=true extraCoverageExpected=%t hidden=true compositor=%t policy=%s\n", scale, width, height, n.width, n.height, len(visual.Rects), n.bounding.count, n.input.count, extraInside, n.compositor == 1, policy)
 }
 
-func verifyLimits(w *app.Window, scale float32, minW, minH, maxW, maxH int) {
+func verifyLimits(w *ui.Window, scale float32, minW, minH, maxW, maxH int) {
 	frame := platform.FrameOf(w.Surface()).Frame()
 	wanted := make([]C.XRectangle, len(frame.Shape))
 	for i, r := range frame.Shape {

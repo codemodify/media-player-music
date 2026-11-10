@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistFileDropsReachTheHostWithoutChangingPlayback(t *testing.T) {
@@ -30,7 +30,7 @@ func TestPlaylistFileDropsReachTheHostWithoutChangingPlayback(t *testing.T) {
 				p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 				list, state, position, index := p.Transport.List, p.Transport.State, p.Transport.Pos, p.Transport.List.Index()
 				off := p.List.Surface().(*platform.Offscreen)
-				for _, at := range []paintengine2d.Point{
+				for _, at := range []paint2d.Point{
 					widget.DeviceBounds(p.listPane.list).Center(),
 					widget.DeviceBounds(p.listPane.add).Center(),
 					widget.DeviceBounds(p.listPane.foot).Center(),

@@ -2,17 +2,17 @@ package realplayer
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 	"reflect"
 	"testing"
 	"time"
 )
 
-func pointer(w *app.Window, button platform.MouseButton, at paintengine2d.Point) {
+func pointer(w *ui.Window, button platform.MouseButton, at paint2d.Point) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: at})
@@ -73,7 +73,7 @@ func TestPlaylistBrowseActivateContextAndInterrupt(t *testing.T) {
 	if plays != 3 {
 		t.Fatal("scrollbar gesture activated row")
 	}
-	list.MousePress(widget.MouseEvent{Button: platform.ButtonLeft, Pos: paintengine2d.Pt(g.Rows.Min.X-1, g.Rows.Min.Y+g.RowHeight/2)})
+	list.MousePress(widget.MouseEvent{Button: platform.ButtonLeft, Pos: paint2d.Pt(g.Rows.Min.X-1, g.Rows.Min.Y+g.RowHeight/2)})
 	pointer(p.Main, platform.ButtonLeft, at)
 	a.PumpOnce()
 	if plays != 3 {
@@ -138,7 +138,7 @@ func TestPlaylistScrollDropAndSliderSecondaryPolicy(t *testing.T) {
 	}
 	for _, f := range []*classicFader{p.body.seek, p.body.volume, p.body.eq.preamp, p.body.eq.bands[0], p.body.eq.balance} {
 		before := f.Value
-		at := widget.DeviceOrigin(f).Add(paintengine2d.Pt(2, 2))
+		at := widget.DeviceOrigin(f).Add(paint2d.Pt(2, 2))
 		pointer(p.Main, platform.ButtonRight, at)
 		a.PumpOnce()
 		if f.Value != before || f.Dragging() || p.Main.Popup() == nil {

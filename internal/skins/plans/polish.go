@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/paintengine2d"
+	"goframework.io/graphics-paint2d"
 	xdraw "golang.org/x/image/draw"
 )
 
@@ -20,7 +20,7 @@ func polish(p *Plan) {
 		return
 	}
 	pixels := &Sheet{Name: "pixels", Pixelated: true}
-	var main *paintengine2d.Image
+	var main *paint2d.Image
 	var mainCell Cell
 	for _, sh := range p.Sheets {
 		pixels.W = max(pixels.W, sh.W)
@@ -29,10 +29,10 @@ func polish(p *Plan) {
 		for i := range sh.Cells {
 			cell := sh.Cells[i]
 			original := cell.Draw
-			one := sync.OnceValue(func() *paintengine2d.Image {
-				im := paintengine2d.NewImage(cell.W, cell.H)
-				ctx := paintengine2d.NewContext(im)
-				ctx.ClipRect(paintengine2d.XYWH(0, 0, float32(cell.W), float32(cell.H)))
+			one := sync.OnceValue(func() *paint2d.Image {
+				im := paint2d.NewImage(cell.W, cell.H)
+				ctx := paint2d.NewContext(im)
+				ctx.ClipRect(paint2d.XYWH(0, 0, float32(cell.W), float32(cell.H)))
 				original(ctx, float32(cell.W), float32(cell.H))
 				return im
 			})
@@ -43,18 +43,18 @@ func polish(p *Plan) {
 				pixels.Cells = append(pixels.Cells, cell)
 				continue
 			}
-			two := sync.OnceValue(func() *paintengine2d.Image {
+			two := sync.OnceValue(func() *paint2d.Image {
 				im := scale2x(one())
 				polishLogo(im, one(), p.Name, cell.Name)
-				return paintengine2d.NewImageFromNRGBA(im)
+				return paint2d.NewImageFromNRGBA(im)
 			})
-			sh.Cells[i].Draw = func(ctx *paintengine2d.Context, w, h float32) {
+			sh.Cells[i].Draw = func(ctx *paint2d.Context, w, h float32) {
 				if ctx.Matrix().ApproxScale() <= 1.001 {
 					original(ctx, w, h)
 					return
 				}
 				im := two()
-				ctx.DrawImageRectPaint(im, paintengine2d.XYWH(0, 0, float32(im.Width), float32(im.Height)), paintengine2d.XYWH(0, 0, w, h), paintengine2d.Paint{Color: paintengine2d.White, Filter: paintengine2d.FilterNearest})
+				ctx.DrawImageRectPaint(im, paint2d.XYWH(0, 0, float32(im.Width), float32(im.Height)), paint2d.XYWH(0, 0, w, h), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
 			}
 		}
 	}
@@ -77,9 +77,9 @@ func polish(p *Plan) {
 		for _, slot := range backdrops {
 			r := slot.At
 			im := classifiedCrop(main, r[0], r[1], r[2], r[3])
-			bitmap := paintengine2d.NewImageFromNRGBA(im)
-			pixels.Cells = append(pixels.Cells, Cell{Name: slot.Name, X: mainCell.X + r[0], Y: mainCell.Y + r[1], W: r[2], H: r[3], Draw: func(ctx *paintengine2d.Context, w, h float32) {
-				ctx.DrawImageRectPaint(bitmap, paintengine2d.XYWH(0, 0, float32(im.Bounds().Dx()), float32(im.Bounds().Dy())), paintengine2d.XYWH(0, 0, w, h), paintengine2d.Paint{Color: paintengine2d.White, Filter: paintengine2d.FilterNearest})
+			bitmap := paint2d.NewImageFromNRGBA(im)
+			pixels.Cells = append(pixels.Cells, Cell{Name: slot.Name, X: mainCell.X + r[0], Y: mainCell.Y + r[1], W: r[2], H: r[3], Draw: func(ctx *paint2d.Context, w, h float32) {
+				ctx.DrawImageRectPaint(bitmap, paint2d.XYWH(0, 0, float32(im.Bounds().Dx()), float32(im.Bounds().Dy())), paint2d.XYWH(0, 0, w, h), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
 			}})
 			slot.Art = [][2]string{{"normal", slot.Name}}
 			layout.Slots = append(layout.Slots, slot)

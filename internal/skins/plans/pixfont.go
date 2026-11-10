@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/codemodify/paintengine2d"
+	"goframework.io/graphics-paint2d"
 )
 
 // The two Winamp panel skins print their displays in an alphabet of their
@@ -119,18 +119,18 @@ func PixFontSprite(r rune) string { return fmt.Sprintf("font.%x", r) }
 // piece stretched nearest instead of being drawn at 1× in the middle of its
 // box; the toolkit does that itself now, on a grid every piece shares, which
 // the margin could not give.
-func (l *lay) panel(name string, w, h int, tint bool, draw func(ctx *paintengine2d.Context, w, h float32)) {
+func (l *lay) panel(name string, w, h int, tint bool, draw func(ctx *paint2d.Context, w, h float32)) {
 	l.cell(name, w, h, [4]int{}, "", tint, draw)
 }
 
 // pixText lays the whole capital face out as tinted panel sprites, one row
 // of cells, each glyph drawn as whole pixels by dot.
-func pixText(l *lay, dot func(ctx *paintengine2d.Context, x, y float32)) {
+func pixText(l *lay, dot func(ctx *paint2d.Context, x, y float32)) {
 	l.row(6)
 	for _, r := range PixFontRunes() {
 		rows := pixGlyphs[r]
 		w := len(rows[0])
-		l.panel(PixFontSprite(r), w, 6, true, func(ctx *paintengine2d.Context, _, _ float32) {
+		l.panel(PixFontSprite(r), w, 6, true, func(ctx *paint2d.Context, _, _ float32) {
 			for y, line := range rows {
 				for x, c := range line {
 					if c == '#' {
@@ -156,7 +156,7 @@ var segDigits = map[rune]string{
 // segDigit draws one seven-segment digit w by h, with strokes t wide and a
 // pixel's gap where two segments meet — the gap is what makes it read as a
 // display rather than as a font.
-func segDigit(ctx *paintengine2d.Context, w, h, t float32, segs string, col paintengine2d.Color) {
+func segDigit(ctx *paint2d.Context, w, h, t float32, segs string, col paint2d.Color) {
 	mid := float32(int((h - t) / 2))
 	for _, s := range segs {
 		switch s {

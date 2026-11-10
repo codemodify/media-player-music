@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // An advertised menu action must execute the player's choice through the
@@ -24,7 +24,7 @@ func TestSkinMenuAccessibleActionsWorkOnLayerAndNativeSurface(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, "dark")
-			a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+			a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 			w, err := a.NewWindow(platform.WindowOptions{Width: 400, Height: 300, Headless: true})
 			if err != nil {
 				t.Fatal(err)
@@ -40,22 +40,23 @@ func TestSkinMenuAccessibleActionsWorkOnLayerAndNativeSurface(t *testing.T) {
 			h.Packs = SkinnedIDs
 			chosen, calls := "", 0
 			h.ChooseSkin = func(id string) { chosen = id; calls++ }
-			h.ContextMenu(from, paintengine2d.Pt(8, 8))
+			h.ContextMenu(from, paint2d.Pt(8, 8))
 			a.PumpOnce()
 			menu, ok := w.Popup().(*widgets.PopupMenu)
 			if !ok {
 				t.Fatalf("skin action opened %T", w.Popup())
 			}
 			items := menu.AccessibleItems()
-			last := len(AppearanceIDs()) - 1
-			if len(items) != len(AppearanceIDs()) || !items[last].Actions.Has(a11y.ActionDefault) {
+			choices := AppearanceIDs()
+			last := len(choices) - 1
+			if len(items) != len(choices) || !items[last].Actions.Has(a11y.ActionDefault) {
 				t.Fatal("skin menu did not advertise its complete choices")
 			}
 			opened := w.Surface().(*platform.Offscreen).PopupsOpened()
 			if native != (opened > 0) {
 				t.Fatalf("native=%t but toolkit opened %d popup surfaces", native, opened)
 			}
-			if !w.AccessibleAction(widget.ItemID(menu, last), a11y.ActionDefault) || chosen != AmarokSkin || calls != 1 {
+			if !w.AccessibleAction(widget.ItemID(menu, last), a11y.ActionDefault) || chosen != choices[last] || calls != 1 {
 				t.Fatalf("accessible choice: chosen=%q calls=%d", chosen, calls)
 			}
 			if w.Popup() != nil {
@@ -77,7 +78,7 @@ func TestCompactSkinMenuScrollsAndPicksWithMouseAndKeyboard(t *testing.T) {
 						mode = "surface"
 					}
 					t.Setenv(platform.EnvPopups, mode)
-					a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+					a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 					w, err := a.NewWindow(platform.WindowOptions{Width: 275, Height: 116, Headless: true})
 					if err != nil {
 						t.Fatal(err)
@@ -93,7 +94,7 @@ func TestCompactSkinMenuScrollsAndPicksWithMouseAndKeyboard(t *testing.T) {
 					h.Packs = SkinnedIDs
 					picked, calls := "", 0
 					h.ChooseSkin = func(id string) { picked = id; calls++ }
-					h.ContextMenu(from, paintengine2d.Pt(8, 8))
+					h.ContextMenu(from, paint2d.Pt(8, 8))
 					a.PumpOnce()
 					pop, ok := w.Popup().(*widgets.PopupMenu)
 					if !ok {
@@ -102,7 +103,8 @@ func TestCompactSkinMenuScrollsAndPicksWithMouseAndKeyboard(t *testing.T) {
 					if !native && pop.MaxOffset() <= 0 {
 						t.Fatal("compact menu did not scroll")
 					}
-					last := len(AppearanceIDs()) - 1
+					choices := AppearanceIDs()
+					last := len(choices) - 1
 					if input == "keyboard" {
 						for i := 0; i <= last; i++ {
 							w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyDown})
@@ -114,21 +116,21 @@ func TestCompactSkinMenuScrollsAndPicksWithMouseAndKeyboard(t *testing.T) {
 						}
 						w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyReturn})
 					} else {
-						pos := widget.DeviceOrigin(pop).Add(paintengine2d.Pt(pop.Bounds().Dx()/2, pop.Bounds().Dy()/2))
+						pos := widget.DeviceOrigin(pop).Add(paint2d.Pt(pop.Bounds().Dx()/2, pop.Bounds().Dy()/2))
 						for i := 0; i < 100 && pop.OffsetY < pop.MaxOffset(); i++ {
-							w.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paintengine2d.Pt(0, 1)})
+							w.Inject(platform.Event{Kind: platform.EventScroll, Pos: pos, Scroll: paint2d.Pt(0, 1)})
 							a.PumpOnce()
 						}
 						row := pop.ItemBounds(last)
 						if row.Min.Y < 0 || row.Max.Y > pop.LocalBounds().Dy() {
 							t.Fatalf("last row clipped after wheel: %v", row)
 						}
-						pos = widget.DeviceOrigin(pop).Add(paintengine2d.Pt((row.Min.X+row.Max.X)/2, (row.Min.Y+row.Max.Y)/2))
+						pos = widget.DeviceOrigin(pop).Add(paint2d.Pt((row.Min.X+row.Max.X)/2, (row.Min.Y+row.Max.Y)/2))
 						w.Inject(platform.Event{Kind: platform.EventMouseDown, Pos: pos, Button: platform.ButtonLeft})
 						w.Inject(platform.Event{Kind: platform.EventMouseUp, Pos: pos, Button: platform.ButtonLeft})
 					}
 					a.PumpOnce()
-					if picked != AmarokSkin || calls != 1 || w.Popup() != nil {
+					if picked != choices[last] || calls != 1 || w.Popup() != nil {
 						t.Fatalf("picked %q calls %d popup %T", picked, calls, w.Popup())
 					}
 				})

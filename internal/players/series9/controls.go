@@ -2,12 +2,13 @@ package series9
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // pane supplies native window gestures and file-drop routing around the
@@ -17,12 +18,12 @@ type pane struct {
 	p       *Player
 	role    string
 	name    string
-	slots   *widget.Slots
+	slots   *skins.Slots
 	buttons map[string]*players.GlyphButton
 }
 
 func newPane(p *Player, role, name string, self widget.Component) *pane {
-	b := &pane{p: p, role: role, name: name, slots: widget.NewSlots(role), buttons: make(map[string]*players.GlyphButton)}
+	b := &pane{p: p, role: role, name: name, slots: skins.NewSlots(role), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(self)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName(name)
@@ -36,31 +37,31 @@ func (b *pane) button(slot, label string, glyph players.Glyph, action func()) *p
 		}
 		return slot
 	}
-	c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
-		if style.DrawSkinSlot(c.Look(), ctx, widget.SlotArtRect(c, b.role, artSlot()), b.role, artSlot(), st) {
+	c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
+		if skins.DrawSkinSlot(c.Look(), ctx, skins.SlotArtRect(c, b.role, artSlot()), b.role, artSlot(), st) {
 			return true
 		}
 		players.DrawGlyph(ctx, r, c.Glyph, players.GlyphInk(c.Look(), st), style.Dip(c.Look(), 1))
 		return true
 	}
-	c.Shaper = func(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
-		return style.SkinSlotShape(lk, size, widget.SlotArtRect(c, b.role, artSlot()), b.role, artSlot())
+	c.Shaper = func(lk style.LookAndFeel, size paint2d.Point) *style.Silhouette {
+		return skins.SkinSlotShape(lk, size, skins.SlotArtRect(c, b.role, artSlot()), b.role, artSlot())
 	}
 	b.buttons[slot] = c
 	b.slots.Bind(slot, c)
 	b.Add(c)
 	return c
 }
-func (b *pane) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *pane) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *pane) Arrange(r paintengine2d.Rect) {
+func (b *pane) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *pane) Paint(ctx *paintengine2d.Context) {
-	style.DrawSkinLayout(b.Look(), ctx, b.LocalBounds(), b.role)
+func (b *pane) Paint(ctx *paint2d.Context) {
+	skins.DrawSkinLayout(b.Look(), ctx, b.LocalBounds(), b.role)
 }
 func (b *pane) MousePress(e widget.MouseEvent) bool {
 	if e.Button == platform.ButtonRight {
@@ -106,7 +107,7 @@ func newSourceSlider(vertical bool, lo, hi, value float32, label string, on func
 		thumbW, thumbH = 17, 18
 		f.Travel = 8.5
 	}
-	f.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, t float32, st style.ControlState) bool {
+	f.Painter = func(ctx *paint2d.Context, r paint2d.Rect, t float32, st style.ControlState) bool {
 		lk, d := s.Look(), style.Dip(s.Look(), 1)
 		track := prefix + ".track"
 		thumbName := prefix + ".thumb"
@@ -118,20 +119,20 @@ func newSourceSlider(vertical bool, lo, hi, value float32, label string, on func
 		} else if st.Hovered() {
 			thumbName += ".hover"
 		}
-		if !style.DrawSkinSprite(lk, ctx, r, track, paintengine2d.Color{}) {
-			style.DrawSkinSprite(lk, ctx, r, prefix+".track", paintengine2d.Color{})
+		if !skins.DrawSkinSprite(lk, ctx, r, track, paint2d.Color{}) {
+			skins.DrawSkinSprite(lk, ctx, r, prefix+".track", paint2d.Color{})
 		}
-		thumb := paintengine2d.XYWH(r.Min.X+t*(r.Dx()-thumbW*d), r.Min.Y+(r.Dy()-thumbH*d)/2, thumbW*d, thumbH*d)
+		thumb := paint2d.XYWH(r.Min.X+t*(r.Dx()-thumbW*d), r.Min.Y+(r.Dy()-thumbH*d)/2, thumbW*d, thumbH*d)
 		if vertical {
-			thumb = paintengine2d.XYWH(r.Min.X+(r.Dx()-thumbW*d)/2, r.Min.Y+(1-t)*(r.Dy()-thumbH*d), thumbW*d, thumbH*d)
+			thumb = paint2d.XYWH(r.Min.X+(r.Dx()-thumbW*d)/2, r.Min.Y+(1-t)*(r.Dy()-thumbH*d), thumbW*d, thumbH*d)
 		} else if !st.Disabled() {
 			ctx.Save()
-			ctx.ClipRect(paintengine2d.XYWH(r.Min.X, r.Min.Y, thumb.Min.X+thumb.Dx()/2-r.Min.X, r.Dy()))
-			style.DrawSkinSprite(lk, ctx, r, prefix+".foreground", paintengine2d.Color{})
+			ctx.ClipRect(paint2d.XYWH(r.Min.X, r.Min.Y, thumb.Min.X+thumb.Dx()/2-r.Min.X, r.Dy()))
+			skins.DrawSkinSprite(lk, ctx, r, prefix+".foreground", paint2d.Color{})
 			ctx.Restore()
 		}
-		if !style.DrawSkinSprite(lk, ctx, thumb, thumbName, paintengine2d.Color{}) {
-			style.DrawSkinSprite(lk, ctx, thumb, prefix+".thumb", paintengine2d.Color{})
+		if !skins.DrawSkinSprite(lk, ctx, thumb, thumbName, paint2d.Color{}) {
+			skins.DrawSkinSprite(lk, ctx, thumb, prefix+".thumb", paint2d.Color{})
 		}
 		if st.Focused() {
 			lk.DrawFocusRing(ctx, r)
@@ -165,7 +166,7 @@ func newResizeGrip(p *Player) *resizeGrip {
 	g.SetAccessibleName("Resize Music Player")
 	return g
 }
-func (g *resizeGrip) Paint(*paintengine2d.Context) {}
+func (g *resizeGrip) Paint(*paint2d.Context) {}
 func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false

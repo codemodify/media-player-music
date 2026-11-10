@@ -6,13 +6,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 }
 
 func activationContract() {
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true, Scale: 1})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true, Scale: 1})
 	w, err := a.NewWindow(platform.WindowOptions{Width: 320, Height: 180, Headless: true})
 	if err != nil {
 		panic(err)
@@ -35,7 +35,7 @@ func activationContract() {
 	l.Selected = 0
 	l.OnActivate = func(int) { activations++ }
 	l.ContextKeepsSelection = true
-	l.OnContext = func(int, paintengine2d.Point) { contexts++ }
+	l.OnContext = func(int, paint2d.Point) { contexts++ }
 	w.SetContent(l)
 	a.PumpOnce()
 	click := func(row int, button platform.MouseButton) {
@@ -65,12 +65,12 @@ func rowHitTesting() {
 	l := widgets.NewListView(8, nil, nil)
 	l.RowGeo = func(style.LookAndFeel) *widgets.RowGeometry {
 		return &widgets.RowGeometry{
-			Rows: paintengine2d.XYWH(10, 20, 120, 60), Bar: paintengine2d.XYWH(140, 20, 10, 60), RowHeight: 20,
+			Rows: paint2d.XYWH(10, 20, 120, 60), Bar: paint2d.XYWH(140, 20, 10, 60), RowHeight: 20,
 		}
 	}
-	l.Arrange(paintengine2d.XYWH(0, 0, 200, 100))
-	for _, p := range []paintengine2d.Point{
-		paintengine2d.Pt(0, 30), paintengine2d.Pt(135, 30), paintengine2d.Pt(151, 30), paintengine2d.Pt(20, 19), paintengine2d.Pt(20, 80),
+	l.Arrange(paint2d.XYWH(0, 0, 200, 100))
+	for _, p := range []paint2d.Point{
+		paint2d.Pt(0, 30), paint2d.Pt(135, 30), paint2d.Pt(151, 30), paint2d.Pt(20, 19), paint2d.Pt(20, 80),
 	} {
 		fmt.Printf("outside rows: RowAt(%v)=%d; want -1\n", p, l.RowAt(p))
 	}
@@ -78,11 +78,11 @@ func rowHitTesting() {
 
 func interruptedClicks(interruption string) {
 	l := widgets.NewListView(4, nil, nil)
-	l.Arrange(paintengine2d.XYWH(0, 0, 200, 100))
+	l.Arrange(paint2d.XYWH(0, 0, 200, 100))
 	l.ContextKeepsSelection = true
 	activations := 0
 	l.OnActivate = func(int) { activations++ }
-	click := widget.MouseEvent{Pos: paintengine2d.Pt(20, 40), Button: platform.ButtonLeft}
+	click := widget.MouseEvent{Pos: paint2d.Pt(20, 40), Button: platform.ButtonLeft}
 	l.MousePress(click)
 	switch interruption {
 	case "pointer exit":
@@ -90,7 +90,7 @@ func interruptedClicks(interruption string) {
 	case "focus loss":
 		l.FocusLost()
 	case "wheel":
-		l.MouseWheel(widget.MouseEvent{Scroll: paintengine2d.Pt(0, -1)})
+		l.MouseWheel(widget.MouseEvent{Scroll: paint2d.Pt(0, -1)})
 	case "context":
 		l.MousePress(widget.MouseEvent{Pos: click.Pos, Button: platform.ButtonRight})
 	case "keyboard":

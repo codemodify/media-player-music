@@ -12,8 +12,8 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
 // These observers wrap installed engines rather than synthesize replies. One
@@ -116,7 +116,7 @@ func (f *installedSwitchFactory) snapshot() []*installedSwitchEngine {
 	return append([]*installedSwitchEngine(nil), f.engines...)
 }
 
-func installedSwitchPlayer(t *testing.T, target string) (*uitoolkit.Application, *Shell, *installedSwitchFactory) {
+func installedSwitchPlayer(t *testing.T, target string) (*ui.Application, *Shell, *installedSwitchFactory) {
 	t.Helper()
 	if runtime.GOOS == "plan9" {
 		t.Skip("the installed mpv adapter is unavailable on Plan9")
@@ -143,7 +143,7 @@ func installedSwitchPlayer(t *testing.T, target string) (*uitoolkit.Application,
 			}
 		}
 	})
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: 1, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: 1, DisableLookWatch: true})
 	s, err := New(a, Options{Skin: players.DefaultSkin, Headless: true, AudioBackend: "mpv", DetectBackends: func() []playback.BackendInfo { return infos }, OpenBackend: f.open})
 	if err != nil {
 		t.Fatal(err)

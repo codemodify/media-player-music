@@ -7,22 +7,21 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // open is a headless player in a named pack at a scale.
-func open(t *testing.T, pack string, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, pack string, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, pack)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	// The face on its own, with a model of its own: a host with no
 	// application behind it is what a face's own tests open it with.
 	h := players.NewHost(a)
@@ -41,7 +40,7 @@ func TestEveryWindowIsAccessible(t *testing.T) {
 	for _, pack := range Skins {
 		t.Run(pack, func(t *testing.T) {
 			a, p := open(t, pack, 1)
-			for name, w := range map[string]*app.Window{
+			for name, w := range map[string]*ui.Window{
 				"strip": p.Main, "equaliser": p.Eq, "playlist": p.List,
 			} {
 				tree := playertest.Audit(t, name, w)
@@ -94,7 +93,7 @@ func TestEveryControlIsOnTheKeyboard(t *testing.T) {
 // The shared transport keys work wherever the focus is, in every window.
 func TestTheTransportKeysWorkInEveryWindow(t *testing.T) {
 	a, p := open(t, Skin, 1)
-	for _, w := range []*app.Window{p.Main, p.Eq, p.List} {
+	for _, w := range []*ui.Window{p.Main, p.Eq, p.List} {
 		p.Transport.State = players.Stopped
 		a.PumpOnce()
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeySpace})
@@ -229,7 +228,7 @@ func hasNamedContaining(tree *a11y.Node, part string) bool {
 	return found
 }
 
-func nameOf(w *app.Window, c widget.Component) string {
+func nameOf(w *ui.Window, c widget.Component) string {
 	if n := w.AccessibleTree().Find(c.ID()); n != nil {
 		return n.Name
 	}
@@ -238,7 +237,7 @@ func nameOf(w *app.Window, c widget.Component) string {
 
 // blank reports whether an image is one flat colour, which is what a window
 // that painted nothing looks like.
-func blank(img *paintengine2d.Image) bool {
+func blank(img *paint2d.Image) bool {
 	r0, g0, b0, _ := img.PremulAt(0, 0)
 	for y := 0; y < img.Height; y += 3 {
 		for x := 0; x < img.Width; x += 3 {
@@ -256,7 +255,7 @@ func blank(img *paintengine2d.Image) bool {
 func TestWinampRequiresAPanelLayout(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, Themed)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	p, err := New(players.NewHost(a), Options{Headless: true})
 	if err == nil || p != nil {
 		t.Fatal("an unskinned theme constructed Winamp windows")

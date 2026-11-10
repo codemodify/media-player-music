@@ -16,8 +16,8 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
 func TestRealPlaybackControlsAndAppearanceChanges(t *testing.T) {
@@ -306,7 +306,7 @@ func (p *integrationMPV) snapshot() []playback.Event {
 	return append([]playback.Event(nil), p.seen...)
 }
 
-func integrationPlayer(t *testing.T) (*uitoolkit.Application, *Shell, *integrationMPV) {
+func integrationPlayer(t *testing.T) (*ui.Application, *Shell, *integrationMPV) {
 	t.Helper()
 	if runtime.GOOS == "windows" || runtime.GOOS == "plan9" {
 		t.Skip("real mpv integration requires the Unix IPC backend")
@@ -342,7 +342,7 @@ func integrationPlayer(t *testing.T) (*uitoolkit.Application, *Shell, *integrati
 	})
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(players.DefaultSkin))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: 1, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: 1, DisableLookWatch: true})
 	s, err := New(a, Options{Skin: players.DefaultSkin, Headless: true, Scale: 1, Backend: engine})
 	if err != nil {
 		t.Fatal(err)
@@ -353,7 +353,7 @@ func integrationPlayer(t *testing.T) (*uitoolkit.Application, *Shell, *integrati
 	return a, s, engine
 }
 
-func integrationWait(t *testing.T, a *uitoolkit.Application, s *Shell, description string, ready func() bool) {
+func integrationWait(t *testing.T, a *ui.Application, s *Shell, description string, ready func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(6 * time.Second)
 	for {
@@ -375,7 +375,7 @@ func integrationWait(t *testing.T, a *uitoolkit.Application, s *Shell, descripti
 	}
 }
 
-func integrationPumpFor(a *uitoolkit.Application, s *Shell, duration time.Duration) {
+func integrationPumpFor(a *ui.Application, s *Shell, duration time.Duration) {
 	deadline := time.Now().Add(duration)
 	for time.Now().Before(deadline) {
 		s.Pulse().Stop()
@@ -384,7 +384,7 @@ func integrationPumpFor(a *uitoolkit.Application, s *Shell, duration time.Durati
 	}
 }
 
-func integrationProperty(t *testing.T, a *uitoolkit.Application, s *Shell, engine *integrationMPV, name string) json.RawMessage {
+func integrationProperty(t *testing.T, a *ui.Application, s *Shell, engine *integrationMPV, name string) json.RawMessage {
 	t.Helper()
 	mark := len(engine.snapshot())
 	if err := engine.Send("get_property", name); err != nil {
@@ -416,7 +416,7 @@ func integrationNumber(t *testing.T, raw json.RawMessage) float64 {
 	return number
 }
 
-func integrationAssertPath(t *testing.T, a *uitoolkit.Application, s *Shell, engine *integrationMPV, want string) {
+func integrationAssertPath(t *testing.T, a *ui.Application, s *Shell, engine *integrationMPV, want string) {
 	t.Helper()
 	var path string
 	if raw := integrationProperty(t, a, s, engine, "path"); json.Unmarshal(raw, &path) != nil || path != want {

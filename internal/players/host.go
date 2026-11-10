@@ -4,12 +4,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	uiskins "goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // Model holds the player state shared by the default UI and its optional skins.
@@ -48,7 +49,7 @@ const DefaultSkin = "default"
 var Themed = unskinnedTheme()
 
 func unskinnedTheme() string {
-	if _, ok := style.LoadTheme("breeze-night"); ok && !style.IsSkin("breeze-night") {
+	if _, ok := style.LoadTheme("breeze-night"); ok && !uiskins.IsSkin("breeze-night") {
 		return "breeze-night"
 	}
 	return "dark"
@@ -57,12 +58,12 @@ func unskinnedTheme() string {
 // Host gives a presentation the model and the application's actions.
 // Hooks are optional, so a presentation can also run on its own in tests.
 type Host struct {
-	App          *app.Application
+	App          *ui.Application
 	Model        *Model
 	AudioBackend string
 
 	Run    func(Command)
-	Shared func(w *app.Window, e widget.KeyEvent) bool
+	Shared func(w *ui.Window, e widget.KeyEvent) bool
 	Packs  func() []string
 	// ChooseSkin lets the application switch between the ordinary UI and
 	// the panel windows. Its implementation schedules window replacement
@@ -80,7 +81,7 @@ type Host struct {
 	lastSkin string
 }
 
-func NewHost(a *app.Application) *Host { return &Host{App: a, Model: NewModel()} }
+func NewHost(a *ui.Application) *Host { return &Host{App: a, Model: NewModel()} }
 
 func (h *Host) Command(c Command) {
 	if h.Run != nil {
@@ -194,7 +195,7 @@ func (h *Host) FeatureTip(feature string, available bool) string {
 	return feature + " unavailable with " + backend + " · change the backend in Settings"
 }
 
-func (h *Host) Keys(w *app.Window, e widget.KeyEvent) bool {
+func (h *Host) Keys(w *ui.Window, e widget.KeyEvent) bool {
 	if h.Shared != nil {
 		return h.Shared(w, e)
 	}
@@ -303,7 +304,7 @@ func (h *Host) DropSkin() {
 
 type NamedWindow struct {
 	Name   string
-	Window *app.Window
+	Window *ui.Window
 }
 
 func (h *Host) PackLabel(id string) string {
@@ -321,7 +322,7 @@ func (h *Host) SkinItems() []*widgets.MenuItem {
 	return items
 }
 
-func (h *Host) ContextMenu(from widget.Component, at paintengine2d.Point) {
+func (h *Host) ContextMenu(from widget.Component, at paint2d.Point) {
 	items := h.SkinItems()
 	if h.ShowSettings != nil {
 		items = append(items, widgets.Sep(), widgets.ItemAccel("Settings…", "Ctrl+,", h.OpenSettings))

@@ -13,8 +13,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/amarok"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		panic(err)
 	}
 	for _, scale := range []float32{1, 1.75} {
-		a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+		a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 		h := players.NewHost(a)
 		h.ShowSettings = func() {}
 		h.Packs = players.SkinnedIDs

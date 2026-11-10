@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/uitoolkit/skingen"
+	"goframework.io/desktop-ui-skingen"
 )
 
 // The 2x transport artwork may refine edges, but must not invent colors or

@@ -11,21 +11,20 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, players.ITunesSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	h.ShowSettings = func() {}
@@ -38,12 +37,12 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	p.Advance(0)
 	return a, p
 }
-func click(w *app.Window, button platform.MouseButton, at paintengine2d.Point) {
+func click(w *ui.Window, button platform.MouseButton, at paint2d.Point) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: at})
 }
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -147,7 +146,7 @@ func TestModeStateAndPlacementRestoreBeforeFirstLayout(t *testing.T) {
 	state := players.PresentationState{Mode: "mini", Sizes: map[string]players.PresentationSize{"full": {Width: 940, Height: 650}, "mini": {Width: 430, Height: 62}}}
 	placement := map[string]players.WindowPlacement{"main": {X: 220, Y: 310, Positioned: true, Width: 430, Height: 62}, "equaliser": {X: 800, Y: 500, Positioned: true, Width: 900, Height: 600}}
 	// Make a fresh presentation and apply shell's actual startup ordering.
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: 1.75, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: 1.75, DisableLookWatch: true})
 	next, err := New(players.NewHost(a), Options{Headless: true, Scale: 1.75})
 	if err != nil {
 		t.Fatal(err)
@@ -191,7 +190,7 @@ func TestMainAndEqualizerMasksStayActiveAcrossModesAndScales(t *testing.T) {
 				p.SetMiniPlayer(mini)
 				a.PumpOnce()
 				p.Advance(0)
-				for _, w := range []*app.Window{p.Main, p.Eq} {
+				for _, w := range []*ui.Window{p.Main, p.Eq} {
 					width, height := w.PixelSize()
 					frame := w.Surface().(*platform.Offscreen).Frame()
 					shape := w.Shape()

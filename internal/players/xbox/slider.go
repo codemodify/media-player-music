@@ -2,10 +2,11 @@ package xbox
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // The source position images encode the value as grayscale along a curved
@@ -14,7 +15,7 @@ import (
 type curvedSlider struct {
 	*players.Fader
 	slot    string
-	mapping *paintengine2d.Image
+	mapping *paint2d.Image
 	mapLook style.LookAndFeel
 }
 
@@ -23,8 +24,8 @@ func newCurvedSlider(slot string, min, max, value float32, label string, on func
 	f.Init(f)
 	return f
 }
-func (f *curvedSlider) ArtShape(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
-	return style.SkinSpriteShape(lk, size, widget.SlotArtRect(f, LayoutMain, f.slot), f.slot+".shape")
+func (f *curvedSlider) ArtShape(lk style.LookAndFeel, size paint2d.Point) *style.Silhouette {
+	return skins.SkinSpriteShape(lk, size, skins.SlotArtRect(f, LayoutMain, f.slot), f.slot+".shape")
 }
 func (f *curvedSlider) updateMap() {
 	r := f.LocalBounds()
@@ -36,10 +37,10 @@ func (f *curvedSlider) updateMap() {
 	if f.mapping != nil && f.mapping.Width == w && f.mapping.Height == h && f.mapLook == lk {
 		return
 	}
-	im := paintengine2d.NewImage(w, h)
-	ctx := paintengine2d.NewContext(im)
-	ctx.Clear(paintengine2d.Transparent)
-	if !style.DrawSkinSprite(lk, ctx, widget.SlotArtRect(f, LayoutMain, f.slot), f.slot+".map", paintengine2d.Color{}) {
+	im := paint2d.NewImage(w, h)
+	ctx := paint2d.NewContext(im)
+	ctx.Clear(paint2d.Transparent)
+	if !skins.DrawSkinSprite(lk, ctx, skins.SlotArtRect(f, LayoutMain, f.slot), f.slot+".map", paint2d.Color{}) {
 		f.mapping = nil
 		return
 	}

@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestFileDropUsesToolkitLocalAndRemoteClassification(t *testing.T) {
@@ -29,7 +29,7 @@ func TestFileDropUsesToolkitLocalAndRemoteClassification(t *testing.T) {
 			calls := 0
 			var received []string
 			h := &Host{DropFiles: func(paths []string) { calls++; received = paths }}
-			e := widget.NewDropEvent(paintengine2d.Point{}, "text/uri-list", []byte(tc.uris))
+			e := widget.NewDropEvent(paint2d.Point{}, "text/uri-list", []byte(tc.uris))
 			e.Action = platform.DragCopy
 			accepted := h.AcceptFileDrop(e)
 			wantCalls := 0

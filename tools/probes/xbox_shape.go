@@ -93,10 +93,9 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/xbox"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -115,7 +114,7 @@ func main() {
 }
 
 func probe(scale float32) {
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
 	p, err := xbox.New(players.NewHost(a), xbox.Options{Scale: scale})
 	if err != nil {
 		panic(err)
@@ -141,7 +140,7 @@ func probe(scale float32) {
 	verify(p.List, p.Main, scale, 610, 430, 305, 215, 500, 350)
 }
 
-func nativeID(w *app.Window) uint64 {
+func nativeID(w *ui.Window) uint64 {
 	parent := w.PortalParent()
 	if !strings.HasPrefix(parent, "x11:") {
 		panic("native X11 surface unavailable: " + parent)
@@ -153,7 +152,7 @@ func nativeID(w *app.Window) uint64 {
 	return id
 }
 
-func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY, extraX, extraY int) {
+func verify(w, owner *ui.Window, scale float32, width, height, insideX, insideY, extraX, extraY int) {
 	px := func(v int) int { return int(math.Round(float64(v) * float64(scale))) }
 	id := nativeID(w)
 	frame := platform.FrameOf(w.Surface()).Frame()

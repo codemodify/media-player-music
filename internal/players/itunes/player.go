@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const (
@@ -37,11 +37,11 @@ type Options struct {
 
 type Player struct {
 	Host           *players.Host
-	App            *app.Application
+	App            *ui.Application
 	Transport      *players.Transport
 	Spectrum       *players.Spectrum
 	Equaliser      *players.Equalizer
-	Main, Eq       *app.Window
+	Main, Eq       *ui.Window
 	body           *body
 	mini           *miniPane
 	eqPane         *eqPane
@@ -57,7 +57,7 @@ type Player struct {
 
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutMini, LayoutEqualizer} {
-		if _, ok := style.SkinLayoutOf(h.App.Look(), role); !ok {
+		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
 			return nil, fmt.Errorf("iTunes requires skin layout %q", role)
 		}
 	}
@@ -107,7 +107,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	return p, nil
 }
 
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}, {Name: "equaliser", Window: p.Eq}}
 }
@@ -121,7 +121,7 @@ func (p *Player) Close() {
 		drop()
 	}
 	p.dropResize = nil
-	for _, w := range []*app.Window{p.Eq, p.Main} {
+	for _, w := range []*ui.Window{p.Eq, p.Main} {
 		if w != nil {
 			w.Close()
 		}
@@ -190,14 +190,14 @@ func (p *Player) updateShape() {
 	p.setShape(p.Main, role, slot)
 	p.refreshOwner()
 }
-func (p *Player) setShape(w *app.Window, role, slot string) {
-	w.SetShapeFunc(func(size paintengine2d.Point, _ float32) *platform.Shape {
-		image := paintengine2d.NewImage(int(size.X+.5), int(size.Y+.5))
-		ctx := paintengine2d.NewContext(image)
-		ctx.Clear(paintengine2d.Transparent)
-		box := paintengine2d.XYWH(0, 0, size.X, size.Y)
-		r, ok := style.SkinSlotRect(w.Look(), role, slot, box)
-		if !ok || !style.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
+func (p *Player) setShape(w *ui.Window, role, slot string) {
+	w.SetShapeFunc(func(size paint2d.Point, _ float32) *platform.Shape {
+		image := paint2d.NewImage(int(size.X+.5), int(size.Y+.5))
+		ctx := paint2d.NewContext(image)
+		ctx.Clear(paint2d.Transparent)
+		box := paint2d.XYWH(0, 0, size.X, size.Y)
+		r, ok := skins.SkinSlotRect(w.Look(), role, slot, box)
+		if !ok || !skins.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
 			return nil
 		}
 		// Artwork paints its own alpha once; the window mask supplies extent.
@@ -209,7 +209,7 @@ func (p *Player) setShape(w *app.Window, role, slot string) {
 		return platform.NewShapeImage(image)
 	})
 }
-func (p *Player) keys(w *app.Window, e widget.KeyEvent) bool {
+func (p *Player) keys(w *ui.Window, e widget.KeyEvent) bool {
 	if e.Mods.Ctrl() {
 		switch e.Key {
 		case platform.KeyM:

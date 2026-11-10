@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistReferenceHeadersMetadataAndStatusFitAfterResize(t *testing.T) {
@@ -63,7 +63,7 @@ func TestPlaylistReferenceHeadersMetadataAndStatusFitAfterResize(t *testing.T) {
 	}
 }
 
-func countPlaylistWhite(img interface{ NRGBAAt(int, int) color.NRGBA }, r paintengine2d.Rect) int {
+func countPlaylistWhite(img interface{ NRGBAAt(int, int) color.NRGBA }, r paint2d.Rect) int {
 	n := 0
 	for y := int(math.Ceil(float64(r.Min.Y))); y < int(r.Max.Y); y++ {
 		for x := int(math.Ceil(float64(r.Min.X))); x < int(r.Max.X); x++ {

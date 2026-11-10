@@ -3,11 +3,11 @@ package xbox
 import (
 	"math"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // The original effects were WMP plug-ins. The frontend renders its own
@@ -25,7 +25,7 @@ func newVisualizer(p *Player) *visualizer {
 	v.SetAccessibleName("Audio visualization")
 	return v
 }
-func (v *visualizer) Paint(ctx *paintengine2d.Context) {
+func (v *visualizer) Paint(ctx *paint2d.Context) {
 	r := v.LocalBounds()
 	lk := v.Look()
 	levels := v.p.Spectrum.Bars
@@ -48,19 +48,19 @@ func (v *visualizer) Paint(ctx *paintengine2d.Context) {
 		for i, level := range levels {
 			w := r.Dx() / float32(len(levels))
 			h := max(0, min(1, level)) * r.Dy() * .75
-			ctx.DrawRect(paintengine2d.XYWH(float32(i)*w+1, r.Dy()-h-8, max(w-2, 1), h), paintengine2d.Fill(paintengine2d.RGBA(.35, .8, .02, .8)))
+			ctx.DrawRect(paint2d.XYWH(float32(i)*w+1, r.Dy()-h-8, max(w-2, 1), h), paint2d.Fill(paint2d.RGBA(.35, .8, .02, .8)))
 		}
 		return
 	}
 	phase := v.p.Transport.Pos.Seconds()
 	for i := 0; i < 9; i++ {
 		level := levels[i*len(levels)/9]
-		at := paintengine2d.Pt(r.Dx()*(.18+.08*float32(i)), r.Dy()*(.45+.18*float32(math.Sin(phase*.7+float64(i)))))
+		at := paint2d.Pt(r.Dx()*(.18+.08*float32(i)), r.Dy()*(.45+.18*float32(math.Sin(phase*.7+float64(i)))))
 		rad := r.Dy() * (.15 + .55*level)
-		ctx.DrawCircle(at, rad, paintengine2d.Radial(paintengine2d.RadialGradient{Center: at, Radius: rad, Stops: []paintengine2d.GradientStop{
-			{Offset: 0, Color: paintengine2d.RGBA(.66, .9, .1, .3+energy*.35)},
-			{Offset: .4, Color: paintengine2d.RGBA(.24, .5, .02, energy*.45)},
-			{Offset: 1, Color: paintengine2d.RGBA(.06, .11, .01, 0)},
+		ctx.DrawCircle(at, rad, paint2d.Radial(paint2d.RadialGradient{Center: at, Radius: rad, Stops: []paint2d.GradientStop{
+			{Offset: 0, Color: paint2d.RGBA(.66, .9, .1, .3+energy*.35)},
+			{Offset: .4, Color: paint2d.RGBA(.24, .5, .02, energy*.45)},
+			{Offset: 1, Color: paint2d.RGBA(.06, .11, .01, 0)},
 		}}))
 	}
 }

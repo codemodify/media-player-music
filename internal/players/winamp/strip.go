@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // ---- the strip ---------------------------------------------------------------
@@ -37,7 +38,7 @@ type strip struct {
 
 	// slots is where each control goes in a panel face: the skin's strip
 	// layout says where each slot is.
-	slots *widget.Slots
+	slots *skins.Slots
 }
 
 func newStrip(p *Player) *strip {
@@ -93,7 +94,7 @@ func newStrip(p *Player) *strip {
 
 	// In a panel face every control sits in a slot of the skin's strip
 	// layout, and every key is the picture its slot gives it (face.go).
-	s.slots = widget.NewSlots(layoutStrip).
+	s.slots = skins.NewSlots(layoutStrip).
 		Bind("display", s.readout).Bind("analyser", s.analyser).Bind("seek", s.seek).
 		Bind("volume", s.volume).Bind("balance", s.balance)
 	for b, slot := range map[*players.GlyphButton]string{
@@ -185,7 +186,7 @@ func (s *strip) sync() {
 	s.Invalidate()
 }
 
-func (s *strip) Arrange(r paintengine2d.Rect) {
+func (s *strip) Arrange(r paint2d.Rect) {
 	s.SetBounds(r)
 	s.show()
 	s.styleAnalyser(faceOf(s.Look()))
@@ -195,7 +196,7 @@ func (s *strip) Arrange(r paintengine2d.Rect) {
 func (s *strip) styleAnalyser(f face) {
 	a := s.analyser
 	a.Pixelated, a.Gap = true, 1
-	a.Ramp, a.PeakTint = nil, paintengine2d.Color{}
+	a.Ramp, a.PeakTint = nil, paint2d.Color{}
 	a.MinBarW = 2
 	if in := f.ink(s.Look()); in != nil {
 		a.Ramp, a.PeakTint = in.ramp, in.peak
@@ -203,31 +204,31 @@ func (s *strip) styleAnalyser(f face) {
 	}
 }
 
-func (s *strip) Measure(c layout.Constraints) paintengine2d.Point {
+func (s *strip) Measure(c layout.Constraints) paint2d.Point {
 	lk := s.Look()
 	if sz, ok := s.slots.Measure(lk, c); ok {
 		return sz
 	}
-	return c.Constrain(paintengine2d.Pt(style.Dip(lk, StripW), style.Dip(lk, StripH)))
+	return c.Constrain(paint2d.Pt(style.Dip(lk, StripW), style.Dip(lk, StripH)))
 }
 
 // Paint draws the skin's artwork, clock, title, figures and status lamps.
-func (s *strip) Paint(ctx *paintengine2d.Context) {
+func (s *strip) Paint(ctx *paint2d.Context) {
 	lk := s.Look()
 	f := faceOf(lk)
 	if !f.panelled() {
 		return
 	}
 	b := s.LocalBounds()
-	style.DrawSkinLayout(lk, ctx, b, layoutStrip)
+	skins.DrawSkinLayout(lk, ctx, b, layoutStrip)
 	// A pack may preserve source-pixel display wells while independently
 	// scaling the surrounding chrome. Their geometry and art stay skin-owned.
 	for _, slot := range []string{"backdrop.display", "backdrop.title", "backdrop.rate", "backdrop.freq", "backdrop.labels"} {
-		if r, ok := style.SkinSlotRect(lk, layoutStrip, slot, b); ok {
-			style.DrawSkinSlot(lk, ctx, r, layoutStrip, slot, style.ControlState(0))
+		if r, ok := skins.SkinSlotRect(lk, layoutStrip, slot, b); ok {
+			skins.DrawSkinSlot(lk, ctx, r, layoutStrip, slot, style.ControlState(0))
 		}
 	}
-	at := func(slot string) paintengine2d.Rect { return slotRect(lk, layoutStrip, slot, b) }
+	at := func(slot string) paint2d.Rect { return slotRect(lk, layoutStrip, slot, b) }
 	in := f.ink(lk)
 	t := s.p.Transport
 	tr := t.Track()
@@ -285,7 +286,7 @@ func (s *strip) KeyPress(e widget.KeyEvent) bool { return s.p.Keys(s.p.Main, e) 
 
 // CaptionAt tells the frame that the strip's own background is caption: a
 // press there moves the window rather than landing in the app.
-func (s *strip) CaptionAt(paintengine2d.Point) bool { return true }
+func (s *strip) CaptionAt(paint2d.Point) bool { return true }
 
 func (s *strip) Describe(n *a11y.Node) {
 	n.Role = a11y.RolePane

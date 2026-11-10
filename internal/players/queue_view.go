@@ -4,10 +4,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // QueueView gives skins the stock list's navigation, scrolling and accessibility
@@ -118,7 +118,8 @@ func (l *QueueView) MousePress(e widget.MouseEvent) bool {
 		l.InterruptActivation()
 		return true
 	}
-	// UITK item 28: RowAt checks Y alone. Honor the actual placed row viewport.
+	// Retain explicit viewport clipping as part of this gesture policy.
+	// The stock RowAt horizontal check was fixed in UITK v0.23.5 (item 28).
 	if l.RowGeo != nil {
 		if g := l.RowGeo(l.Look()); g != nil && !g.Rows.Contains(e.Pos) && !g.Bar.Contains(e.Pos) {
 			l.InterruptActivation()
@@ -132,8 +133,10 @@ func (l *QueueView) MousePress(e widget.MouseEvent) bool {
 	}
 	l.MarkPointerFocus()
 	l.pointerRow, l.pointerPress = -1, true
-	// UITK item 29: retain stock selection/context policy, but commit only
-	// this application's uninterrupted double-click through stock Activate.
+	// Keep track identity/remapping and global-key interruptions in this
+	// application's gesture policy. A same-count queue replacement has no
+	// stock model-reset hook, so only our uninterrupted click pair commits
+	// through stock Activate; selection/context remain the stock policies.
 	activate := l.OnActivate
 	l.OnActivate = func(int) {}
 	handled := l.ListView.MousePress(e)

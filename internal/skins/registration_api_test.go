@@ -10,26 +10,27 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 // Exercise the public toolkit API with an unrelated in-memory skin. No app
 // registration, extraction, custom painters or production skin plans are used.
 func TestPublicSkinRegistrationPaintsAndReloadsItsOwnArtwork(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	style.InvalidateSkinCache()
-	t.Cleanup(style.InvalidateSkinCache)
+	skins.InvalidateSkinCache()
+	t.Cleanup(skins.InvalidateSkinCache)
 	const id = "skin-registration-public-probe"
 	red := color.NRGBA{R: 240, G: 20, B: 30, A: 255}
 	blue := color.NRGBA{R: 20, G: 40, B: 230, A: 255}
 	green := color.NRGBA{R: 30, G: 210, B: 50, A: 255}
 	register := func(label string, fill color.NRGBA) {
 		t.Helper()
-		if err := style.RegisterSkinFS(registrationFixture(t, label, fill), id); err != nil {
+		if err := skins.RegisterSkinFS(registrationFixture(t, label, fill), id); err != nil {
 			t.Fatal(err)
 		}
-		if sk, ok := style.LoadSkin(id); !ok || sk.Label != label {
+		if sk, ok := skins.LoadSkin(id); !ok || sk.Label != label {
 			t.Fatalf("registered skin lookup = %+v, %v, want %q", sk, ok, label)
 		}
 		if pack, ok := style.LoadTheme(id); !ok || pack.Label != label {
@@ -44,8 +45,8 @@ func TestPublicSkinRegistrationPaintsAndReloadsItsOwnArtwork(t *testing.T) {
 		pack, _ := style.LoadTheme(id)
 		look := pack.Look()
 		for _, scale := range []float32{1, 1.75} {
-			img := paintengine2d.NewImage(24, 24)
-			if !style.DrawSkinSprite(style.WithScale(look, scale), paintengine2d.NewContext(img), paintengine2d.XYWH(0, 0, 4*scale, 4*scale), "face", paintengine2d.Color{}) {
+			img := paint2d.NewImage(24, 24)
+			if !skins.DrawSkinSprite(style.WithScale(look, scale), paint2d.NewContext(img), paint2d.XYWH(0, 0, 4*scale, 4*scale), "face", paint2d.Color{}) {
 				t.Fatalf("registered artwork did not paint at %gx", scale)
 			}
 			if got := img.NRGBAAt(2, 2); got != fill {
@@ -58,12 +59,12 @@ func TestPublicSkinRegistrationPaintsAndReloadsItsOwnArtwork(t *testing.T) {
 	// registration populated caches under the same skin ID and file names.
 	register("Blue", blue)
 	checkPaint(blue)
-	if got := style.SkinSourceFile(id); got != "" {
+	if got := skins.SkinSourceFile(id); got != "" {
 		t.Errorf("in-memory source file = %q", got)
 	}
 
 	// A user's override must win even when an app registers the name again.
-	userDir := style.UserSkinDir(id)
+	userDir := skins.UserSkinDir(id)
 	if err := os.MkdirAll(filepath.Join(userDir, "art"), 0o700); err != nil {
 		t.Fatal(err)
 	}
@@ -72,17 +73,17 @@ func TestPublicSkinRegistrationPaintsAndReloadsItsOwnArtwork(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := style.RegisterSkinFS(registrationFixture(t, "Blue again", blue), id); err != nil {
+	if err := skins.RegisterSkinFS(registrationFixture(t, "Blue again", blue), id); err != nil {
 		t.Fatal(err)
 	}
-	if sk, ok := style.LoadSkin(id); !ok || sk.Label != "User" {
+	if sk, ok := skins.LoadSkin(id); !ok || sk.Label != "User" {
 		t.Fatalf("registration replaced the user's override: %+v, %v", sk, ok)
 	}
 	checkPaint(green)
 	if err := os.RemoveAll(userDir); err != nil {
 		t.Fatal(err)
 	}
-	style.InvalidateSkinCache()
+	skins.InvalidateSkinCache()
 	checkPaint(blue)
 }
 
@@ -102,7 +103,7 @@ func registrationFixture(t *testing.T, label string, fill color.NRGBA) fstest.Ma
 		return buf.Bytes()
 	}
 	return fstest.MapFS{
-		style.SkinFile: {Data: []byte(`{"skin":1,"label":"` + label + `","base":"dark",` +
+		skins.SkinFile: {Data: []byte(`{"skin":1,"label":"` + label + `","base":"dark",` +
 			`"sheets":{"sheet":{"1x":"art/sheet.png","2x":"art/sheet@2x.png"}},` +
 			`"sprites":{"face":{"sheet":"sheet","at":[0,0,4,4]}}}`)},
 		"art/sheet.png":    {Data: encode(4)},

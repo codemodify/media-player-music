@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p            *Player
-	slots        *widget.Slots
+	slots        *skins.Slots
 	buttons      map[string]*players.GlyphButton
 	play, eq, pl *players.GlyphButton
 	seek, volume *curvedSlider
@@ -27,7 +28,7 @@ type body struct {
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton)}
+	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Xbox music player")
@@ -58,7 +59,7 @@ func newBody(p *Player) *body {
 	menu := func() {
 		c := b.buttons["skin"]
 		o := widget.DeviceOrigin(c)
-		p.Host.ContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()))
+		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	}
 	button("skin", "Appearance and settings", players.GlyphSkin, menu)
 	button("logo", "Appearance and settings", players.GlyphSkin, menu)
@@ -87,9 +88,9 @@ func newBody(p *Player) *body {
 		// These are the original custom-slider animation frames, not a
 		// straight track painted over the skin's curved display.
 		item.f.Travel = .001
-		item.f.Painter = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, t float32, _ style.ControlState) bool {
+		item.f.Painter = func(ctx *paint2d.Context, _ paint2d.Rect, t float32, _ style.ControlState) bool {
 			n := int(t*float32(item.frames-1) + .5)
-			return style.DrawSkinSprite(item.f.Look(), ctx, widget.SlotArtRect(item.f, LayoutMain, item.slot), fmt.Sprintf("%s.%d", item.slot, n), paintengine2d.Color{})
+			return skins.DrawSkinSprite(item.f.Look(), ctx, skins.SlotArtRect(item.f, LayoutMain, item.slot), fmt.Sprintf("%s.%d", item.slot, n), paint2d.Color{})
 		}
 		b.slots.Bind(item.slot, item.f)
 		b.Add(item.f)
@@ -99,10 +100,10 @@ func newBody(p *Player) *body {
 		f := players.NewFader(-players.EqRange, players.EqRange, p.Equaliser.Gains[i], name+" Hz", func(v float32) { p.Equaliser.Set(band, v) })
 		f.Format = players.Decibels
 		f.Travel = 2
-		f.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, t float32, st style.ControlState) bool {
+		f.Painter = func(ctx *paint2d.Context, r paint2d.Rect, t float32, st style.ControlState) bool {
 			d := style.Dip(f.Look(), 1)
-			thumb := paintengine2d.XYWH(r.Min.X, r.Min.Y+(1-t)*(r.Dy()-4*d), r.Dx(), 4*d)
-			return style.DrawSkinSprite(f.Look(), ctx, thumb, "eq.thumb", paintengine2d.Color{})
+			thumb := paint2d.XYWH(r.Min.X, r.Min.Y+(1-t)*(r.Dy()-4*d), r.Dx(), 4*d)
+			return skins.DrawSkinSprite(f.Look(), ctx, thumb, "eq.thumb", paint2d.Color{})
 		}
 		b.slots.Bind(fmt.Sprintf("eq.%d", i), f)
 		b.bands = append(b.bands, f)
@@ -118,7 +119,7 @@ func newBody(p *Player) *body {
 	// This slot was text in the original skin. Keep it text, with ordinary
 	// button input and focus, so every EQ action remains reachable.
 	presets.Shaper = nil
-	presets.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, _ style.ControlState) bool {
+	presets.Art = func(ctx *paint2d.Context, r paint2d.Rect, _ style.ControlState) bool {
 		players.DrawTextIn(ctx, players.ScaledFace(presets.Look().Font(), style.Dip(presets.Look(), 7)), r, p.Equaliser.Preset, green(), style.AlignCenter)
 		return true
 	}
@@ -134,15 +135,15 @@ func skinButton(role, slot, name string, glyph players.Glyph, action func(), pla
 		}
 		return slot
 	}
-	c.Art = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, st style.ControlState) bool {
-		return style.DrawSkinSlot(c.Look(), ctx, widget.SlotArtRect(c, role, artSlot()), role, artSlot(), st)
+	c.Art = func(ctx *paint2d.Context, _ paint2d.Rect, st style.ControlState) bool {
+		return skins.DrawSkinSlot(c.Look(), ctx, skins.SlotArtRect(c, role, artSlot()), role, artSlot(), st)
 	}
-	c.Shaper = func(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
-		return style.SkinSlotShape(lk, size, widget.SlotArtRect(c, role, slot), role, slot)
+	c.Shaper = func(lk style.LookAndFeel, size paint2d.Point) *style.Silhouette {
+		return skins.SkinSlotShape(lk, size, skins.SlotArtRect(c, role, slot), role, slot)
 	}
 	return c
 }
-func green() paintengine2d.Color { return paintengine2d.RGB(.62, .95, .38) }
+func green() paint2d.Color { return paint2d.RGB(.62, .95, .38) }
 func (b *body) stepPreset(next bool) {
 	list := players.EqPresets()
 	if len(list) == 0 {
@@ -192,7 +193,7 @@ func (b *body) eqMenu() {
 		name := pr.Name
 		items = append(items, widgets.RadioItem(name, "preset", name == e.Preset, func() { e.Apply(name) }))
 	}
-	widgets.ShowContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
+	widgets.ShowContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
 }
 func (b *body) sync() {
 	p, t := b.p, b.p.Transport
@@ -223,22 +224,22 @@ func (b *body) sync() {
 	}
 	b.Invalidate()
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	style.DrawSkinLayout(lk, ctx, box, LayoutMain)
+	skins.DrawSkinLayout(lk, ctx, box, LayoutMain)
 	if b.p.Host.Model.EqualizerVisible {
-		r, _ := style.SkinSlotRect(lk, LayoutMain, "eq.panel", box)
-		style.DrawSkinSprite(lk, ctx, r, "eq.panel", paintengine2d.Color{})
+		r, _ := skins.SkinSlotRect(lk, LayoutMain, "eq.panel", box)
+		skins.DrawSkinSprite(lk, ctx, r, "eq.panel", paint2d.Color{})
 	}
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, slot, box); return r }
+	at := func(slot string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, slot, box); return r }
 	title := b.p.Transport.Track().Label()
 	if title == "" {
 		title = "Music Player"

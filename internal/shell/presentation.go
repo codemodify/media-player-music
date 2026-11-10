@@ -5,6 +5,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/amarok"
+	"github.com/codemodify/media-player-music/internal/players/fancy"
 	"github.com/codemodify/media-player-music/internal/players/fandom"
 	"github.com/codemodify/media-player-music/internal/players/halflife2"
 	"github.com/codemodify/media-player-music/internal/players/headspace"
@@ -15,7 +16,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/vlc"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"github.com/codemodify/media-player-music/internal/players/xbox"
-	"github.com/codemodify/uitoolkit/app"
+	"goframework.io/desktop-ui"
 )
 
 // Presentation is the window arrangement for the player's appearance.
@@ -24,9 +25,10 @@ import (
 // iTunes switches full and mini views within its main window and owns an EQ.
 // Series 9 embeds its drawers and switches full/compact views in one window.
 // Classic VLC, RealPlayer and Amarok each embed their sections in one window.
+// Fancy uses three shaped panels and switches its main window to a compact view.
 type Presentation interface {
 	Close()
-	MainWindow() *app.Window
+	MainWindow() *ui.Window
 	Windows() []players.NamedWindow
 	Advance(time.Duration)
 	Refresh()
@@ -74,6 +76,9 @@ func openPresentation(h *players.Host, opts Options, skin string) (Presentation,
 	}
 	if skin == players.AmarokSkin {
 		return amarok.New(h, amarok.Options{Headless: opts.Headless, Scale: opts.Scale})
+	}
+	if skin == players.FancySkin {
+		return fancy.New(h, fancy.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
 	return winamp.New(h, winamp.Options{Headless: opts.Headless, Scale: opts.Scale})
 }

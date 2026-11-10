@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui/platform"
 )
 
 const modeFull = "full"

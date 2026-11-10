@@ -9,18 +9,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
 )
 
 func TestSkinLabelsUseTheRequestedBrandingWithoutChangingIDs(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	style.InvalidateSkinCache()
-	t.Cleanup(style.InvalidateSkinCache)
+	skins.InvalidateSkinCache()
+	t.Cleanup(skins.InvalidateSkinCache)
 	want := []string{
 		"Default (no skin)", "WinAmp - classic", "WinAmp - Silver", "WinAmp - Classified", "WinAmp - DOSamp", "WinAmp - Windows 98",
 		"WinAmp - Classic Amber", "WinAmp - Calculator", "WinAmp - Sony CDX-MP3", "WinAmp - TI-82", "WinAmp - Radar Amp", "WinAmp - Quake 3 Arena",
 		"Win Media Player - Headspace", "Win Media Player - Xbox", "Win Media Player - Half Life 2", "Win Media Player - Fandom", "Mac OS X - iTunes", "Win Media Player - Series 9",
-		"VLC - Classic", "RealPlayer - Classic", "KDE - Amarok 1.4",
+		"VLC - Classic", "RealPlayer - Classic", "KDE - Amarok 1.4", "Fancy",
 	}
 	ids := AppearanceIDs()
 	if len(ids) != len(want) {
@@ -86,10 +86,13 @@ func TestSkinLabelFormatsTheUserOverrideBeforeCatalogueFallback(t *testing.T) {
 		{AmarokSkin, "Amarok 1.4", "KDE - Amarok 1.4"},
 		{AmarokSkin, "KDE - KDE - Custom", "KDE - Custom"},
 		{AmarokSkin, "KDE - ", "KDE - Amarok 1.4"},
+		{FancySkin, "Fancy", "Fancy"},
+		{FancySkin, "WinAmp - Fancy", "Fancy"},
+		{FancySkin, "Win Media Player - Custom Fancy", "Fancy"},
 	} {
 		t.Run(tc.id+"/"+tc.label, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-			dir := style.UserSkinDir(tc.id)
+			dir := skins.UserSkinDir(tc.id)
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				t.Fatal(err)
 			}
@@ -97,11 +100,11 @@ func TestSkinLabelFormatsTheUserOverrideBeforeCatalogueFallback(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(filepath.Join(dir, style.SkinFile), data, 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), data, 0600); err != nil {
 				t.Fatal(err)
 			}
-			style.InvalidateSkinCache()
-			t.Cleanup(style.InvalidateSkinCache)
+			skins.InvalidateSkinCache()
+			t.Cleanup(skins.InvalidateSkinCache)
 			if got := SkinLabel(tc.id); got != tc.want {
 				t.Fatalf("user-supplied label lost precedence or branding: %q", got)
 			}
@@ -110,7 +113,7 @@ func TestSkinLabelFormatsTheUserOverrideBeforeCatalogueFallback(t *testing.T) {
 }
 
 func TestWMPCatalogueKeepsTheWinampFamilySeparate(t *testing.T) {
-	for _, id := range []string{HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin} {
+	for _, id := range []string{HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin, FancySkin} {
 		if IsPanelSkin(id) || !IsSkinned(id) {
 			t.Fatalf("%s was not recognized as its own optional family", id)
 		}
@@ -126,13 +129,13 @@ func TestWMPCatalogueKeepsTheWinampFamilySeparate(t *testing.T) {
 	// Callers may reorder choices without changing the shared catalogue.
 	ids := SkinnedIDs()
 	ids[0] = "changed"
-	if next := SkinnedIDs(); next[0] != WinampSkin || !reflect.DeepEqual(next[len(next)-9:], []string{HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin}) {
+	if next := SkinnedIDs(); next[0] != WinampSkin || !reflect.DeepEqual(next[len(next)-10:], []string{HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin, FancySkin}) {
 		t.Fatalf("mutable choice list changed catalogue order: %v", next)
 	}
 }
 
 func TestEveryImportedAppearanceRetainsItsSavedSession(t *testing.T) {
-	want := []string{"default", "winamp", "winamp-silver", "winamp-classified", "dosamp", "windows-98", "winamp-amber", "calculator", "sony-cdx-mp3", "ti-82", "radar-amp", "quake-3-arena", "headspace", "xbox", "half-life-2", "fandom", "itunes", "series-9", "vlc", "realplayer", "amarok"}
+	want := []string{"default", "winamp", "winamp-silver", "winamp-classified", "dosamp", "windows-98", "winamp-amber", "calculator", "sony-cdx-mp3", "ti-82", "radar-amp", "quake-3-arena", "headspace", "xbox", "half-life-2", "fandom", "itunes", "series-9", "vlc", "realplayer", "amarok", "fancy"}
 	if got := AppearanceIDs(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("menu/keyboard order=%v, want %v", got, want)
 	}

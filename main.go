@@ -16,8 +16,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/shell"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 
 func run() error {
 	skin := flag.String("skin", "", "appearance: "+players.SkinChoices()+" (default: last used, or no skin)")
-	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $UITK_SCALE)")
+	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $GOFRAMEWORK_DESKTOP_UI_SCALE)")
 	shot := flag.String("shot", "", "paint posed screenshots into this directory and exit")
 	at := flag.Duration("at", 97*time.Second, "playback position in screenshot mode")
 	audioBackend := flag.String("audio-backend", "", "installed playback program: mpv, vlc, mplayer, mpg123 (default: last used, or mpv)")
@@ -47,11 +47,17 @@ func run() error {
 	}
 	opts.Skin = selected
 	os.Setenv(style.ThemeEnv, shell.LookFor(selected))
+	// Preserve the player's desktop reduced-motion behavior after the toolkit
+	// made following that preference an application opt-in.
+	style.SetFollowDesktopMotion(true)
+	// Song and artist labels borrow missing glyphs (CJK and other scripts)
+	// from installed fonts; this was the font_fallback build tag.
+	style.SetFallback(true)
 	iconImages, err := appicon.Images(appicon.LogoPNG())
 	if err != nil {
 		return err
 	}
-	a := uitoolkit.New(uitoolkit.Options{Headless: headless, Scale: float32(*scale), Backend: playerBackend(headless)})
+	a := ui.New(ui.Options{Headless: headless, Scale: float32(*scale), Backend: playerBackend(headless)})
 	a.SetIcon(iconImages...)
 	s, err := shell.New(a, opts)
 	if err != nil {

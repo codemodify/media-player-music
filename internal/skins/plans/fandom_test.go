@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	fdlayout "github.com/codemodify/media-player-music/internal/skins/fandom"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/skingen"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skingen"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestFandomRetainsSourceAlphaAndIndependentHighResolution(t *testing.T) {
@@ -62,7 +63,7 @@ func TestFandomGeneratedLayoutKeepsChassisAndResponsivePlaylist(t *testing.T) {
 	if err := Write(dir, p); err != nil {
 		t.Fatal(err)
 	}
-	if err := style.RegisterSkinFS(os.DirFS(filepath.Join(dir, p.Name)), p.Name); err != nil {
+	if err := skins.RegisterSkinFS(os.DirFS(filepath.Join(dir, p.Name)), p.Name); err != nil {
 		t.Fatal(err)
 	}
 	pack, ok := style.LoadTheme(p.Name)
@@ -72,14 +73,14 @@ func TestFandomGeneratedLayoutKeepsChassisAndResponsivePlaylist(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			lk := style.WithScale(pack.Look(), scale)
-			main := paintengine2d.XYWH(5, 7, 490*scale, 330*scale)
-			check := func(layout, name string, box paintengine2d.Rect, x, y, w, h float32) paintengine2d.Rect {
+			main := paint2d.XYWH(5, 7, 490*scale, 330*scale)
+			check := func(layout, name string, box paint2d.Rect, x, y, w, h float32) paint2d.Rect {
 				t.Helper()
-				got, ok := style.SkinSlotRect(lk, layout, name, box)
+				got, ok := skins.SkinSlotRect(lk, layout, name, box)
 				if !ok {
 					t.Fatalf("missing %s", name)
 				}
-				want := paintengine2d.XYWH(box.Min.X+x*scale, box.Min.Y+y*scale, w*scale, h*scale)
+				want := paint2d.XYWH(box.Min.X+x*scale, box.Min.Y+y*scale, w*scale, h*scale)
 				if got != want {
 					t.Fatalf("%s=%v want%v", name, got, want)
 				}
@@ -91,7 +92,7 @@ func TestFandomGeneratedLayoutKeepsChassisAndResponsivePlaylist(t *testing.T) {
 			check(fdlayout.LayoutMain, "volume", main, 282, 280, 137, 19)
 			for _, size := range [][2]float32{{190, 246}, {310, 386}} {
 				w, h := size[0], size[1]
-				box := paintengine2d.XYWH(11, 13, w*scale, h*scale)
+				box := paint2d.XYWH(11, 13, w*scale, h*scale)
 				check(fdlayout.LayoutPlaylist, "shape.playlist", box, 0, 0, w, h)
 				check(fdlayout.LayoutPlaylist, "rows", box, 15, 31, w-43, h-60)
 				check(fdlayout.LayoutPlaylist, "scroll", box, w-27, 31, 9, h-60)

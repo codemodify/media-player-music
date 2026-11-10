@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p                        *Player
-	slots                    *widget.Slots
+	slots                    *skins.Slots
 	play, eq, pl             *players.GlyphButton
 	volume, balance, seek    *players.Fader
 	bands                    []*players.Fader
@@ -28,7 +29,7 @@ type body struct {
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton)}
+	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Headspace music player")
@@ -59,7 +60,7 @@ func newBody(p *Player) *body {
 	b.pl.Toggle = true
 	button("skin", "Appearance and settings", players.GlyphSkin, func() {
 		o := widget.DeviceOrigin(b.buttons["skin"])
-		p.Host.ContextMenu(b.buttons["skin"], paintengine2d.Pt(o.X, o.Y+b.buttons["skin"].Bounds().Dy()))
+		p.Host.ContextMenu(b.buttons["skin"], paint2d.Pt(o.X, o.Y+b.buttons["skin"].Bounds().Dy()))
 	})
 	button("eq.handle", "Open or close equalizer", players.GlyphNone, func() { p.ShowEqualiser(!p.Host.Model.EqualizerVisible) })
 	button("pl.handle", "Open or close playlist", players.GlyphNone, func() { p.ShowPlaylist(!p.Host.Model.PlaylistVisible) })
@@ -113,7 +114,7 @@ func newBody(p *Player) *body {
 	add := button("list.header", "Open or add music files", players.GlyphNone, func() {
 		c := b.buttons["list.header"]
 		o := widget.DeviceOrigin(c)
-		widgets.ShowContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()),
+		widgets.ShowContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()),
 			widgets.Item("Open music files…", func() { p.Host.OpenFiles(c, false) }),
 			widgets.Item("Add music files…", func() { p.Host.OpenFiles(c, true) }),
 			widgets.Item("Remove current track", func() { p.Host.RemoveTrack() }),
@@ -128,7 +129,7 @@ func newBody(p *Player) *body {
 }
 
 func (b *body) paintButton(c *players.GlyphButton, slot string) {
-	c.Art = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, st style.ControlState) bool {
+	c.Art = func(ctx *paint2d.Context, _ paint2d.Rect, st style.ControlState) bool {
 		artSlot := slot
 		if slot == "play" && b.p.Transport.State == players.Playing {
 			artSlot = "pause"
@@ -139,10 +140,10 @@ func (b *body) paintButton(c *players.GlyphButton, slot string) {
 		if slot == "pl.handle" && !b.p.Host.Model.PlaylistVisible {
 			artSlot += ".closed"
 		}
-		r := widget.SlotArtRect(c, LayoutMain, artSlot)
-		return style.DrawSkinSlot(c.Look(), ctx, r, LayoutMain, artSlot, st)
+		r := skins.SlotArtRect(c, LayoutMain, artSlot)
+		return skins.DrawSkinSlot(c.Look(), ctx, r, LayoutMain, artSlot, st)
 	}
-	c.Shaper = func(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
+	c.Shaper = func(lk style.LookAndFeel, size paint2d.Point) *style.Silhouette {
 		artSlot := slot
 		if slot == "eq.handle" && !b.p.Host.Model.EqualizerVisible {
 			artSlot += ".closed"
@@ -150,7 +151,7 @@ func (b *body) paintButton(c *players.GlyphButton, slot string) {
 		if slot == "pl.handle" && !b.p.Host.Model.PlaylistVisible {
 			artSlot += ".closed"
 		}
-		return style.SkinSlotShape(lk, size, widget.SlotArtRect(c, LayoutMain, artSlot), LayoutMain, artSlot)
+		return skins.SkinSlotShape(lk, size, skins.SlotArtRect(c, LayoutMain, artSlot), LayoutMain, artSlot)
 	}
 }
 
@@ -164,25 +165,25 @@ func (b *body) paintSlider(f *players.Fader, slot string) {
 		prefix, travel = "seek", 9
 	}
 	f.Travel = travel
-	f.Painter = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, t float32, st style.ControlState) bool {
+	f.Painter = func(ctx *paint2d.Context, _ paint2d.Rect, t float32, st style.ControlState) bool {
 		lk := f.Look()
-		r := widget.SlotArtRect(f, LayoutMain, slot)
-		style.DrawSkinSprite(lk, ctx, r, prefix+".track", paintengine2d.Color{})
+		r := skins.SlotArtRect(f, LayoutMain, slot)
+		skins.DrawSkinSprite(lk, ctx, r, prefix+".track", paint2d.Color{})
 		name := prefix + ".thumb"
-		w, h, ok := style.SkinSpriteSize(lk, name)
+		w, h, ok := skins.SkinSpriteSize(lk, name)
 		if !ok {
 			return false
 		}
 		w, h = style.Dip(lk, w), style.Dip(lk, h)
 		pad := style.Dip(lk, travel)
-		at := paintengine2d.XYWH(r.Min.X+pad+(r.Dx()-2*pad)*t-w/2, r.Min.Y+(r.Dy()-h)/2, w, h)
+		at := paint2d.XYWH(r.Min.X+pad+(r.Dx()-2*pad)*t-w/2, r.Min.Y+(r.Dy()-h)/2, w, h)
 		if f.Vertical {
-			at = paintengine2d.XYWH(r.Min.X+(r.Dx()-w)/2, r.Min.Y+pad+(r.Dy()-2*pad)*(1-t)-h/2, w, h)
+			at = paint2d.XYWH(r.Min.X+(r.Dx()-w)/2, r.Min.Y+pad+(r.Dy()-2*pad)*(1-t)-h/2, w, h)
 		}
 		if st.Pressed() && slot == "seek" {
 			name += ".down"
 		}
-		style.DrawSkinSprite(lk, ctx, at, name, paintengine2d.Color{})
+		skins.DrawSkinSprite(lk, ctx, at, name, paint2d.Color{})
 		return true
 	}
 }
@@ -206,7 +207,7 @@ func (b *body) eqMenu() {
 		name := preset.Name
 		items = append(items, widgets.RadioItem(name, "preset", name == e.Preset, func() { e.Apply(name) }))
 	}
-	widgets.ShowContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
+	widgets.ShowContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
 }
 
 func (b *body) controlVisible(c widget.Component) bool {
@@ -259,13 +260,13 @@ func (b *body) sync() {
 	b.Invalidate()
 }
 
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	if sz, ok := b.slots.Measure(b.Look(), c); ok {
 		return sz
 	}
-	return c.Constrain(paintengine2d.Pt(style.Dip(b.Look(), MainW), style.Dip(b.Look(), MainH)))
+	return c.Constrain(paint2d.Pt(style.Dip(b.Look(), MainW), style.Dip(b.Look(), MainH)))
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 	for _, name := range []string{"eq.handle", "pl.handle"} {
@@ -274,18 +275,18 @@ func (b *body) Arrange(r paintengine2d.Rect) {
 			open = b.p.Host.Model.PlaylistVisible
 		}
 		if !open {
-			if at, ok := style.SkinSlotRect(b.Look(), LayoutMain, name+".closed", b.LocalBounds()); ok {
+			if at, ok := skins.SkinSlotRect(b.Look(), LayoutMain, name+".closed", b.LocalBounds()); ok {
 				b.buttons[name].Arrange(at)
 			}
 		}
 	}
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	style.DrawSkinSprite(lk, ctx, box, "face."+b.p.wingState(), paintengine2d.Color{})
+	skins.DrawSkinSprite(lk, ctx, box, "face."+b.p.wingState(), paint2d.Color{})
 	font := players.ScaledFace(lk.Font(), style.Dip(lk, 10))
-	col := paintengine2d.RGB(.47, .81, .03)
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, slot, box); return r }
+	col := paint2d.RGB(.47, .81, .03)
+	at := func(slot string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, slot, box); return r }
 	title := b.p.Transport.Track().Label()
 	if title == "" {
 		title = "Music Player"
@@ -299,7 +300,7 @@ func (b *body) Paint(ctx *paintengine2d.Context) {
 	players.DrawTextIn(ctx, font, at("status"), b.p.Transport.State.String(), col, style.AlignStart)
 	if b.p.Host.Model.EqualizerVisible {
 		font = players.ScaledFace(lk.Font(), style.Dip(lk, 8))
-		col = paintengine2d.RGB(.47, .81, .03)
+		col = paint2d.RGB(.47, .81, .03)
 		for slot, text := range map[string]string{"balance.label": "Balance", "volume.label": "Volume"} {
 			players.DrawTextIn(ctx, font, at(slot), text, col, style.AlignCenter)
 		}

@@ -98,12 +98,12 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/itunes"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	uiskins "goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -122,7 +122,7 @@ func main() {
 }
 
 func probe(scale float32) {
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
 	p, err := itunes.New(players.NewHost(a), itunes.Options{Scale: scale})
 	if err != nil {
 		panic(err)
@@ -176,7 +176,7 @@ func probe(scale float32) {
 	fmt.Printf("scale=%g twoFullMiniRoundTrips=true stableNativeMain=true horizontalMiniLimits=true currentEQOwner=true hiddenOnlyOwnedWindows=true\n", scale)
 }
 
-func nativeID(w *app.Window) uint64 {
+func nativeID(w *ui.Window) uint64 {
 	parent := w.PortalParent()
 	if !strings.HasPrefix(parent, "x11:") {
 		panic("native X11 surface unavailable: " + parent)
@@ -188,7 +188,7 @@ func nativeID(w *app.Window) uint64 {
 	return id
 }
 
-func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY, extraX, extraY int, extraInside bool) {
+func verify(w, owner *ui.Window, scale float32, width, height, insideX, insideY, extraX, extraY int, extraInside bool) {
 	px := func(v int) int { return int(math.Round(float64(v) * float64(scale))) }
 	id := nativeID(w)
 	frame := platform.FrameOf(w.Surface()).Frame()
@@ -242,14 +242,14 @@ func verify(w, owner *app.Window, scale float32, width, height, insideX, insideY
 
 // Compare unoverlaid soft chrome edges after actual native rendering. The
 // binary window extent must preserve the source artwork alpha exactly once.
-func verifySoftAlpha(w *app.Window, capture *paintengine2d.Image, role, slot string) {
+func verifySoftAlpha(w *ui.Window, capture *paint2d.Image, role, slot string) {
 	pw, ph := w.PixelSize()
-	raw := paintengine2d.NewImage(pw, ph)
-	ctx := paintengine2d.NewContext(raw)
-	ctx.Clear(paintengine2d.Transparent)
-	box := paintengine2d.XYWH(0, 0, float32(pw), float32(ph))
-	r, ok := style.SkinSlotRect(w.Look(), role, slot, box)
-	if !ok || !style.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
+	raw := paint2d.NewImage(pw, ph)
+	ctx := paint2d.NewContext(raw)
+	ctx.Clear(paint2d.Transparent)
+	box := paint2d.XYWH(0, 0, float32(pw), float32(ph))
+	r, ok := uiskins.SkinSlotRect(w.Look(), role, slot, box)
+	if !ok || !uiskins.DrawSkinSlot(w.Look(), ctx, r, role, slot, 0) {
 		panic("native soft-alpha fixture art missing")
 	}
 	checked := 0
@@ -259,7 +259,7 @@ func verifySoftAlpha(w *app.Window, capture *paintengine2d.Image, role, slot str
 			if alpha == 0 || alpha == 255 {
 				continue
 			}
-			at := paintengine2d.Pt(float32(x)+.5, float32(y)+.5)
+			at := paint2d.Pt(float32(x)+.5, float32(y)+.5)
 			covered := false
 			for _, c := range w.Content().Children() {
 				if c.Visible() && widget.DeviceBounds(c).Contains(at) {
@@ -284,7 +284,7 @@ func verifySoftAlpha(w *app.Window, capture *paintengine2d.Image, role, slot str
 	fmt.Printf("nativeSoftAlphaPreserved=true sampledArtPixels=%d role=%s\n", checked, role)
 }
 
-func verifyLimits(w *app.Window, scale float32, minW, minH, maxW, maxH int) {
+func verifyLimits(w *ui.Window, scale float32, minW, minH, maxW, maxH int) {
 	frame := platform.FrameOf(w.Surface()).Frame()
 	wanted := make([]C.XRectangle, len(frame.Shape))
 	for i, r := range frame.Shape {

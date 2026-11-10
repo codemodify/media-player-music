@@ -1,7 +1,7 @@
 package winamp
 
 import (
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui/platform"
 	"testing"
 )
 

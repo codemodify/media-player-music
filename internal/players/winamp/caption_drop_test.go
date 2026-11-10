@@ -6,12 +6,12 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistCaptionDropsPreserveCaptionAndPlayerActions(t *testing.T) {
@@ -33,7 +33,7 @@ func TestPlaylistCaptionDropsPreserveCaptionAndPlayerActions(t *testing.T) {
 					t.Fatal("binding a caption drop policy rebuilt toolkit controls or identities")
 				}
 				caption := widget.DeviceBounds(header).Center()
-				if region, _ := p.List.NonClientHit(caption); region != app.RegionCaption {
+				if region, _ := p.List.NonClientHit(caption); region != ui.RegionCaption {
 					t.Fatalf("the original caption lost its hit/drag identity: %s", region)
 				}
 				tree := playertest.Audit(t, "playlist caption", p.List)
@@ -44,7 +44,7 @@ func TestPlaylistCaptionDropsPreserveCaptionAndPlayerActions(t *testing.T) {
 						t.Fatal("the playlist's hidden caption buttons were restored")
 					}
 				}
-				for _, point := range []paintengine2d.Point{caption, close.Bounds.Center(), widget.DeviceBounds(left).Center()} {
+				for _, point := range []paint2d.Point{caption, close.Bounds.Center(), widget.DeviceBounds(left).Center()} {
 					before := calls
 					p.List.Surface().(*platform.Offscreen).SimulateDropAction(point, map[string][]byte{
 						"text/uri-list": []byte("file:///home/user/Music/net\r\n"),
@@ -61,8 +61,8 @@ func TestPlaylistCaptionDropsPreserveCaptionAndPlayerActions(t *testing.T) {
 				off := p.List.Surface().(*platform.Offscreen)
 				moves := off.FrameCalls().Moves
 				p.List.Inject(platform.Event{Kind: platform.EventMouseDown, Button: platform.ButtonLeft, Pos: caption})
-				p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: caption.Add(paintengine2d.Pt(35, 0))})
-				p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: caption.Add(paintengine2d.Pt(35, 0))})
+				p.List.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: caption.Add(paint2d.Pt(35, 0))})
+				p.List.Inject(platform.Event{Kind: platform.EventMouseUp, Button: platform.ButtonLeft, Pos: caption.Add(paint2d.Pt(35, 0))})
 				a.PumpOnce()
 				if off.FrameCalls().Moves != moves+1 {
 					t.Fatal("caption dragging no longer starts one toolkit window move")

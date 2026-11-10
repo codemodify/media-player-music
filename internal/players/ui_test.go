@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // ---- the transport button ------------------------------------------------------
@@ -73,10 +73,10 @@ func TestAGlyphButtonIsAWholeControl(t *testing.T) {
 func TestEveryGlyphDrawsInsideItsBox(t *testing.T) {
 	const side = 40
 	for g := GlyphPlay; g <= GlyphSkin; g++ {
-		img := paintengine2d.NewImage(side, side)
-		ctx := paintengine2d.NewContext(img)
-		ctx.Clear(paintengine2d.Color{})
-		DrawGlyph(ctx, paintengine2d.XYWH(0, 0, side, side), g, paintengine2d.RGB(1, 1, 1), 2)
+		img := paint2d.NewImage(side, side)
+		ctx := paint2d.NewContext(img)
+		ctx.Clear(paint2d.Color{})
+		DrawGlyph(ctx, paint2d.XYWH(0, 0, side, side), g, paint2d.RGB(1, 1, 1), 2)
 		ink := 0
 		edge := 0
 		for y := 0; y < side; y++ {

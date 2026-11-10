@@ -5,10 +5,11 @@ import (
 	"math"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type eqPane struct {
@@ -48,15 +49,15 @@ func newEqPane(p *Player) *eqPane {
 	b.Add(b.balance)
 	return b
 }
-func (b *eqPane) bandRect(i int) paintengine2d.Rect {
+func (b *eqPane) bandRect(i int) paint2d.Rect {
 	d := style.Dip(b.Look(), 1)
 	w := b.LocalBounds().Dx() / d
 	// Original Corona.js GetEqSliderLeft distributes ten18px tracks inside
 	// the328px middle panel. Keep design-pixel flooring before display scale.
 	x := 2 + float32(math.Floor(float64((w-6-180)/11*float32(i+1)+18*float32(i))))
-	return paintengine2d.XYWH(x*d, 33*d, 18*d, 67*d)
+	return paint2d.XYWH(x*d, 33*d, 18*d, 67*d)
 }
-func (b *eqPane) Arrange(r paintengine2d.Rect) {
+func (b *eqPane) Arrange(r paint2d.Rect) {
 	b.pane.Arrange(r)
 	for i, f := range b.sliders {
 		f.Arrange(b.bandRect(i))
@@ -98,24 +99,24 @@ func (b *eqPane) presetMenu() {
 		name := pr.Name
 		items = append(items, widgets.RadioItem(name, "preset", name == e.Preset, func() { e.Apply(name) }))
 	}
-	widgets.ShowContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
+	widgets.ShowContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
 }
-func (b *eqPane) Paint(ctx *paintengine2d.Context) {
+func (b *eqPane) Paint(ctx *paint2d.Context) {
 	b.pane.Paint(ctx)
 	lk, box := b.Look(), b.LocalBounds()
 	f := players.ScaledFace(lk.Font(), style.Dip(lk, 9))
-	ink := paintengine2d.RGB(.08, .12, .19)
+	ink := paint2d.RGB(.08, .12, .19)
 	if !b.p.Host.EqualizerAvailable() {
-		ink = paintengine2d.RGB(.5, .5, .5)
+		ink = paint2d.RGB(.5, .5, .5)
 	}
 	d := style.Dip(lk, 1)
 	for i, name := range players.EqBands {
 		r := b.bandRect(i)
-		label := paintengine2d.XYWH(r.Min.X-6*d, 104*d, 30*d, 15*d)
+		label := paint2d.XYWH(r.Min.X-6*d, 104*d, 30*d, 15*d)
 		players.DrawTextIn(ctx, f, label, name, ink, style.AlignCenter)
 	}
 	for _, item := range []struct{ slot, text string }{{"preset.label", b.p.Equaliser.Preset}, {"balance.label", "Balance"}} {
-		r, _ := style.SkinSlotRect(lk, LayoutEqualizer, item.slot, box)
+		r, _ := skins.SkinSlotRect(lk, LayoutEqualizer, item.slot, box)
 		players.DrawTextIn(ctx, f, r, item.text, ink, style.AlignStart)
 	}
 }

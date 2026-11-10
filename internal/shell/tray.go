@@ -3,8 +3,8 @@ package shell
 import (
 	"log"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/graphics-paint2d"
 )
 
 // openTray uses the application's logo, which main sets before opening the
@@ -14,7 +14,7 @@ func (s *Shell) openTray() {
 	if s.opts.Headless || s.closed || s.tray != nil {
 		return
 	}
-	var image *paintengine2d.Image
+	var image *paint2d.Image
 	for _, candidate := range s.App.Icon() {
 		if candidate != nil && candidate.Width > 0 && candidate.Width == candidate.Height &&
 			(image == nil || candidate.Width > image.Width) {
@@ -23,10 +23,7 @@ func (s *Shell) openTray() {
 	}
 	item, err := s.App.NewStatusItem(platform.StatusItemOptions{
 		ID: "media-player-music", Title: "Music Player", Tooltip: "Music Player",
-		// Plasma resolves IconName before IconPixmap. This app-specific
-		// unresolved name lets it use the supplied logo instead of the
-		// toolkit's generic application-default-icon fallback.
-		Icon:    platform.StatusIcon{Name: "media-player-music", Image: image},
+		Icon:    platform.StatusIcon{Image: image},
 		OnClick: s.showPlayer,
 		Menu: []platform.StatusMenuItem{
 			{Text: "Show player", OnClick: s.showPlayer},

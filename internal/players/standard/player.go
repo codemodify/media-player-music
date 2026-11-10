@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const (
@@ -26,11 +26,11 @@ type Options struct {
 
 type Player struct {
 	Host           *players.Host
-	App            *app.Application
+	App            *ui.Application
 	Transport      *players.Transport
 	Spectrum       *players.Spectrum
 	Equaliser      *players.Equalizer
-	Main           *app.Window
+	Main           *ui.Window
 	body           *body
 	dropLook       func()
 	dropResize     func()
@@ -54,7 +54,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 		p.placementReady = true
 		p.retryPlacement(0)
 	})
-	w.SetOnCaptionDrag(func(paintengine2d.Point) bool {
+	w.SetOnCaptionDrag(func(paint2d.Point) bool {
 		// A user drag takes precedence over unfinished startup restoration.
 		p.restore = nil
 		return false
@@ -71,7 +71,7 @@ func New(h *players.Host, opts Options) (*Player, error) {
 	return p, nil
 }
 
-func (p *Player) MainWindow() *app.Window { return p.Main }
+func (p *Player) MainWindow() *ui.Window { return p.Main }
 func (p *Player) Windows() []players.NamedWindow {
 	return []players.NamedWindow{{Name: "main", Window: p.Main}}
 }
@@ -117,11 +117,11 @@ func (p *Player) keys(e widget.KeyEvent) bool {
 	}
 	if e.Key == platform.KeyMenu || (e.Key == platform.KeyF10 && e.Mods.Shift()) {
 		from := widget.Component(p.body)
-		at := paintengine2d.Pt(8, 8)
+		at := paint2d.Pt(8, 8)
 		if f := p.Main.Focus(); f != nil {
 			from = f
 			o := widget.DeviceOrigin(f)
-			at = paintengine2d.Pt(o.X, o.Y+f.Bounds().Dy())
+			at = paint2d.Pt(o.X, o.Y+f.Bounds().Dy())
 		}
 		p.Host.ContextMenu(from, at)
 		return true

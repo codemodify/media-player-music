@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // playlistList keeps the stock list's navigation and scrolling and reserves
@@ -33,7 +33,7 @@ func newPlaylistList(p *Player) *playlistList {
 	l.Init(l)
 	l.OnActivate = func(i int) { l.activate(i) }
 	l.ContextKeepsSelection = true
-	l.OnContext = func(_ int, at paintengine2d.Point) { p.Host.ContextMenu(l, at) }
+	l.OnContext = func(_ int, at paint2d.Point) { p.Host.ContextMenu(l, at) }
 	l.SetFocusVisibleOnly(true)
 	l.SetAccessibleName("Playlist")
 	l.DisableTypeAhead = true

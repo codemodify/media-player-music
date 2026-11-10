@@ -6,11 +6,12 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // The panel faces on the skin's own layouts: the controls are where the
@@ -32,7 +33,7 @@ func TestThePanelsControlsAreWhereTheSkinSays(t *testing.T) {
 				s.readout: "display", s.seek: "seek", s.volume: "volume", s.play: "play",
 				s.shuffle: "shuffle", s.skinBtn: "skin",
 			} {
-				want, ok := style.SkinSlotRect(s.Look(), layoutStrip, slot, s.LocalBounds())
+				want, ok := skins.SkinSlotRect(s.Look(), layoutStrip, slot, s.LocalBounds())
 				if !ok {
 					t.Fatalf("%s@%gx: no %s slot", id, scale, slot)
 				}
@@ -41,7 +42,7 @@ func TestThePanelsControlsAreWhereTheSkinSays(t *testing.T) {
 				}
 			}
 			for i, f := range p.eqPane.bands {
-				want, _ := style.SkinSlotRect(f.Look(), layoutEqualiser, "band."+string(rune('0'+i)), p.eqPane.LocalBounds())
+				want, _ := skins.SkinSlotRect(f.Look(), layoutEqualiser, "band."+string(rune('0'+i)), p.eqPane.LocalBounds())
 				if d := maxDiff(f.Bounds(), want); d > 0.5 {
 					t.Errorf("%s@%gx: band %d at %v, its slot is %v", id, scale, i, f.Bounds(), want)
 				}
@@ -69,7 +70,7 @@ func skinKeyless(xs []string) []string {
 	return out
 }
 
-func maxDiff(a, b paintengine2d.Rect) float32 {
+func maxDiff(a, b paint2d.Rect) float32 {
 	d := float32(0)
 	for _, v := range []float32{a.Min.X - b.Min.X, a.Min.Y - b.Min.Y, a.Max.X - b.Max.X, a.Max.Y - b.Max.Y} {
 		if v < 0 {
@@ -121,7 +122,7 @@ func TestTheSilverEqualiserWearsItsOwnCaption(t *testing.T) {
 		// Above the display, to the right of any title: the strip's band
 		// is navy, the equaliser's is the pale chrome of its face.
 		x, y := int(200*scale), int(5*scale)
-		navy := func(w *app.Window) bool {
+		navy := func(w *ui.Window) bool {
 			r, g, b, _ := w.Capture().PremulAt(x, y)
 			return b > r+20 && r < 90 && g < 110
 		}
@@ -149,7 +150,7 @@ func TestTheRoundKeysRefuseTheirCorners(t *testing.T) {
 		key := p.strip.play
 		b := key.Bounds()
 		at := func(dx, dy float32) widget.Component {
-			return p.strip.HitTest(paintengine2d.Pt(b.Min.X+dx, b.Min.Y+dy))
+			return p.strip.HitTest(paint2d.Pt(b.Min.X+dx, b.Min.Y+dy))
 		}
 		if at(b.Dx()/2, b.Dy()/2) != widget.Component(key) {
 			t.Fatalf("silver@%gx: the middle of the play key is not the key", scale)
@@ -163,7 +164,7 @@ func TestTheRoundKeysRefuseTheirCorners(t *testing.T) {
 	_, p := open(t, Skin, 1)
 	key := p.strip.play
 	b := key.Bounds()
-	if p.strip.HitTest(paintengine2d.Pt(b.Min.X+1, b.Min.Y+1)) != widget.Component(key) {
+	if p.strip.HitTest(paint2d.Pt(b.Min.X+1, b.Min.Y+1)) != widget.Component(key) {
 		t.Error("classic: a key drawn to its corners refuses its corner")
 	}
 	// And the keyboard never looks at any of it.
@@ -182,11 +183,11 @@ func TestPanelKeysHaveAHoverFaceWhereTheArtHasOne(t *testing.T) {
 	}{{SkinSilver, true}, {Skin, false}} {
 		_, p := open(t, c.id, 1)
 		lk := p.strip.Look()
-		paint := func(st style.ControlState) *paintengine2d.Image {
-			img := paintengine2d.NewImage(40, 40)
-			ctx := paintengine2d.NewContext(img)
-			ctx.Clear(paintengine2d.Color{})
-			style.DrawSkinSlot(lk, ctx, paintengine2d.XYWH(0, 0, 21, 21), layoutStrip, "play", st)
+		paint := func(st style.ControlState) *paint2d.Image {
+			img := paint2d.NewImage(40, 40)
+			ctx := paint2d.NewContext(img)
+			ctx.Clear(paint2d.Color{})
+			skins.DrawSkinSlot(lk, ctx, paint2d.XYWH(0, 0, 21, 21), layoutStrip, "play", st)
 			return img
 		}
 		rest, hover := paint(style.StateNone), paint(style.StateHovered)
@@ -215,7 +216,7 @@ func TestTheTitlesAreThePlayersInEveryFace(t *testing.T) {
 	for _, id := range Skins {
 		for _, scale := range []float32{1, 1.75} {
 			_, p := open(t, id, scale)
-			for name, w := range map[string]*app.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List} {
+			for name, w := range map[string]*ui.Window{"strip": p.Main, "equaliser": p.Eq, "playlist": p.List} {
 				if w.Title() != want[name] {
 					t.Errorf("%s@%g: the %s is titled %q, want %q", id, scale, name, w.Title(), want[name])
 				}
@@ -226,7 +227,7 @@ func TestTheTitlesAreThePlayersInEveryFace(t *testing.T) {
 		id    string
 		upper bool
 	}{{Skin, true}, {SkinSilver, true}} {
-		sk, _ := style.LoadSkin(c.id)
+		sk, _ := skins.LoadSkin(c.id)
 		if got := sk.Text["caption"] != nil && sk.Text["caption"].Upper; got != c.upper {
 			t.Errorf("%s: caption in capitals = %v, want %v", c.id, got, c.upper)
 		}
@@ -243,14 +244,14 @@ func TestTheTitlesAreThePlayersInEveryFace(t *testing.T) {
 func TestTheClassicReadoutIsWholePixelsAtFractionalScales(t *testing.T) {
 	// row is the source-pixel display well, in the
 	// strip's own coordinates.
-	rowOf := func(p *Player) (paintengine2d.Rect, paintengine2d.Point) {
-		first, _ := style.SkinSlotRect(p.strip.Look(), layoutStrip, "display", p.strip.LocalBounds())
+	rowOf := func(p *Player) (paint2d.Rect, paint2d.Point) {
+		first, _ := skins.SkinSlotRect(p.strip.Look(), layoutStrip, "display", p.strip.LocalBounds())
 		// Capture crops the surface's shadow margin; DeviceOrigin includes it.
 		o, window := widget.DeviceOrigin(p.strip), p.Main.WindowRect().Min
 		o.X, o.Y = o.X-window.X, o.Y-window.Y
 		return first, o
 	}
-	shot := func(scale float32) (*paintengine2d.Image, paintengine2d.Rect, paintengine2d.Point) {
+	shot := func(scale float32) (*paint2d.Image, paint2d.Rect, paint2d.Point) {
 		_, p := open(t, Skin, scale)
 		p.Transport.State = players.Stopped
 		p.Spectrum.Reset()

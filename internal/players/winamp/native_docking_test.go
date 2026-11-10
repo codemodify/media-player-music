@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/style"
 )
 
 // This opt-in opens only its own synthetic player. The event-follow checks pump
@@ -20,10 +20,10 @@ func TestNativeDesktopMovesFollowAndRejoinWithoutPlaybackTicks(t *testing.T) {
 	}
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("UITK_BACKEND", "x11")
+			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
-			a := uitoolkit.New(uitoolkit.Options{Scale: 1.75, DisableLookWatch: true})
+			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})
 			p, err := New(players.NewHost(a), Options{Scale: 1.75})
 			if err != nil {
 				t.Fatal(err)

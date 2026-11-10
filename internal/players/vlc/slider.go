@@ -2,8 +2,8 @@ package vlc
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // Secondary presses belong to the player context menu rather than changing

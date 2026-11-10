@@ -8,20 +8,20 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/skingen"
+	"goframework.io/desktop-ui-skingen"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
 	var calls []float32
-	draw := func(ctx *paintengine2d.Context, w, h float32) {
+	draw := func(ctx *paint2d.Context, w, h float32) {
 		scale := ctx.Matrix().ApproxScale()
 		calls = append(calls, scale)
-		color := paintengine2d.RGB(0, 1, 0)
+		color := paint2d.RGB(0, 1, 0)
 		if scale > 1 {
-			color = paintengine2d.RGB(0, 0, 1)
+			color = paint2d.RGB(0, 0, 1)
 		}
-		ctx.DrawRect(paintengine2d.XYWH(0, 0, w, h), paintengine2d.Fill(color))
+		ctx.DrawRect(paint2d.XYWH(0, 0, w, h), paint2d.Fill(color))
 	}
 	original := &skingen.Sheet{W: 4, H: 4, Pixelated: true, Cells: []skingen.Cell{{Name: "face", W: 4, H: 4, Draw: draw}}}
 	oneOriginal := skingen.Render(original, 1)

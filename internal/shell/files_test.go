@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
 )
 
 func writeMusicEntry(t *testing.T, root, relative string) string {
@@ -70,7 +70,7 @@ func TestTrackedChooserOwnerAndCancelSurviveSkinReplacement(t *testing.T) {
 	}
 }
 
-func waitFileLoad(t *testing.T, a *uitoolkit.Application, description string, ready func() bool) {
+func waitFileLoad(t *testing.T, a *ui.Application, description string, ready func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(4 * time.Second)
 	for {

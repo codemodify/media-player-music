@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
-func groupFixture(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func groupFixture(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, "dark")
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	p := &Player{App: a, Host: h, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
 	var err error
@@ -33,6 +33,7 @@ func groupFixture(t *testing.T, scale float32) (*uitoolkit.Application, *Player)
 	t.Cleanup(p.Close)
 	p.initGroup()
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.AdvanceGeometry(0)
 	return a, p
 }
@@ -65,6 +66,7 @@ func TestDesktopMoveCarriesOnlyTheSnappedPlaylist(t *testing.T) {
 				p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420+i, 250+i)
 			}
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			for i, old := range before {
 				if got := p.Desk.Rack.Pane(i).Box; got != old.Moved(459-before[p.iMain].X, 289-before[p.iMain].Y) {
 					t.Fatalf("pane%d did not follow final event: %+v", i, got)
@@ -72,12 +74,14 @@ func TestDesktopMoveCarriesOnlyTheSnappedPlaylist(t *testing.T) {
 			}
 			p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1500, 900)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			if p.Desk.Rack.Pane(p.iList).To != -1 {
 				t.Fatal("dragged playlist stayed attached")
 			}
 			detached := p.Desk.Rack.Pane(p.iList).Box
 			p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(510, 330)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			if p.Desk.Rack.Pane(p.iList).Box != detached {
 				t.Fatal("detached playlist followed Main")
 			}
@@ -93,10 +97,12 @@ func TestMainRejoinKeepsAStationaryPlaylistInPlace(t *testing.T) {
 	a, p := groupFixture(t, 1.75)
 	p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1400, 800)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	list := p.Desk.Rack.Pane(p.iList).Box
 	want := (rack.Bond{Side: rack.SideRight, Along: 23}).Place(list, MainW, MainH)
 	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(want.X+2, want.Y)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	if p.Desk.Rack.Pane(p.iMain).Box != want || p.Desk.Rack.Pane(p.iList).To != p.iMain || p.Desk.Rack.Pane(p.iList).Box != list {
 		t.Fatal("Main rejoin shifted stationary playlist geometry")
 	}
@@ -107,8 +113,10 @@ func TestPlacementRestoresResizedHiddenPlaylistWithoutResizingMain(t *testing.T)
 	a, p := groupFixture(t, 1.75)
 	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420, 250)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.List.SetSize(330, 390)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.AdvanceGeometry(0)
 	p.ShowPlaylist(false)
 	before := p.Desk.Rack.Boxes()
@@ -121,6 +129,7 @@ func TestPlacementRestoresResizedHiddenPlaylistWithoutResizingMain(t *testing.T)
 	reopened.ShowPlaylist(false)
 	reopened.RestorePlacement(saved)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	reopened.AdvanceGeometry(0)
 	if got := reopened.Desk.Rack.Boxes(); !reflect.DeepEqual(got, before) {
 		t.Fatalf("restore replaced original group: got%+v want%+v", got, before)
@@ -133,6 +142,7 @@ func TestPlacementRestoresResizedHiddenPlaylistWithoutResizingMain(t *testing.T)
 	}
 	reopened.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(490, 295)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	if reopened.Desk.Rack.Pane(reopened.iList).Box != before[p.iList].Moved(70, 45) {
 		t.Fatal("hidden playlist lost its restored bond")
 	}
@@ -149,6 +159,7 @@ func TestNativeDragCancelsPendingStartupPlacement(t *testing.T) {
 	p.userMoved("playlist")
 	p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(2200, 850)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.AdvanceGeometry(0)
 	if p.restoredPlacement != nil || !p.stacked || p.Desk.Rack.Pane(p.iList).To != -1 {
 		t.Fatal("native drag retained a pending restore/default arrangement")

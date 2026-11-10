@@ -9,7 +9,7 @@ import (
 	"io/fs"
 	"sync"
 
-	"github.com/codemodify/uitoolkit/style"
+	uiskins "goframework.io/desktop-ui-skins"
 )
 
 //go:generate go run ./cmd/generate -out packs
@@ -39,7 +39,7 @@ func Register() error {
 		for _, entry := range entries {
 			pack, err := fs.Sub(bundled, "packs/"+entry.Name())
 			if err == nil {
-				err = style.RegisterSkinFS(pack, entry.Name())
+				err = uiskins.RegisterSkinFS(pack, entry.Name())
 			}
 			if err != nil {
 				registration.err = fmt.Errorf("register bundled skin %s: %w", entry.Name(), err)

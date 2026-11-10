@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/paintengine2d"
+	"goframework.io/graphics-paint2d"
 )
 
 // Winamp is the compact player's base-skin look of the era: slate-blue
@@ -95,15 +95,15 @@ func winamp() *Plan {
 	// and anchored footer when resized.
 	cw := f.ContentW()
 	l.row(f.ContentH(panel.MainH))
-	l.panel("main.face", cw, f.ContentH(panel.MainH), false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("main.face", cw, f.ContentH(panel.MainH), false, func(ctx *paint2d.Context, w, h float32) {
 		clMainFace(ctx, w, h, f)
 	})
 	l.row(f.EqContentH())
-	l.panel("eq.face", cw, f.EqContentH(), false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("eq.face", cw, f.EqContentH(), false, func(ctx *paint2d.Context, w, h float32) {
 		clEqFace(ctx, w, h, f)
 	})
 	l.row(f.ContentH(panel.ListH))
-	l.cell("list.face", cw, f.ContentH(panel.ListH), [4]int{6, 8, 36, 8}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("list.face", cw, f.ContentH(panel.ListH), [4]int{6, 8, 36, 8}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clListFace(ctx, w, h, f)
 	})
 	clListPieces(l, f)
@@ -118,16 +118,16 @@ func winamp() *Plan {
 	type key struct {
 		name   string
 		r      panel.R
-		print  func(ctx *paintengine2d.Context, w, h float32, down bool)
+		print  func(ctx *paint2d.Context, w, h float32, down bool)
 		toggle bool
 	}
-	glyph := func(g string) func(*paintengine2d.Context, float32, float32, bool) {
-		return func(ctx *paintengine2d.Context, w, h float32, down bool) {
+	glyph := func(g string) func(*paint2d.Context, float32, float32, bool) {
+		return func(ctx *paint2d.Context, w, h float32, down bool) {
 			clTransportGlyph(ctx, w, h, g, down)
 		}
 	}
-	word := func(s string) func(*paintengine2d.Context, float32, float32, bool) {
-		return func(ctx *paintengine2d.Context, w, h float32, down bool) {
+	word := func(s string) func(*paint2d.Context, float32, float32, bool) {
+		return func(ctx *paint2d.Context, w, h float32, down bool) {
 			d := float32(0)
 			if down {
 				d = 1
@@ -136,8 +136,8 @@ func winamp() *Plan {
 			pixLabel(ctx, float32(int((w-float32(tw))/2))+d, float32(int((h-6)/2))+d, s, Hex(clGlyph))
 		}
 	}
-	lampWord := func(s string) func(*paintengine2d.Context, float32, float32, bool) {
-		return func(ctx *paintengine2d.Context, w, h float32, down bool) {
+	lampWord := func(s string) func(*paint2d.Context, float32, float32, bool) {
+		return func(ctx *paint2d.Context, w, h float32, down bool) {
 			d := float32(0)
 			if down {
 				d = 1
@@ -155,7 +155,7 @@ func winamp() *Plan {
 		{"next", m.Next, glyph("next"), false},
 		{"eject", m.Eject, glyph("eject"), false},
 		{"shuffle", m.Shuffle, lampWord("SHUFFLE"), true},
-		{"repeat", m.Repeat, func(ctx *paintengine2d.Context, w, h float32, down bool) {
+		{"repeat", m.Repeat, func(ctx *paint2d.Context, w, h float32, down bool) {
 			d := float32(0)
 			if down {
 				d = 1
@@ -171,7 +171,7 @@ func winamp() *Plan {
 		{"rem", f.List.Rem, word("REM"), false},
 		{"sel", f.List.Sel, word("SEL"), false},
 		{"misc", f.List.Misc, word("MISC"), false},
-		{"opts", f.List.Opts, func(ctx *paintengine2d.Context, w, h float32, down bool) {
+		{"opts", f.List.Opts, func(ctx *paint2d.Context, w, h float32, down bool) {
 			d := float32(0)
 			if down {
 				d = 1
@@ -190,7 +190,7 @@ func winamp() *Plan {
 		for _, st := range states {
 			down := strings.HasSuffix(st, "down")
 			on := strings.HasPrefix(st, ".on")
-			l.panel("key."+k.name+st, k.r.W(), k.r.H(), false, func(ctx *paintengine2d.Context, w, h float32) {
+			l.panel("key."+k.name+st, k.r.W(), k.r.H(), false, func(ctx *paint2d.Context, w, h float32) {
 				clKeyFace(ctx, w, h, down)
 				if k.toggle {
 					clKeyLamp(ctx, 3, 3, on, down)
@@ -205,7 +205,7 @@ func winamp() *Plan {
 	l.row(m.Skin.H())
 	for _, st := range []string{"", ".down"} {
 		down := st != ""
-		l.panel("key.skin"+st, m.Skin.W(), m.Skin.H(), false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.panel("key.skin"+st, m.Skin.W(), m.Skin.H(), false, func(ctx *paint2d.Context, w, h float32) {
 			clSkinColumn(ctx, w, h, down)
 		})
 	}
@@ -221,7 +221,7 @@ func winamp() *Plan {
 				col = Hex(clCream)
 			}
 			g := g
-			l.panel("mini."+g+st, r.W(), r.H(), false, func(ctx *paintengine2d.Context, w, h float32) {
+			l.panel("mini."+g+st, r.W(), r.H(), false, func(ctx *paint2d.Context, w, h float32) {
 				clMiniGlyph(ctx, g, col)
 			})
 		}
@@ -231,57 +231,57 @@ func winamp() *Plan {
 	l.row(13)
 	for _, d := range "0123456789-" {
 		d := d
-		l.panel("led."+string(d), 9, 13, false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.panel("led."+string(d), 9, 13, false, func(ctx *paint2d.Context, w, h float32) {
 			segDigit(ctx, w, h, 1, segDigits[d], Hex(clLCD))
 		})
 	}
-	l.panel("led.colon", 3, 13, false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("led.colon", 3, 13, false, func(ctx *paint2d.Context, w, h float32) {
 		px(ctx, 1, 4, 1, 2, Hex(clLCD))
 		px(ctx, 1, 8, 1, 2, Hex(clLCD))
 	})
 	l.row(9)
-	l.panel("state.play", 9, 9, false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("state.play", 9, 9, false, func(ctx *paint2d.Context, w, h float32) {
 		px(ctx, 0, 1, 2, 2, Hex(clLCD)) // the working dot
 		for i := float32(0); i < 4; i++ {
 			px(ctx, 3+i, 1+i, 1, 7-2*i, Hex(clLCD))
 		}
 	})
-	l.panel("state.pause", 9, 9, false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("state.pause", 9, 9, false, func(ctx *paint2d.Context, w, h float32) {
 		px(ctx, 0, 1, 2, 2, Hex(clLCDLo))
 		px(ctx, 3, 1, 2, 7, Hex(clLCD))
 		px(ctx, 6, 1, 2, 7, Hex(clLCD))
 	})
-	l.panel("state.stop", 9, 9, false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("state.stop", 9, 9, false, func(ctx *paint2d.Context, w, h float32) {
 		px(ctx, 0, 1, 2, 2, Hex("#a02010"))
 		px(ctx, 3, 2, 5, 5, Hex(clLCD))
 	})
 	l.row(10)
-	l.panel("lamp.mono", f.Main.Mono.W(), f.Main.Mono.H(), false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("lamp.mono", f.Main.Mono.W(), f.Main.Mono.H(), false, func(ctx *paint2d.Context, w, h float32) {
 		clLamp(ctx, w, h, "MONO", true)
 	})
-	l.panel("lamp.stereo", f.Main.Stereo.W(), f.Main.Stereo.H(), false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.panel("lamp.stereo", f.Main.Stereo.W(), f.Main.Stereo.H(), false, func(ctx *paint2d.Context, w, h float32) {
 		clLamp(ctx, w, h, "STEREO", true)
 	})
 
 	// The capitals, white, for the app to set in whatever ink it needs.
-	pixText(l, func(ctx *paintengine2d.Context, x, y float32) {
-		px(ctx, x, y, 1, 1, paintengine2d.RGB(1, 1, 1))
+	pixText(l, func(ctx *paint2d.Context, x, y float32) {
+		px(ctx, x, y, 1, 1, paint2d.RGB(1, 1, 1))
 	})
 
 	// ---- the sliders' thumbs ------------------------------------------------
 	l.row(11)
 	for _, st := range []string{"", ".down"} {
 		down := st != ""
-		l.panel("thumb"+st, 14, 11, false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.panel("thumb"+st, 14, 11, false, func(ctx *paint2d.Context, w, h float32) {
 			clThumb(ctx, w, h, down)
 		})
-		l.panel("seek.thumb"+st, 29, 10, false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.panel("seek.thumb"+st, 29, 10, false, func(ctx *paint2d.Context, w, h float32) {
 			clSeekThumb(ctx, w, h, down)
 		})
-		l.panel("eq.thumb"+st, 11, 11, false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.panel("eq.thumb"+st, 11, 11, false, func(ctx *paint2d.Context, w, h float32) {
 			clEqThumb(ctx, w, h, down)
 		})
-		l.panel("list.thumb"+st, 8, 18, false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.panel("list.thumb"+st, 8, 18, false, func(ctx *paint2d.Context, w, h float32) {
 			clListThumb(ctx, w, h, down)
 		})
 	}
@@ -290,7 +290,7 @@ func winamp() *Plan {
 	//
 	// These are sliced for real: the engine stretches them to the window.
 	l.row(14)
-	l.cell("window.normal", 8, 8, [4]int{2, 2, 2, 2}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("window.normal", 8, 8, [4]int{2, 2, 2, 2}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		px(ctx, 0, 0, w, h, Hex(clInk))
 		px(ctx, 1, 1, w-2, h-2, Hex(clLight))
 		px(ctx, 2, 2, w-3, h-3, Hex(clShade))
@@ -298,30 +298,30 @@ func winamp() *Plan {
 	})
 	// The band: the mark at the left, then the groove, which runs on under
 	// the title and is stopped either side of it by the plate.
-	l.cell("caption.normal", 64, f.Caption, [4]int{0, 30, 0, 22}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("caption.normal", 64, f.Caption, [4]int{0, 30, 0, 22}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clBand(ctx, w, h, true)
 	})
-	l.cell("caption.inactive", 64, f.Caption, [4]int{0, 30, 0, 22}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("caption.inactive", 64, f.Caption, [4]int{0, 30, 0, 22}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clBand(ctx, w, h, false)
 	})
-	l.cell("caption.plate", 12, f.Caption, [4]int{0, 4, 0, 4}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("caption.plate", 12, f.Caption, [4]int{0, 4, 0, 4}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clPlate(ctx, w, h, true)
 	})
-	l.cell("caption.plate.inactive", 12, f.Caption, [4]int{0, 4, 0, 4}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("caption.plate.inactive", 12, f.Caption, [4]int{0, 4, 0, 4}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clPlate(ctx, w, h, false)
 	})
-	l.cell("capbtn.normal", 9, 9, [4]int{2, 2, 2, 2}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("capbtn.normal", 9, 9, [4]int{2, 2, 2, 2}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clCapKey(ctx, w, h, Hex("#2c2c40"), false)
 	})
-	l.cell("capbtn.hover", 9, 9, [4]int{2, 2, 2, 2}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("capbtn.hover", 9, 9, [4]int{2, 2, 2, 2}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clCapKey(ctx, w, h, Hex("#3c3c56"), false)
 	})
-	l.cell("capbtn.pressed", 9, 9, [4]int{2, 2, 2, 2}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("capbtn.pressed", 9, 9, [4]int{2, 2, 2, 2}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clCapKey(ctx, w, h, Hex("#1a1a28"), true)
 	})
 	// A skin may re-draw the focus ring and may never remove it: this one
 	// is the dotted rectangle of the era, in the display's green.
-	l.cell("focus.ring", 8, 8, [4]int{2, 2, 2, 2}, "none", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("focus.ring", 8, 8, [4]int{2, 2, 2, 2}, "none", false, func(ctx *paint2d.Context, w, h float32) {
 		focusDots(ctx, 0, 0, w, h, Hex(clLCD))
 	})
 	l.close()
@@ -373,7 +373,7 @@ func winamp() *Plan {
 // clChrome fills a face with the chrome: a gentle fall from a lit top to a
 // darker foot, one flat colour per row, which is how a gradient was drawn on
 // a panel with a palette.
-func clChrome(ctx *paintengine2d.Context, w, h float32) {
+func clChrome(ctx *paint2d.Context, w, h float32) {
 	top, bot := Hex(clBodyTop), Hex(clBodyBot)
 	for y := float32(0); y < h; y++ {
 		px(ctx, 0, y, w, 1, lerpColor(top, bot, y/max(h-1, 1)))
@@ -382,7 +382,7 @@ func clChrome(ctx *paintengine2d.Context, w, h float32) {
 
 // clInset is the panel's inner frame: a lit line and a shadowed line a few
 // pixels in from the edge, the tell of a face pressed out of one sheet.
-func clInset(ctx *paintengine2d.Context, x, y, w, h float32) {
+func clInset(ctx *paint2d.Context, x, y, w, h float32) {
 	lit, dark := Hex(clLight), Hex(clShade)
 	px(ctx, x, y, w, 1, dark)
 	px(ctx, x, y, 1, h, dark)
@@ -396,7 +396,7 @@ func clInset(ctx *paintengine2d.Context, x, y, w, h float32) {
 
 // clWell is a black well sunk into the chrome: a shadowed top and left, a lit
 // bottom and right. dots puts the display's faint grid in it.
-func clWell(ctx *paintengine2d.Context, r panel.R, dots bool) {
+func clWell(ctx *paint2d.Context, r panel.R, dots bool) {
 	x, y, w, h := float32(r.X()), float32(r.Y()), float32(r.W()), float32(r.H())
 	px(ctx, x, y, w, h, Hex(clWellC))
 	if dots {
@@ -413,7 +413,7 @@ func clWell(ctx *paintengine2d.Context, r panel.R, dots bool) {
 }
 
 // clGroove is a slot sunk into the chrome for a thumb to run in.
-func clGroove(ctx *paintengine2d.Context, r panel.R) {
+func clGroove(ctx *paint2d.Context, r panel.R) {
 	x, y, w, h := float32(r.X()), float32(r.Y()), float32(r.W()), float32(r.H())
 	px(ctx, x, y, w, h, Hex("#2a2a42"))
 	px(ctx, x, y, w, 1, Hex(clShade))
@@ -425,16 +425,16 @@ func clGroove(ctx *paintengine2d.Context, r panel.R) {
 
 // clBar is a coloured bar a slider's thumb rides on, printed on the chrome:
 // a lit top row, the colour, a dark foot, and an outline.
-func clBar(ctx *paintengine2d.Context, x, y, w, h float32, col string) {
+func clBar(ctx *paint2d.Context, x, y, w, h float32, col string) {
 	c := Hex(col)
 	px(ctx, x+1, y, w-2, h, Hex(clInk))
 	px(ctx, x, y+1, w, h-2, Hex(clInk))
 	px(ctx, x+1, y+1, w-2, h-2, c)
-	px(ctx, x+1, y+1, w-2, 1, lerpColor(c, paintengine2d.RGB(1, 1, 1), 0.35))
-	px(ctx, x+1, y+h-2, w-2, 1, lerpColor(c, paintengine2d.RGB(0, 0, 0), 0.35))
+	px(ctx, x+1, y+1, w-2, 1, lerpColor(c, paint2d.RGB(1, 1, 1), 0.35))
+	px(ctx, x+1, y+h-2, w-2, 1, lerpColor(c, paint2d.RGB(0, 0, 0), 0.35))
 }
 
-func clMainFace(ctx *paintengine2d.Context, w, h float32, f *panel.Face) {
+func clMainFace(ctx *paint2d.Context, w, h float32, f *panel.Face) {
 	m := f.Main
 	clChrome(ctx, w, h)
 	clInset(ctx, 4, 0, w-8, h-2)
@@ -459,7 +459,7 @@ func clMainFace(ctx *paintengine2d.Context, w, h float32, f *panel.Face) {
 	clMark(ctx, float32(m.Mark.X()), float32(m.Mark.Y()))
 }
 
-func clEqFace(ctx *paintengine2d.Context, w, h float32, f *panel.Face) {
+func clEqFace(ctx *paint2d.Context, w, h float32, f *panel.Face) {
 	e := f.Eq
 	clChrome(ctx, w, h)
 	clInset(ctx, 4, 0, w-8, h-2)
@@ -509,7 +509,7 @@ func clEqFace(ctx *paintengine2d.Context, w, h float32, f *panel.Face) {
 	}
 }
 
-func clListFace(ctx *paintengine2d.Context, w, h float32, f *panel.Face) {
+func clListFace(ctx *paint2d.Context, w, h float32, f *panel.Face) {
 	clChrome(ctx, w, h)
 	clInset(ctx, 4, 0, w-8, h-2)
 	for i := float32(0); i < 4; i++ {
@@ -524,18 +524,18 @@ func clListFace(ctx *paintengine2d.Context, w, h float32, f *panel.Face) {
 func clListPieces(l *lay, f *panel.Face) {
 	li := f.List
 	well := func(name string, r panel.R, slice [4]int) {
-		l.cell(name, r.W(), r.H(), slice, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+		l.cell(name, r.W(), r.H(), slice, "", false, func(ctx *paint2d.Context, w, h float32) {
 			clWell(ctx, panel.R{0, 0, int(w), int(h)}, false)
 		})
 	}
 	well("list.rows", li.Rows.Grow(1), [4]int{2, 2, 2, 2})
 	r := li.Scroll.Grow(1)
-	l.cell("list.scroll", r.W(), r.H(), [4]int{2, 2, 2, 2}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("list.scroll", r.W(), r.H(), [4]int{2, 2, 2, 2}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		clGroove(ctx, panel.R{0, 0, int(w), int(h)})
 	})
 	well("list.info", li.Info, [4]int{})
 	well("list.clock", li.Clock, [4]int{})
-	l.cell("list.arrows", li.Scroll.W(), 20, [4]int{}, "", false, func(ctx *paintengine2d.Context, w, h float32) {
+	l.cell("list.arrows", li.Scroll.W(), 20, [4]int{}, "", false, func(ctx *paint2d.Context, w, h float32) {
 		for i := float32(0); i < 3; i++ {
 			px(ctx, 4-i, 4+i, 1+2*i, 1, Hex("#8c90a4"))
 			px(ctx, 4-i, 14-i, 1+2*i, 1, Hex("#8c90a4"))
@@ -547,7 +547,7 @@ func clListPieces(l *lay, f *panel.Face) {
 
 // clKeyFace is a key of the era: a light face, a bright top and left, a
 // grey foot and right, and a black outline — turned over while it is held.
-func clKeyFace(ctx *paintengine2d.Context, w, h float32, down bool) {
+func clKeyFace(ctx *paint2d.Context, w, h float32, down bool) {
 	px(ctx, 0, 0, w, h, Hex(clInk))
 	hi, lo, face := Hex(clKeyHi), Hex(clKeyLo), Hex(clKey)
 	if down {
@@ -565,7 +565,7 @@ func clKeyFace(ctx *paintengine2d.Context, w, h float32, down bool) {
 
 // clKeyLamp is the little lamp in a toggle's corner: dark green off, lit
 // green on.
-func clKeyLamp(ctx *paintengine2d.Context, x, y float32, on, down bool) {
+func clKeyLamp(ctx *paint2d.Context, x, y float32, on, down bool) {
 	if down {
 		x++
 		y++
@@ -576,12 +576,12 @@ func clKeyLamp(ctx *paintengine2d.Context, x, y float32, on, down bool) {
 		col = Hex("#18e818")
 	}
 	px(ctx, x, y, 3, 3, col)
-	px(ctx, x, y, 3, 1, lerpColor(col, paintengine2d.RGB(1, 1, 1), 0.3))
+	px(ctx, x, y, 3, 1, lerpColor(col, paint2d.RGB(1, 1, 1), 0.3))
 }
 
 // clTransportGlyph is the mark on a transport key: a slate shape with a lit
 // face, engraved rather than printed.
-func clTransportGlyph(ctx *paintengine2d.Context, w, h float32, g string, down bool) {
+func clTransportGlyph(ctx *paint2d.Context, w, h float32, g string, down bool) {
 	cx := float32(int(w/2)) - 4
 	cy := float32(int(h/2)) - 4
 	if down {
@@ -638,7 +638,7 @@ func clTransportGlyph(ctx *paintengine2d.Context, w, h float32, g string, down b
 }
 
 // clRepeatGlyph is the repeat key's mark: a loop with an arrowhead.
-func clRepeatGlyph(ctx *paintengine2d.Context, x, y float32) {
+func clRepeatGlyph(ctx *paint2d.Context, x, y float32) {
 	ink := Hex(clGlyph)
 	px(ctx, x+1, y, 11, 1, ink)
 	px(ctx, x, y+1, 1, 4, ink)
@@ -650,7 +650,7 @@ func clRepeatGlyph(ctx *paintengine2d.Context, x, y float32) {
 // clSkinColumn is the skin key: the four letters of the word it changes,
 // stood in a column on the display's black, the way the era stood its
 // option letters.
-func clSkinColumn(ctx *paintengine2d.Context, w, h float32, down bool) {
+func clSkinColumn(ctx *paint2d.Context, w, h float32, down bool) {
 	px(ctx, 0, 0, w, h, Hex(clWellC))
 	col := Hex("#8a8ea4")
 	if down {
@@ -665,7 +665,7 @@ func clSkinColumn(ctx *paintengine2d.Context, w, h float32, down bool) {
 
 // clMiniGlyph is one of the playlist's small transport marks, five pixels
 // high, in gold.
-func clMiniGlyph(ctx *paintengine2d.Context, g string, col paintengine2d.Color) {
+func clMiniGlyph(ctx *paint2d.Context, g string, col paint2d.Color) {
 	switch g {
 	case "prev":
 		px(ctx, 1, 1, 1, 5, col)
@@ -695,7 +695,7 @@ func clMiniGlyph(ctx *paintengine2d.Context, g string, col paintengine2d.Color) 
 }
 
 // clLamp is a channel lamp: the word, green and lit, or grey and dark.
-func clLamp(ctx *paintengine2d.Context, w, h float32, s string, on bool) {
+func clLamp(ctx *paint2d.Context, w, h float32, s string, on bool) {
 	col := Hex(clDim)
 	if on {
 		col = Hex(clLCD)
@@ -713,7 +713,7 @@ func clLamp(ctx *paintengine2d.Context, w, h float32, s string, on bool) {
 }
 
 // clThumb is the volume and balance thumb: a grey key with three grip lines.
-func clThumb(ctx *paintengine2d.Context, w, h float32, down bool) {
+func clThumb(ctx *paint2d.Context, w, h float32, down bool) {
 	clKeyFace(ctx, w, h, down)
 	for i := float32(0); i < 3; i++ {
 		px(ctx, 5+2*i, 3, 1, 5, Hex(clGlyph))
@@ -722,7 +722,7 @@ func clThumb(ctx *paintengine2d.Context, w, h float32, down bool) {
 
 // clSeekThumb is the seek bar's thumb: a gold bar with the groove's lines on
 // it, so it reads as a piece of the title bands.
-func clSeekThumb(ctx *paintengine2d.Context, w, h float32, down bool) {
+func clSeekThumb(ctx *paint2d.Context, w, h float32, down bool) {
 	px(ctx, 0, 0, w, h, Hex(clInk))
 	rows := []string{clCream, clGold, clGoldDk, clCream, clSilver, clGoldDk, clGold, clGoldDk}
 	if down {
@@ -736,13 +736,13 @@ func clSeekThumb(ctx *paintengine2d.Context, w, h float32, down bool) {
 }
 
 // clEqThumb is an equaliser thumb: a small grey key with a dark eye.
-func clEqThumb(ctx *paintengine2d.Context, w, h float32, down bool) {
+func clEqThumb(ctx *paint2d.Context, w, h float32, down bool) {
 	clKeyFace(ctx, w, h, down)
 	px(ctx, 4, 3, 3, 5, Hex(clGlyph))
 }
 
 // clListThumb is the playlist's scroll thumb, gold like the seek bar's.
-func clListThumb(ctx *paintengine2d.Context, w, h float32, down bool) {
+func clListThumb(ctx *paint2d.Context, w, h float32, down bool) {
 	px(ctx, 0, 0, w, h, Hex(clInk))
 	face := Hex(clGold)
 	if down {
@@ -769,7 +769,7 @@ var clGrooveDim = []string{"#2a2a3c", "#8a8c9a", "#70727e", "#2a2a3c", "#5e606c"
 
 // clBandBack is the title band's ground: darker than the chrome under it,
 // with a grey rule along its top, so the band reads as a strip of its own.
-func clBandBack(ctx *paintengine2d.Context, w, h float32) {
+func clBandBack(ctx *paint2d.Context, w, h float32) {
 	px(ctx, 0, 0, w, h, Hex("#141421"))
 	px(ctx, 0, 0, w, 1, Hex("#16161e"))
 	px(ctx, 0, 1, w, 1, Hex("#55555f"))
@@ -780,7 +780,7 @@ func clBandBack(ctx *paintengine2d.Context, w, h float32) {
 
 // clBand is the caption: the chrome, the player logo at the left, and the
 // groove from there to the caption keys. Out of focus, the groove greys.
-func clBand(ctx *paintengine2d.Context, w, h float32, active bool) {
+func clBand(ctx *paint2d.Context, w, h float32, active bool) {
 	clBandBack(ctx, w, h)
 	rows := clGrooveRows
 	if !active {
@@ -796,12 +796,12 @@ func clBand(ctx *paintengine2d.Context, w, h float32, active bool) {
 	px(ctx, x0, gy+float32(len(rows))-1, 1, 1, Hex("#141421"))
 	px(ctx, x1-1, gy, 1, 1, Hex("#141421"))
 	px(ctx, x1-1, gy+float32(len(rows))-1, 1, 1, Hex("#141421"))
-	paintPlayerLogo(ctx, paintengine2d.XYWH(5, float32(int((h-10)/2)), 10, 10))
+	paintPlayerLogo(ctx, paint2d.XYWH(5, float32(int((h-10)/2)), 10, 10))
 }
 
 // clPlate is the plate under the title: plain chrome that stops the groove
 // with a rounded end either side of the words.
-func clPlate(ctx *paintengine2d.Context, w, h float32, active bool) {
+func clPlate(ctx *paint2d.Context, w, h float32, active bool) {
 	clBandBack(ctx, w, h)
 	rows := clGrooveRows
 	if !active {
@@ -821,9 +821,9 @@ func clPlate(ctx *paintengine2d.Context, w, h float32, active bool) {
 
 // clCapKey is a caption key: a tiny dark bevelled square the frame prints
 // its mark on in the groove's gold.
-func clCapKey(ctx *paintengine2d.Context, w, h float32, face paintengine2d.Color, down bool) {
+func clCapKey(ctx *paint2d.Context, w, h float32, face paint2d.Color, down bool) {
 	px(ctx, 0, 0, w, h, Hex(clInk))
-	hi, lo := lerpColor(face, paintengine2d.RGB(1, 1, 1), 0.45), lerpColor(face, paintengine2d.RGB(0, 0, 0), 0.45)
+	hi, lo := lerpColor(face, paint2d.RGB(1, 1, 1), 0.45), lerpColor(face, paint2d.RGB(0, 0, 0), 0.45)
 	if down {
 		hi, lo = lo, hi
 	}
@@ -837,15 +837,15 @@ func clCapKey(ctx *paintengine2d.Context, w, h float32, face paintengine2d.Color
 // ---- the mark --------------------------------------------------------------------
 
 // clMark is the mark printed at the strip's lower right: the original player logo.
-func clMark(ctx *paintengine2d.Context, x, y float32) {
-	paintPlayerLogo(ctx, paintengine2d.XYWH(x, y, 15, 15))
+func clMark(ctx *paint2d.Context, x, y float32) {
+	paintPlayerLogo(ctx, paint2d.XYWH(x, y, 15, 15))
 }
 
 // ---- small helpers -------------------------------------------------------------
 
 // pixLabel prints a line of the capital face straight onto a face, whole
 // pixels, for the labels that never change (KBPS, PREAMP, +12DB).
-func pixLabel(ctx *paintengine2d.Context, x, y float32, s string, col paintengine2d.Color) {
+func pixLabel(ctx *paint2d.Context, x, y float32, s string, col paint2d.Color) {
 	for _, r := range strings.ToUpper(s) {
 		rows, ok := pixGlyphs[r]
 		if !ok {
@@ -876,16 +876,16 @@ func pixWidth(s string) int {
 }
 
 // lerpColor mixes two colours, t of the way from a to b.
-func lerpColor(a, b paintengine2d.Color, t float32) paintengine2d.Color {
-	return paintengine2d.RGBA(a.R+(b.R-a.R)*t, a.G+(b.G-a.G)*t, a.B+(b.B-a.B)*t, a.A+(b.A-a.A)*t)
+func lerpColor(a, b paint2d.Color, t float32) paint2d.Color {
+	return paint2d.RGBA(a.R+(b.R-a.R)*t, a.G+(b.G-a.G)*t, a.B+(b.B-a.B)*t, a.A+(b.A-a.A)*t)
 }
 
 // ctx2 moves the origin to a rect's corner for a helper that draws from
 // (0, 0); restore puts it back.
-func ctx2(ctx *paintengine2d.Context, r panel.R) *paintengine2d.Context {
+func ctx2(ctx *paint2d.Context, r panel.R) *paint2d.Context {
 	ctx.Save()
 	ctx.Translate(float32(r.X()), float32(r.Y()))
 	return ctx
 }
 
-func restore(ctx *paintengine2d.Context) { ctx.Restore() }
+func restore(ctx *paint2d.Context) { ctx.Restore() }

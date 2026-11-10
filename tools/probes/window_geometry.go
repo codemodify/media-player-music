@@ -6,12 +6,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 	"os/exec"
 	"strings"
 	"time"
@@ -22,7 +21,7 @@ func main() {
 	if pack, ok := style.LoadTheme("breeze"); ok {
 		look = pack.Look()
 	}
-	a := uitoolkit.New(uitoolkit.Options{Backend: "x11", Scale: 1.75, Look: look, DisableLookWatch: true})
+	a := ui.New(ui.Options{Backend: "x11", Scale: 1.75, Look: look, DisableLookWatch: true})
 	a.SetTitleBarPrefs(platform.DefaultTitleBarPrefs(""))
 	w, e := a.NewWindow(platform.WindowOptions{Title: "geometry audit", Width: 520, Height: 340, Decorations: platform.DecorationsClient})
 	if e != nil {
@@ -82,7 +81,7 @@ func main() {
 	child.Show()
 	pump(200 * time.Millisecond)
 	props("hide/show")
-	forceAlpha := func(w *app.Window) {
+	forceAlpha := func(w *ui.Window) {
 		s := w.Surface().(platform.WindowFrame)
 		f := s.Frame()
 		f.Alpha = !f.Alpha

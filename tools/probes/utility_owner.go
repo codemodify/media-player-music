@@ -5,7 +5,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui/platform"
 	"os/exec"
 	"strings"
 	"time"

@@ -10,6 +10,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	amarokskin "github.com/codemodify/media-player-music/internal/skins/amarok"
+	fancyskin "github.com/codemodify/media-player-music/internal/skins/fancy"
 	fandomskin "github.com/codemodify/media-player-music/internal/skins/fandom"
 	halflife2skin "github.com/codemodify/media-player-music/internal/skins/halflife2"
 	headspaceskin "github.com/codemodify/media-player-music/internal/skins/headspace"
@@ -19,10 +20,10 @@ import (
 	series9skin "github.com/codemodify/media-player-music/internal/skins/series9"
 	vlcskin "github.com/codemodify/media-player-music/internal/skins/vlc"
 	xboxskin "github.com/codemodify/media-player-music/internal/skins/xbox"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
 )
 
 // Appearances are the complete set of UI choices. An ordinary themed UI is
@@ -44,7 +45,7 @@ type Options struct {
 }
 
 type Shell struct {
-	App  *app.Application
+	App  *ui.Application
 	Host *players.Host
 
 	opts              Options
@@ -61,14 +62,14 @@ type Shell struct {
 	backendTransition bool
 	backendWorkers    sync.WaitGroup
 	backendError      string
-	settingsWindow    *app.Window
+	settingsWindow    *ui.Window
 	settingsPanel     *players.BackendSettingsPanel
 	lifecycleDone     chan struct{}
 	playback          playbackState
 	closed            bool
 	eventStop         chan struct{}
 	eventDone         chan struct{}
-	fileWindow        *app.Window
+	fileWindow        *ui.Window
 	fileLoader        *fileLoader
 	rememberIn        time.Duration
 	lastSaved         []byte
@@ -97,7 +98,7 @@ func LookFor(skin string) string {
 	return skin
 }
 
-func New(a *app.Application, opts Options) (*Shell, error) {
+func New(a *ui.Application, opts Options) (*Shell, error) {
 	s := &Shell{App: a, opts: opts, settings: players.LoadSettings(), lifecycleDone: make(chan struct{})}
 	s.Host = &players.Host{
 		App: a, Model: players.NewModel(),
@@ -174,7 +175,7 @@ func New(a *app.Application, opts Options) (*Shell, error) {
 
 func (s *Shell) Skin() string                   { return s.skin }
 func (s *Shell) Presentation() Presentation     { return s.presentation }
-func (s *Shell) MainWindow() *app.Window        { return s.presentation.MainWindow() }
+func (s *Shell) MainWindow() *ui.Window         { return s.presentation.MainWindow() }
 func (s *Shell) Windows() []players.NamedWindow { return s.presentation.Windows() }
 func (s *Shell) Pulse() *players.Pulse          { return s.pulse }
 func (s *Shell) Pose(pos time.Duration)         { s.presentation.Pose(pos) }
@@ -231,7 +232,7 @@ func (s *Shell) SetSkin(id string) error {
 		return nil
 	}
 	if skin != players.DefaultSkin {
-		pack, ok := style.LoadSkin(skin)
+		pack, ok := skins.LoadSkin(skin)
 		if !ok {
 			return fmt.Errorf("skin %q is unavailable", skin)
 		}
@@ -254,6 +255,8 @@ func (s *Shell) SetSkin(id string) error {
 			layouts = []string{realplayerskin.LayoutMain, realplayerskin.LayoutPlaylist, realplayerskin.LayoutEqualizer}
 		} else if skin == players.AmarokSkin {
 			layouts = []string{amarokskin.LayoutMain}
+		} else if skin == players.FancySkin {
+			layouts = []string{fancyskin.LayoutMain, fancyskin.LayoutCompact, fancyskin.LayoutEqualizer, fancyskin.LayoutPlaylist}
 		}
 		for _, name := range layouts {
 			if pack.Layouts[name] == nil {
@@ -283,7 +286,7 @@ func (s *Shell) SetSkin(id string) error {
 	}
 
 	s.pulse.Stop()
-	before := map[*app.Window]bool{}
+	before := map[*ui.Window]bool{}
 	for _, w := range s.App.Windows() {
 		before[w] = true
 	}
@@ -372,7 +375,7 @@ func (s *Shell) Command(c players.Command) {
 	}
 }
 
-func (s *Shell) Keys(w *app.Window, e widget.KeyEvent) bool {
+func (s *Shell) Keys(w *ui.Window, e widget.KeyEvent) bool {
 	if e.Key == platform.KeyEscape || (e.Mods.Ctrl() && e.Key == platform.KeyQ) {
 		s.quitPlayer()
 		return true

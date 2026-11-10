@@ -8,19 +8,20 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p            *Player
-	slots        *widget.Slots
+	slots        *skins.Slots
 	buttons      map[string]*players.GlyphButton
 	play         *players.GlyphButton
 	seek, volume *sourceSlider
@@ -33,12 +34,12 @@ type body struct {
 	query        string
 	sortColumn   int
 	descending   bool
-	queueRect    paintengine2d.Rect
+	queueRect    paint2d.Rect
 	searchLook   style.LookAndFeel
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), sortColumn: -1}
+	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), sortColumn: -1}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Amarok 1.4 music player")
@@ -75,7 +76,7 @@ func newBody(p *Player) *body {
 	}{{"close", "Close to tray", style.CaptionClose, p.Main.RequestClose}, {"minimize", "Minimize Music Player", style.CaptionMinimize, p.Main.Minimize}} {
 		c := button(caption.name, caption.label, players.GlyphNone, caption.action)
 		kind := caption.kind
-		c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+		c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 			bevel(ctx, r, st.Pressed(), style.Dip(c.Look(), 1))
 			style.DrawCaptionGlyph(ctx, r.Inset(style.Dip(c.Look(), 4)), kind, false, ink, style.Dip(c.Look(), 9), style.Dip(c.Look(), 1))
 			return true
@@ -110,11 +111,11 @@ func newBody(p *Player) *body {
 	b.list.RowGeo = func(lk style.LookAndFeel) *widgets.RowGeometry {
 		r := b.list.LocalBounds()
 		d := style.Dip(lk, 1)
-		return &widgets.RowGeometry{Rows: paintengine2d.XYWH(d, d, max(r.Dx()-16*d, 0), max(r.Dy()-2*d, 0)), Bar: paintengine2d.XYWH(r.Dx()-14*d, d, 13*d, max(r.Dy()-2*d, 0)), RowHeight: 19 * d}
+		return &widgets.RowGeometry{Rows: paint2d.XYWH(d, d, max(r.Dx()-16*d, 0), max(r.Dy()-2*d, 0)), Bar: paint2d.XYWH(r.Dx()-14*d, d, 13*d, max(r.Dy()-2*d, 0)), RowHeight: 19 * d}
 	}
 	b.list.RowPaint = b.paintRow
 	b.list.ScrollPaint = b.paintScroll
-	b.list.OnContext = func(_ int, _ paintengine2d.Point) { b.contextMenu(b.list) }
+	b.list.OnContext = func(_ int, _ paint2d.Point) { b.contextMenu(b.list) }
 	b.Add(b.list)
 	for i, title := range []string{"Title", "Artist", "Album", "Length"} {
 		column, label := i, title
@@ -135,7 +136,7 @@ func newBody(p *Player) *body {
 	b.eq = newEqPane(p)
 	b.Add(b.eq)
 	b.analyser = players.NewAnalyserView(p.Spectrum)
-	b.analyser.Tint = paintengine2d.RGB(.24, .25, .32)
+	b.analyser.Tint = paint2d.RGB(.24, .25, .32)
 	b.analyser.Peaks = false
 	b.slots.Bind("analyser", b.analyser)
 	b.Add(b.analyser)
@@ -146,18 +147,18 @@ func newBody(p *Player) *body {
 		name, label := tab.name, tab.label
 		c := iconButton(p, name, label, players.GlyphNone, tab.action)
 		c.Toggle = true
-		c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+		c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 			col := ink
 			if st.Checked() {
-				ctx.DrawRect(r, paintengine2d.Fill(blue))
-				col = paintengine2d.White
+				ctx.DrawRect(r, paint2d.Fill(blue))
+				col = paint2d.White
 			} else {
 				bevel(ctx, r, st.Pressed(), style.Dip(c.Look(), 1))
 			}
 			ctx.Save()
 			ctx.Translate(r.Min.X, r.Max.Y)
 			ctx.Rotate(-math.Pi / 2)
-			players.DrawTextIn(ctx, font(c.Look(), 11), paintengine2d.XYWH(0, 0, r.Dy(), r.Dx()), label, col, style.AlignCenter)
+			players.DrawTextIn(ctx, font(c.Look(), 11), paint2d.XYWH(0, 0, r.Dy(), r.Dx()), label, col, style.AlignCenter)
 			ctx.Restore()
 			return true
 		}
@@ -239,11 +240,11 @@ func (b *body) syncRows() {
 	}
 	b.list.SyncRows(ids)
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	lk, box := b.Look(), b.LocalBounds()
 	b.slots.Arrange(lk, box)
@@ -254,44 +255,44 @@ func (b *body) Arrange(r paintengine2d.Rect) {
 		b.eq.Arrange(eq)
 		q.Max.Y = eq.Min.Y - d(6)
 	} else {
-		b.eq.Arrange(paintengine2d.Rect{})
+		b.eq.Arrange(paint2d.Rect{})
 	}
 	b.queueRect = q
 	rows := q
 	rows.Min.Y += d(24)
 	b.list.Arrange(rows)
-	head := paintengine2d.XYWH(q.Min.X, q.Min.Y, q.Dx()-d(15), d(24))
+	head := paint2d.XYWH(q.Min.X, q.Min.Y, q.Dx()-d(15), d(24))
 	for i, cell := range columnRects(head, lk) {
 		b.headers[i].Arrange(cell)
 	}
 	rail := slot(lk, "rail", box)
-	b.buttons["tab.context"].Arrange(paintengine2d.XYWH(rail.Min.X, rail.Min.Y, rail.Dx(), d(94)))
-	b.buttons["tab.equalizer"].Arrange(paintengine2d.XYWH(rail.Min.X, rail.Min.Y+d(98), rail.Dx(), d(106)))
+	b.buttons["tab.context"].Arrange(paint2d.XYWH(rail.Min.X, rail.Min.Y, rail.Dx(), d(94)))
+	b.buttons["tab.equalizer"].Arrange(paint2d.XYWH(rail.Min.X, rail.Min.Y+d(98), rail.Dx(), d(106)))
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
 	d := func(n float32) float32 { return style.Dip(lk, n) }
-	ctx.DrawRect(box, paintengine2d.Fill(chrome))
-	ctx.DrawRect(box.Inset(d(.5)), paintengine2d.StrokePaint(border, d(1)))
+	ctx.DrawRect(box, paint2d.Fill(chrome))
+	ctx.DrawRect(box.Inset(d(.5)), paint2d.StrokePaint(border, d(1)))
 	caption := slot(lk, "caption", box)
-	style.DrawSkinSlot(lk, ctx, caption, LayoutMain, "caption", 0)
-	style.DrawSkinSprite(lk, ctx, paintengine2d.XYWH(d(8), d(5), d(16), d(16)), "app.icon", paintengine2d.Color{})
-	players.DrawTextIn(ctx, font(lk, 12), slot(lk, "title", box), "Music Player", paintengine2d.White, style.AlignStart)
-	players.DrawTextIn(ctx, font(lk, 11), paintengine2d.XYWH(d(247), d(34), d(57), d(24)), "Search:", ink, style.AlignEnd)
-	ctx.DrawRect(paintengine2d.XYWH(d(5), d(64), box.Dx()-d(10), d(1)), paintengine2d.Fill(border))
+	skins.DrawSkinSlot(lk, ctx, caption, LayoutMain, "caption", 0)
+	skins.DrawSkinSprite(lk, ctx, paint2d.XYWH(d(8), d(5), d(16), d(16)), "app.icon", paint2d.Color{})
+	players.DrawTextIn(ctx, font(lk, 12), slot(lk, "title", box), "Music Player", paint2d.White, style.AlignStart)
+	players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(d(247), d(34), d(57), d(24)), "Search:", ink, style.AlignEnd)
+	ctx.DrawRect(paint2d.XYWH(d(5), d(64), box.Dx()-d(10), d(1)), paint2d.Fill(border))
 	b.paintContext(ctx, slot(lk, "context", box))
-	ctx.DrawRect(b.queueRect, paintengine2d.Fill(paintengine2d.White))
-	ctx.DrawRect(b.queueRect.Inset(d(.5)), paintengine2d.StrokePaint(border, d(1)))
+	ctx.DrawRect(b.queueRect, paint2d.Fill(paint2d.White))
+	ctx.DrawRect(b.queueRect.Inset(d(.5)), paint2d.StrokePaint(border, d(1)))
 	if !b.list.Visible() {
 		players.DrawTextIn(ctx, font(lk, 12), b.queueRect, "Playlist hidden · Ctrl+L to show", muted, style.AlignCenter)
 	}
-	footer := paintengine2d.XYWH(d(6), box.Dy()-d(96), box.Dx()-d(12), d(1))
-	ctx.DrawRect(footer, paintengine2d.Fill(border))
+	footer := paint2d.XYWH(d(6), box.Dy()-d(96), box.Dx()-d(12), d(1))
+	ctx.DrawRect(footer, paint2d.Fill(border))
 	volume := slot(lk, "volume", box)
-	players.DrawTextIn(ctx, font(lk, 10), paintengine2d.XYWH(volume.Min.X, volume.Min.Y-d(6), volume.Dx(), d(12)), fmt.Sprintf("Volume %d%%", int(b.p.Transport.Volume*100+.5)), muted, style.AlignEnd)
+	players.DrawTextIn(ctx, font(lk, 10), paint2d.XYWH(volume.Min.X, volume.Min.Y-d(6), volume.Dx(), d(12)), fmt.Sprintf("Volume %d%%", int(b.p.Transport.Volume*100+.5)), muted, style.AlignEnd)
 	seek := slot(lk, "seek", box)
-	players.DrawTextIn(ctx, font(lk, 11), paintengine2d.XYWH(d(7), seek.Min.Y, d(38), seek.Dy()), players.Clock(b.p.Transport.Pos), ink, style.AlignStart)
-	players.DrawTextIn(ctx, font(lk, 11), paintengine2d.XYWH(seek.Max.X+d(6), seek.Min.Y, d(108), seek.Dy()), "−"+players.Clock(max(b.p.Transport.Length()-b.p.Transport.Pos, 0)), ink, style.AlignEnd)
+	players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(d(7), seek.Min.Y, d(38), seek.Dy()), players.Clock(b.p.Transport.Pos), ink, style.AlignStart)
+	players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(seek.Max.X+d(6), seek.Min.Y, d(108), seek.Dy()), "−"+players.Clock(max(b.p.Transport.Length()-b.p.Transport.Pos, 0)), ink, style.AlignEnd)
 	status := slot(lk, "status", box)
 	text := b.p.Host.StatusText()
 	if b.p.Host.Model.Error == "" && b.p.Host.Model.Live {
@@ -299,27 +300,27 @@ func (b *body) Paint(ctx *paintengine2d.Context) {
 	}
 	players.DrawTextIn(ctx, font(lk, 10), status, text, ink, style.AlignStart)
 }
-func (b *body) paintContext(ctx *paintengine2d.Context, r paintengine2d.Rect) {
+func (b *body) paintContext(ctx *paint2d.Context, r paint2d.Rect) {
 	lk := b.Look()
 	d := func(n float32) float32 { return style.Dip(lk, n) }
 	t := b.p.Transport.Track()
 	ctx.Save()
 	ctx.ClipRect(r)
 	defer ctx.Restore()
-	ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.White))
-	ctx.DrawRect(r.Inset(d(.5)), paintengine2d.StrokePaint(border, d(1)))
-	heading := paintengine2d.XYWH(r.Min.X+d(2), r.Min.Y+d(2), r.Dx()-d(4), d(23))
-	ctx.DrawRect(heading, paintengine2d.Fill(paintengine2d.RGB(.86, .88, .96)))
+	ctx.DrawRect(r, paint2d.Fill(paint2d.White))
+	ctx.DrawRect(r.Inset(d(.5)), paint2d.StrokePaint(border, d(1)))
+	heading := paint2d.XYWH(r.Min.X+d(2), r.Min.Y+d(2), r.Dx()-d(4), d(23))
+	ctx.DrawRect(heading, paint2d.Fill(paint2d.RGB(.86, .88, .96)))
 	players.DrawTextIn(ctx, font(lk, 11), heading.Inset(d(4)), "Current track", ink, style.AlignStart)
 	x, y, w := r.Min.X+d(9), r.Min.Y+d(33), r.Dx()-d(18)
 	for _, line := range []string{t.Title, t.Artist, t.Album} {
-		players.DrawTextIn(ctx, font(lk, 11), paintengine2d.XYWH(x, y, w, d(20)), line, ink, style.AlignStart)
+		players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(x, y, w, d(20)), line, ink, style.AlignStart)
 		y += d(20)
 	}
 	coverW := d(133)
-	style.DrawSkinSprite(lk, ctx, paintengine2d.XYWH(x+(w-coverW)/2, y+d(6), coverW, d(120)), "cover.empty", paintengine2d.Color{})
+	skins.DrawSkinSprite(lk, ctx, paint2d.XYWH(x+(w-coverW)/2, y+d(6), coverW, d(120)), "cover.empty", paint2d.Color{})
 	y += d(132)
-	players.DrawTextIn(ctx, font(lk, 10), paintengine2d.XYWH(x, y, w, d(18)), "No cover artwork", muted, style.AlignCenter)
+	players.DrawTextIn(ctx, font(lk, 10), paint2d.XYWH(x, y, w, d(18)), "No cover artwork", muted, style.AlignCenter)
 	y += d(26)
 	lines := []string{fmt.Sprintf("%s · %s", b.p.Transport.State, players.Clock(t.Length)), b.p.Host.AudioBackend}
 	if t.Rate > 0 {
@@ -332,20 +333,20 @@ func (b *body) paintContext(ctx *paintengine2d.Context, r paintengine2d.Rect) {
 		if line == "" {
 			continue
 		}
-		players.DrawTextIn(ctx, font(lk, 11), paintengine2d.XYWH(x, y, w, d(20)), line, muted, style.AlignStart)
+		players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(x, y, w, d(20)), line, muted, style.AlignStart)
 		y += d(20)
 	}
 }
-func (b *body) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i int, st style.ControlState) bool {
+func (b *body) paintRow(ctx *paint2d.Context, row paint2d.Rect, i int, st style.ControlState) bool {
 	lk := b.list.Look()
-	col, bg := ink, paintengine2d.White
+	col, bg := ink, paint2d.White
 	if i%2 == 1 {
-		bg = paintengine2d.RGB(.86, .89, .98)
+		bg = paint2d.RGB(.86, .89, .98)
 	}
 	if i == b.list.Selected {
-		col, bg = paintengine2d.White, paintengine2d.RGB(.54, .54, .72)
+		col, bg = paint2d.White, paint2d.RGB(.54, .54, .72)
 	}
-	ctx.DrawRect(row, paintengine2d.Fill(bg))
+	ctx.DrawRect(row, paint2d.Fill(bg))
 	if i == b.list.Selected && st.Focused() {
 		lk.DrawFocusRing(ctx, row)
 	}
@@ -356,15 +357,15 @@ func (b *body) paintRow(ctx *paintengine2d.Context, row paintengine2d.Rect, i in
 			align = style.AlignEnd
 		}
 		if column == 0 && b.list.QueueIndex(i) == b.p.Transport.List.Index() {
-			players.DrawGlyph(ctx, paintengine2d.XYWH(cell.Min.X, cell.Min.Y, style.Dip(lk, 15), cell.Dy()), players.GlyphPlay, col, style.Dip(lk, 1))
+			players.DrawGlyph(ctx, paint2d.XYWH(cell.Min.X, cell.Min.Y, style.Dip(lk, 15), cell.Dy()), players.GlyphPlay, col, style.Dip(lk, 1))
 			cell.Min.X += style.Dip(lk, 15)
 		}
 		players.DrawTextIn(ctx, font(lk, 11), cell.Inset(style.Dip(lk, 3)), values[column], col, align)
 	}
 	return true
 }
-func (b *body) paintScroll(ctx *paintengine2d.Context, track, thumb paintengine2d.Rect, st style.ControlState) bool {
-	ctx.DrawRect(track, paintengine2d.Fill(paintengine2d.RGB(.88, .88, .93)))
+func (b *body) paintScroll(ctx *paint2d.Context, track, thumb paint2d.Rect, st style.ControlState) bool {
+	ctx.DrawRect(track, paint2d.Fill(paint2d.RGB(.88, .88, .93)))
 	bevel(ctx, thumb, st.Pressed(), style.Dip(b.Look(), 1))
 	return true
 }
@@ -375,14 +376,14 @@ func columnValues(t players.Track) [4]string {
 	}
 	return [4]string{t.Title, t.Artist, t.Album, clock}
 }
-func columnRects(row paintengine2d.Rect, lk style.LookAndFeel) [4]paintengine2d.Rect {
+func columnRects(row paint2d.Rect, lk style.LookAndFeel) [4]paint2d.Rect {
 	timeW := style.Dip(lk, 55)
 	remaining := max(row.Dx()-timeW, 0)
 	widths := [4]float32{remaining * .45, remaining * .27, remaining * .28, timeW}
-	var out [4]paintengine2d.Rect
+	var out [4]paint2d.Rect
 	x := row.Min.X
 	for i, w := range widths {
-		out[i] = paintengine2d.XYWH(x, row.Min.Y, w, row.Dy())
+		out[i] = paint2d.XYWH(x, row.Min.Y, w, row.Dy())
 		x += w
 	}
 	return out
@@ -420,15 +421,15 @@ type resizeGrip struct {
 	p *Player
 }
 
-func (g *resizeGrip) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(g.Look(), 17), style.Dip(g.Look(), 17)))
+func (g *resizeGrip) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(g.Look(), 17), style.Dip(g.Look(), 17)))
 }
-func (g *resizeGrip) Arrange(r paintengine2d.Rect) { g.SetBounds(r) }
-func (g *resizeGrip) Paint(ctx *paintengine2d.Context) {
+func (g *resizeGrip) Arrange(r paint2d.Rect) { g.SetBounds(r) }
+func (g *resizeGrip) Paint(ctx *paint2d.Context) {
 	r := g.LocalBounds()
 	d := style.Dip(g.Look(), 1)
 	for i := float32(3); i < 14; i += 4 {
-		ctx.DrawLine(paintengine2d.Pt(r.Max.X-i*d, r.Max.Y-2*d), paintengine2d.Pt(r.Max.X-2*d, r.Max.Y-i*d), paintengine2d.StrokePaint(border, d))
+		ctx.DrawLine(paint2d.Pt(r.Max.X-i*d, r.Max.Y-2*d), paint2d.Pt(r.Max.X-2*d, r.Max.Y-i*d), paint2d.StrokePaint(border, d))
 	}
 }
 func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {

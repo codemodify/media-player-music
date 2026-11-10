@@ -5,16 +5,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 	"time"
 )
 
 func main() {
-	a := app.New(app.Options{Backend: "x11", Scale: 1.75, Look: style.DarkLook(), DisableLookWatch: true})
-	open := func(title string) *app.Window {
+	a := ui.New(ui.Options{Backend: "x11", Scale: 1.75, Look: style.DarkLook(), DisableLookWatch: true})
+	open := func(title string) *ui.Window {
 		w, e := a.NewWindow(platform.WindowOptions{Title: title, Width: 200, Height: 100, Decorations: platform.DecorationsNone})
 		if e != nil {
 			panic(e)

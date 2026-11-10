@@ -2,22 +2,22 @@ package vlc
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p            *Player
-	slots        *widget.Slots
+	slots        *skins.Slots
 	buttons      map[string]*widgets.Button
 	menu         *widgets.MenuBar
-	menuLook     *menuLook
 	seek, volume *sourceSlider
 	eq           *eqPane
 	queue        *queuePane
@@ -25,7 +25,7 @@ type body struct {
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: map[string]*widgets.Button{}}
+	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: map[string]*widgets.Button{}}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Classic VLC Music Player")
@@ -48,16 +48,16 @@ func newBody(p *Player) *body {
 	b.volume.Format = players.Percent
 	// The original wxWidgets volume control was a small horizontal gauge,
 	// rather than a second seek thumb. Keep stock slider input/a11y behavior.
-	b.volume.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, t float32, st style.ControlState) bool {
+	b.volume.Painter = func(ctx *paint2d.Context, r paint2d.Rect, t float32, st style.ControlState) bool {
 		d := style.Dip(b.volume.Look(), 1)
-		box := paintengine2d.XYWH(r.Min.X, r.Min.Y+(r.Dy()-14*d)/2, r.Dx(), 14*d)
-		ctx.DrawRect(box, paintengine2d.Fill(paintengine2d.RGB(.45, .45, .45)))
+		box := paint2d.XYWH(r.Min.X, r.Min.Y+(r.Dy()-14*d)/2, r.Dx(), 14*d)
+		ctx.DrawRect(box, paint2d.Fill(paint2d.RGB(.45, .45, .45)))
 		inner := box.Inset(d)
-		ctx.DrawRect(inner, paintengine2d.Fill(paintengine2d.White))
+		ctx.DrawRect(inner, paint2d.Fill(paint2d.White))
 		inner = inner.Inset(2 * d)
 		filled := inner
 		filled.Max.X = filled.Min.X + filled.Dx()*t
-		ctx.DrawRect(filled, paintengine2d.Fill(paintengine2d.RGB(.35, .65, .28)))
+		ctx.DrawRect(filled, paint2d.Fill(paint2d.RGB(.35, .65, .28)))
 		if st.Focused() {
 			b.volume.Look().DrawFocusRing(ctx, r)
 		}
@@ -72,7 +72,7 @@ func newBody(p *Player) *body {
 	b.Add(b.eq)
 	b.Add(b.queue)
 	b.analyser = players.NewAnalyserView(p.Spectrum)
-	b.analyser.Tint = paintengine2d.RGB(.2, .65, .16)
+	b.analyser.Tint = paint2d.RGB(.2, .65, .16)
 	b.Add(b.analyser)
 	b.menu = b.newMenu()
 	b.slots.Bind("menu", b.menu)
@@ -88,13 +88,13 @@ func (b *body) button(name, label, icon string, action func()) *widgets.Button {
 	c.SetAccessibleName(label)
 	c.Tip = label
 	c.SetFocusVisibleOnly(true)
-	c.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+	c.Painter = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 		lk := c.Look()
 		d := func(v float32) float32 { return style.Dip(lk, v) }
 		if name == "close" || name == "minimize" || name == "maximize" {
-			lk.DrawButton(ctx, r, st, "")
+			lk.DrawButton(ctx, r, st, style.ButtonDraw{})
 		} else if st.Hovered() || st.Pressed() || st.Checked() {
-			lk.DrawButton(ctx, r, st, "")
+			lk.DrawButton(ctx, r, st, style.ButtonDraw{})
 		}
 		mark := icon
 		if name == "play" && b.p.Transport.State == players.Playing {
@@ -105,8 +105,8 @@ func (b *body) button(name, label, icon string, action func()) *widgets.Button {
 		}
 		if mark != "" {
 			size := d(16)
-			rr := paintengine2d.XYWH(r.Min.X+(r.Dx()-size)/2, r.Min.Y+(r.Dy()-size)/2, size, size)
-			style.DrawSkinSprite(lk, ctx, rr, "icon."+mark, paintengine2d.Color{})
+			rr := paint2d.XYWH(r.Min.X+(r.Dx()-size)/2, r.Min.Y+(r.Dy()-size)/2, size, size)
+			skins.DrawSkinSprite(lk, ctx, rr, "icon."+mark, paint2d.Color{})
 			return true
 		}
 		g := players.GlyphNone
@@ -117,22 +117,22 @@ func (b *body) button(name, label, icon string, action func()) *widgets.Button {
 			g = players.GlyphRepeat
 		}
 		if g != players.GlyphNone {
-			players.DrawGlyph(ctx, r, g, paintengine2d.Black, d(1))
+			players.DrawGlyph(ctx, r, g, paint2d.Black, d(1))
 			return true
 		}
 		cx, cy := (r.Min.X+r.Max.X)/2, (r.Min.Y+r.Max.Y)/2
 		if name == "close" {
-			path := paintengine2d.NewPath()
+			path := paint2d.NewPath()
 			path.MoveTo(cx-d(3), cy-d(3))
 			path.LineTo(cx+d(3), cy+d(3))
 			path.MoveTo(cx+d(3), cy-d(3))
 			path.LineTo(cx-d(3), cy+d(3))
-			ctx.DrawPath(path, paintengine2d.StrokePaint(paintengine2d.Black, d(1.2)))
+			ctx.DrawPath(path, paint2d.StrokePaint(paint2d.Black, d(1.2)))
 		} else if name == "maximize" {
-			ctx.DrawRect(paintengine2d.XYWH(cx-d(4), cy-d(4), d(8), d(8)), paintengine2d.StrokePaint(paintengine2d.Black, d(1)))
-			ctx.DrawRect(paintengine2d.XYWH(cx-d(4), cy-d(4), d(8), d(2)), paintengine2d.Fill(paintengine2d.Black))
+			ctx.DrawRect(paint2d.XYWH(cx-d(4), cy-d(4), d(8), d(8)), paint2d.StrokePaint(paint2d.Black, d(1)))
+			ctx.DrawRect(paint2d.XYWH(cx-d(4), cy-d(4), d(8), d(2)), paint2d.Fill(paint2d.Black))
 		} else {
-			ctx.DrawRect(paintengine2d.XYWH(cx-d(3), cy+d(2), d(6), d(2)), paintengine2d.Fill(paintengine2d.Black))
+			ctx.DrawRect(paint2d.XYWH(cx-d(3), cy+d(2), d(6), d(2)), paint2d.Fill(paint2d.Black))
 		}
 		return true
 	}
@@ -148,21 +148,17 @@ func (b *body) newMenu() *widgets.MenuBar {
 		widgets.NewMenu("File", widgets.ItemAccel("Open music files…", "Ctrl+O", func() { h.OpenFiles(b, false) }), widgets.Item("Add music files…", func() { h.OpenFiles(b, true) }), widgets.Sep(), widgets.Item("Close to tray", p.Main.RequestClose)),
 		widgets.NewMenu("View", widgets.ItemAccel("Playlist", "Ctrl+L", func() { p.ShowPlaylist(!h.Model.PlaylistVisible) }), widgets.ItemAccel("Equalizer", "Ctrl+E", func() { p.ShowEqualiser(!h.Model.EqualizerVisible) })),
 		widgets.NewMenu("Settings", widgets.ItemAccel("Audio backend…", "Ctrl+,", h.OpenSettings), widgets.Item("Appearance…", func() {
-			h.ContextMenu(b, widget.DeviceOrigin(b).Add(paintengine2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())))
+			h.ContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())))
 		})),
 		widgets.NewMenu("Audio", widgets.Item("Play / pause", func() { h.Command(players.CmdPlayPause) }), widgets.Item("Stop", func() { h.Command(players.CmdStop) }), widgets.Item("Mute / restore", func() { h.Command(players.CmdMute) })),
 		widgets.NewMenu("Help", widgets.Item("About this appearance", func() {
-			widgets.ShowContextMenu(b, widget.DeviceOrigin(b).Add(paintengine2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())), infoItem("VLC 0.8.6 wxWidgets appearance"), infoItem("Original VideoLAN toolbar artwork"), infoItem("Playback backend: "+h.AudioBackend))
+			widgets.ShowContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())), infoItem("VLC 0.8.6 wxWidgets appearance"), infoItem("Original VideoLAN toolbar artwork"), infoItem("Playback backend: "+h.AudioBackend))
 		})),
 	)
 }
 
 func (b *body) sync() {
 	p, t := b.p, b.p.Transport
-	if lk := p.Main.Look(); b.menuLook == nil || b.menuLook.LookAndFeel != lk {
-		b.menuLook = &menuLook{LookAndFeel: lk}
-		b.menu.SetLook(b.menuLook)
-	}
 	b.buttons["pl"].Checked = p.Host.Model.PlaylistVisible
 	b.buttons["eq"].Checked = p.Host.Model.EqualizerVisible
 	b.buttons["shuffle"].Checked = t.Random
@@ -185,14 +181,14 @@ func (b *body) sync() {
 	b.analyser.Invalidate()
 	b.Invalidate()
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(b.Look(), MainW), style.Dip(b.Look(), MainH)))
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(b.Look(), MainW), style.Dip(b.Look(), MainH)))
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	box, lk := b.LocalBounds(), b.Look()
 	b.slots.Arrange(lk, box)
-	at := func(name string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, name, box); return r }
+	at := func(name string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, name, box); return r }
 	eq, queue := at("equalizer"), at("playlist")
 	// Keep at least one complete song row usable at the minimum size.
 	// The equalizer's fader travel can shorten without hiding its controls.
@@ -204,27 +200,27 @@ func (b *body) Arrange(r paintengine2d.Rect) {
 	if b.eq.Visible() {
 		b.eq.Arrange(eq)
 	} else {
-		b.eq.Arrange(paintengine2d.Rect{})
+		b.eq.Arrange(paint2d.Rect{})
 		queue.Min.Y = eq.Min.Y
 	}
 	if b.queue.Visible() {
 		b.queue.Arrange(queue)
 	} else {
-		b.queue.Arrange(paintengine2d.Rect{})
+		b.queue.Arrange(paint2d.Rect{})
 	}
-	b.analyser.Arrange(paintengine2d.XYWH(queue.Min.X+style.Dip(lk, 6), queue.Min.Y+style.Dip(lk, 42), max(0, queue.Dx()-style.Dip(lk, 12)), max(0, queue.Dy()-style.Dip(lk, 50))))
+	b.analyser.Arrange(paint2d.XYWH(queue.Min.X+style.Dip(lk, 6), queue.Min.Y+style.Dip(lk, 42), max(0, queue.Dx()-style.Dip(lk, 12)), max(0, queue.Dy()-style.Dip(lk, 50))))
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	style.DrawSkinLayout(lk, ctx, box, LayoutMain)
-	at := func(name string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, name, box); return r }
-	style.DrawSkinSprite(lk, ctx, at("logo"), "app.icon", paintengine2d.Color{})
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 11)), at("title"), "Music Player", paintengine2d.White, style.AlignStart)
+	skins.DrawSkinLayout(lk, ctx, box, LayoutMain)
+	at := func(name string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, name, box); return r }
+	skins.DrawSkinSprite(lk, ctx, at("logo"), "app.icon", paint2d.Color{})
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 11)), at("title"), "Music Player", paint2d.White, style.AlignStart)
 	status := at("status")
-	ctx.DrawRect(status, paintengine2d.Fill(paintengine2d.RGB(.83, .82, .79)))
+	ctx.DrawRect(status, paint2d.Fill(paint2d.RGB(.83, .82, .79)))
 	clock := players.Clock(b.p.Transport.Pos) + " / " + players.Clock(b.p.Transport.List.Current().Length)
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), paintengine2d.XYWH(status.Min.X+style.Dip(lk, 3), status.Min.Y, style.Dip(lk, 120), status.Dy()), clock, paintengine2d.Black, style.AlignStart)
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), paintengine2d.XYWH(status.Min.X+style.Dip(lk, 128), status.Min.Y, max(0, status.Dx()-style.Dip(lk, 132)), status.Dy()), b.p.Host.StatusText(), paintengine2d.Black, style.AlignStart)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), paint2d.XYWH(status.Min.X+style.Dip(lk, 3), status.Min.Y, style.Dip(lk, 120), status.Dy()), clock, paint2d.Black, style.AlignStart)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), paint2d.XYWH(status.Min.X+style.Dip(lk, 128), status.Min.Y, max(0, status.Dx()-style.Dip(lk, 132)), status.Dy()), b.p.Host.StatusText(), paint2d.Black, style.AlignStart)
 	if !b.queue.Visible() {
 		display := at("playlist")
 		if !b.eq.Visible() {
@@ -235,7 +231,7 @@ func (b *body) Paint(ctx *paintengine2d.Context) {
 		if b.p.Transport.List.Len() == 0 {
 			text = "Open a music file"
 		}
-		players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 12)), paintengine2d.XYWH(display.Min.X, display.Min.Y, display.Dx(), style.Dip(lk, 32)), text, paintengine2d.Black, style.AlignCenter)
+		players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 12)), paint2d.XYWH(display.Min.X, display.Min.Y, display.Dx(), style.Dip(lk, 32)), text, paint2d.Black, style.AlignCenter)
 	}
 }
 func (b *body) KeyPress(e widget.KeyEvent) bool {
@@ -281,7 +277,7 @@ func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy
 }
 func (b *body) Drop(e widget.DropEvent) bool { return b.p.Host.AcceptFileDrop(e) }
-func (b *body) contextMenu(from widget.Component, at paintengine2d.Point) {
+func (b *body) contextMenu(from widget.Component, at paint2d.Point) {
 	h, t := b.p.Host, b.p.Transport
 	items := []*widgets.MenuItem{widgets.Item("Add music files…", func() { h.OpenFiles(from, true) }), widgets.Item("Remove current track", h.RemoveTrack), widgets.Sep(), widgets.CheckItem("Shuffle", t.Random, func() { h.Command(players.CmdShuffle) }), widgets.Item("Repeat: "+t.Repeat.String(), func() { h.Command(players.CmdRepeat) }), widgets.Sep(), widgets.Item("Equalizer", func() { b.p.ShowEqualiser(!h.Model.EqualizerVisible) }), widgets.Item("Playlist", func() { b.p.ShowPlaylist(!h.Model.PlaylistVisible) }), widgets.Item("Settings…", h.OpenSettings)}
 	if looks := h.SkinItems(); len(looks) > 0 {
@@ -304,13 +300,13 @@ func newResizeGrip(p *Player) *resizeGrip {
 	g.SetTransparent(true)
 	return g
 }
-func (g *resizeGrip) Paint(ctx *paintengine2d.Context) {
+func (g *resizeGrip) Paint(ctx *paint2d.Context) {
 	b, d := g.LocalBounds(), style.Dip(g.Look(), 1)
 	for i := float32(3); i < 13; i += 4 {
-		p := paintengine2d.NewPath()
+		p := paint2d.NewPath()
 		p.MoveTo(b.Max.X-i*d, b.Max.Y-d)
 		p.LineTo(b.Max.X-d, b.Max.Y-i*d)
-		ctx.DrawPath(p, paintengine2d.StrokePaint(paintengine2d.RGB(.5, .5, .5), d))
+		ctx.DrawPath(p, paint2d.StrokePaint(paint2d.RGB(.5, .5, .5), d))
 	}
 }
 func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {

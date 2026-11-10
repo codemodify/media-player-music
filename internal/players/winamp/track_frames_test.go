@@ -11,10 +11,10 @@ import (
 	"testing/fstest"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // Observed/model values must repaint the optional source track sequence,
@@ -29,7 +29,7 @@ func TestModelRefreshPaintsTheCorrespondingSliderTrackFrames(t *testing.T) {
 			installTrackFrameFixture(t, id)
 			p.SetSkin(id)
 			a.PumpOnce()
-			check := func(label string, w *app.Window, f *players.Fader, family, frame int) {
+			check := func(label string, w *ui.Window, f *players.Fader, family, frame int) {
 				t.Helper()
 				im := w.Capture()
 				r := widget.DeviceBounds(f).Translate(w.WindowRect().Min.Mul(-1))
@@ -69,8 +69,8 @@ func TestModelRefreshPaintsTheCorrespondingSliderTrackFrames(t *testing.T) {
 	}
 }
 
-func trackFrameColor(family, frame int) paintengine2d.Color {
-	return paintengine2d.RGB(float32(35+frame*6)/255, float32(80+family*45)/255, 57.0/255)
+func trackFrameColor(family, frame int) paint2d.Color {
+	return paint2d.RGB(float32(35+frame*6)/255, float32(80+family*45)/255, 57.0/255)
 }
 
 func installTrackFrameFixture(t *testing.T, id string) {
@@ -94,14 +94,14 @@ func installTrackFrameFixture(t *testing.T, id string) {
 		t.Fatal(err)
 	}
 	var doc map[string]any
-	if err := json.Unmarshal(files[style.SkinFile].Data, &doc); err != nil {
+	if err := json.Unmarshal(files[skins.SkinFile].Data, &doc); err != nil {
 		t.Fatal(err)
 	}
 	doc["label"] = "Observed slider frames"
 	sheets := doc["sheets"].(map[string]any)
 	sprites := doc["sprites"].(map[string]any)
 	sheets["testFrames"] = map[string]any{"1x": "track-frames.png"}
-	im := paintengine2d.NewImage(68, 28*(13+13+63))
+	im := paint2d.NewImage(68, 28*(13+13+63))
 	y := 0
 	for family, spec := range []struct {
 		prefix string
@@ -126,8 +126,8 @@ func installTrackFrameFixture(t *testing.T, id string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	files[style.SkinFile] = &fstest.MapFile{Data: b}
-	if err := style.RegisterSkinFS(files, id); err != nil {
+	files[skins.SkinFile] = &fstest.MapFile{Data: b}
+	if err := skins.RegisterSkinFS(files, id); err != nil {
 		t.Fatal(err)
 	}
 }

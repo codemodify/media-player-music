@@ -1,0 +1,394 @@
+{
+  "base": "dark",
+  "colors": {
+    "control": "#242b34",
+    "focus": "#68d6e5",
+    "panel": "#141920",
+    "selection": "#183840",
+    "selectionText": "#85e6ee",
+    "text": "#dbe7ed",
+    "textMuted": "#8a99a6",
+    "window": "#11151b"
+  },
+  "family": "fancy",
+  "label": "Fancy",
+  "layouts": {
+    "fancy.compact": {
+      "size": [420, 40],
+      "slots": {
+        "close": {
+          "at": [401, 8, 15, 20]
+        },
+        "next": {
+          "at": [337, 11, 18, 18]
+        },
+        "pause": {
+          "at": [318, 11, 18, 18]
+        },
+        "play": {
+          "at": [318, 11, 18, 18]
+        },
+        "prev": {
+          "at": [280, 11, 18, 18]
+        },
+        "restore": {
+          "at": [357, 8, 21, 20]
+        },
+        "seek": {
+          "at": [23, 25, 255, 5]
+        },
+        "shape.compact": {
+          "art": "face.compact",
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "skin": {
+          "at": [380, 8, 18, 20]
+        },
+        "stop": {
+          "at": [299, 11, 18, 18]
+        },
+        "time": {
+          "at": [235, 7, 42, 14]
+        },
+        "track": {
+          "at": [23, 7, 207, 14]
+        }
+      }
+    },
+    "fancy.equalizer": {
+      "size": [420, 124],
+      "slots": {
+        "auto": {
+          "at": [70, 105, 32, 14]
+        },
+        "band.0": {
+          "at": [84, 32, 14, 65]
+        },
+        "band.1": {
+          "at": [105, 32, 14, 65]
+        },
+        "band.2": {
+          "at": [126, 32, 14, 65]
+        },
+        "band.3": {
+          "at": [147, 32, 14, 65]
+        },
+        "band.4": {
+          "at": [168, 32, 14, 65]
+        },
+        "band.5": {
+          "at": [189, 32, 14, 65]
+        },
+        "band.6": {
+          "at": [210, 32, 14, 65]
+        },
+        "band.7": {
+          "at": [231, 32, 14, 65]
+        },
+        "band.8": {
+          "at": [252, 32, 14, 65]
+        },
+        "band.9": {
+          "at": [273, 32, 14, 65]
+        },
+        "close": {
+          "at": [393, 7, 18, 17]
+        },
+        "header": {
+          "at": [37, 8, 67, 15]
+        },
+        "labels": {
+          "at": [52, 98, 242, 11]
+        },
+        "load": {
+          "at": [103, 7, 42, 17]
+        },
+        "on": {
+          "at": [40, 105, 26, 14]
+        },
+        "preamp": {
+          "at": [56, 32, 14, 65]
+        },
+        "presets": {
+          "at": [241, 7, 68, 17]
+        },
+        "reset": {
+          "at": [149, 7, 42, 17]
+        },
+        "save": {
+          "at": [195, 7, 42, 17]
+        },
+        "shape.equalizer": {
+          "art": "face.equalizer",
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "status": {
+          "at": [327, 33, 64, 66]
+        }
+      }
+    },
+    "fancy.main": {
+      "size": [420, 220],
+      "slots": {
+        "analyser": {
+          "at": [162, 31, 96, 45]
+        },
+        "back": {
+          "at": [83, 173, 31, 25]
+        },
+        "balance": {
+          "at": [357, 63, 40, 40]
+        },
+        "close": {
+          "at": [396, 47, 16, 14]
+        },
+        "compact": {
+          "at": [310, 145, 22, 17]
+        },
+        "eq": {
+          "at": [70, 68, 44, 17]
+        },
+        "forward": {
+          "at": [306, 173, 31, 25]
+        },
+        "header": {
+          "at": [43, 47, 83, 13]
+        },
+        "logo": {
+          "art": "app.icon",
+          "at": [23, 45, 16, 16]
+        },
+        "minimize": {
+          "at": [377, 47, 16, 14]
+        },
+        "mute": {
+          "at": [23, 109, 40, 17]
+        },
+        "next": {
+          "at": [351, 165, 28, 24]
+        },
+        "open": {
+          "at": [355, 144, 30, 17]
+        },
+        "pause": {
+          "at": [181, 161, 58, 58]
+        },
+        "pl": {
+          "at": [70, 91, 44, 17]
+        },
+        "play": {
+          "at": [181, 161, 58, 58]
+        },
+        "prev": {
+          "at": [42, 165, 28, 24]
+        },
+        "repeat": {
+          "at": [306, 91, 44, 17]
+        },
+        "seek": {
+          "at": [135, 145, 150, 10]
+        },
+        "settings": {
+          "at": [355, 109, 43, 17]
+        },
+        "shape.main": {
+          "art": "face.main",
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "shuffle": {
+          "at": [306, 68, 44, 17]
+        },
+        "skin": {
+          "at": [72, 113, 42, 17]
+        },
+        "status": {
+          "at": [161, 131, 98, 11]
+        },
+        "stop": {
+          "at": [122, 184, 26, 23]
+        },
+        "time": {
+          "at": [157, 82, 106, 30]
+        },
+        "track": {
+          "at": [148, 115, 124, 14]
+        },
+        "volume": {
+          "at": [23, 63, 40, 40]
+        }
+      }
+    },
+    "fancy.playlist": {
+      "size": [420, 144],
+      "slots": {
+        "add": {
+          "at": [44, 5, 28, 17],
+          "fromBottom": true
+        },
+        "clear": {
+          "art": "playlist.clear",
+          "at": [215, 7, 43, 17]
+        },
+        "close": {
+          "at": [9, 7, 18, 17],
+          "fromRight": true
+        },
+        "header": {
+          "at": [42, 8, 73, 16]
+        },
+        "list": {
+          "at": [42, 29, 93, 26],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "logo": {
+          "art": "playlist.logo",
+          "at": [48, 85, 24, 24],
+          "fromRight": true
+        },
+        "open": {
+          "art": "playlist.load",
+          "at": [119, 7, 45, 17]
+        },
+        "remove": {
+          "at": [77, 5, 42, 17],
+          "fromBottom": true
+        },
+        "repeat": {
+          "art": "playlist.toggle",
+          "at": [25, 63, 60, 18],
+          "fromRight": true
+        },
+        "resize": {
+          "at": [16, 16, 13, 13],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "rows": {
+          "at": [45, 32, 102, 29],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "save": {
+          "art": "playlist.save",
+          "at": [168, 7, 43, 17]
+        },
+        "scroll": {
+          "at": [93, 32, 7, 29],
+          "fromRight": true,
+          "stretchY": true
+        },
+        "shape.playlist": {
+          "art": "face.playlist",
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "shuffle": {
+          "art": "playlist.toggle",
+          "at": [25, 35, 60, 18],
+          "fromRight": true
+        },
+        "status": {
+          "at": [126, 7, 114, 14],
+          "fromBottom": true,
+          "stretchX": true
+        }
+      }
+    }
+  },
+  "lineage": "Application artwork inspired by the supplied Player Interface reference by Sinator Designer",
+  "metrics": {
+    "menuItemH": 22
+  },
+  "parts": {},
+  "sheets": {
+    "fancy-chrome": {
+      "1x": "art/fancy-chrome.png",
+      "2x": "art/fancy-chrome@2x.png"
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "app.icon": {
+      "at": [0, 540, 16, 16],
+      "sheet": "fancy-chrome"
+    },
+    "face.compact": {
+      "at": [0, 497, 420, 40],
+      "middle": "stretch",
+      "sheet": "fancy-chrome",
+      "slice": [19, 20, 19, 20]
+    },
+    "face.equalizer": {
+      "at": [0, 223, 420, 124],
+      "middle": "stretch",
+      "sheet": "fancy-chrome"
+    },
+    "face.main": {
+      "at": [0, 0, 420, 220],
+      "middle": "stretch",
+      "sheet": "fancy-chrome"
+    },
+    "face.playlist": {
+      "at": [0, 350, 420, 144],
+      "middle": "stretch",
+      "sheet": "fancy-chrome",
+      "slice": [39, 100, 39, 48]
+    },
+    "playlist.clear": {
+      "at": [94, 559, 43, 17],
+      "sheet": "fancy-chrome"
+    },
+    "playlist.load": {
+      "at": [0, 559, 45, 17],
+      "sheet": "fancy-chrome"
+    },
+    "playlist.logo": {
+      "at": [203, 559, 24, 24],
+      "sheet": "fancy-chrome"
+    },
+    "playlist.save": {
+      "at": [48, 559, 43, 17],
+      "sheet": "fancy-chrome"
+    },
+    "playlist.toggle": {
+      "at": [140, 559, 60, 18],
+      "sheet": "fancy-chrome"
+    }
+  },
+  "summary": "Graphite sculpted wings, a round cyan spectrum display, separate equalizer and playlist, and a compact player strip.",
+  "text": {
+    "player.current": {
+      "color": "#83e5ed"
+    },
+    "player.info": {
+      "color": "#8493a0",
+      "size": 9
+    },
+    "player.row": {
+      "color": "#abbcc6",
+      "size": 10
+    },
+    "player.selected": {
+      "color": "#142b33"
+    },
+    "player.selectedText": {
+      "color": "#98eaf2"
+    },
+    "player.text": {
+      "color": "#83dee7",
+      "size": 10
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

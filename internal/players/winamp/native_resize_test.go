@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
 func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
@@ -25,10 +25,10 @@ func TestNativePlaylistResizeAndSavedSize(t *testing.T) {
 	const scale = 1.75
 	for _, skin := range []string{Skin, SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
-			t.Setenv("UITK_BACKEND", "x11")
+			t.Setenv("GOFRAMEWORK_DESKTOP_UI_BACKEND", "x11")
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
-			a := uitoolkit.New(uitoolkit.Options{Scale: scale, DisableLookWatch: true})
+			a := ui.New(ui.Options{Scale: scale, DisableLookWatch: true})
 			p, err := New(players.NewHost(a), Options{Scale: scale})
 			if err != nil {
 				t.Fatal(err)

@@ -13,9 +13,9 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/itunes"
 	"github.com/codemodify/media-player-music/internal/skins"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 	os.Setenv(style.ThemeEnv, players.ITunesSkin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.ShowSettings = func() {}
 	p, err := itunes.New(h, itunes.Options{Headless: true, Scale: float32(*scale)})
@@ -41,7 +41,7 @@ func main() {
 	p.ShowPlaylist(true)
 	p.ShowEqualiser(true)
 	a.PumpOnce()
-	write := func(name string, im *paintengine2d.Image) {
+	write := func(name string, im *paint2d.Image) {
 		path := filepath.Join(*dir, "itunes-"+name+".png")
 		f, err := os.Create(path)
 		if err != nil {

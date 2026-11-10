@@ -7,12 +7,11 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"github.com/codemodify/media-player-music/internal/shell"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 )
 
 // Caption recreation can happen after a look/frame change. The ordinary shell
@@ -22,13 +21,13 @@ func TestShellTimerRebindsPlaylistCaptionDrops(t *testing.T) {
 		t.Run(skin, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, skin)
-			a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: 1.75, DisableLookWatch: true})
+			a := ui.New(ui.Options{Headless: true, Scale: 1.75, DisableLookWatch: true})
 			s, err := shell.New(a, shell.Options{Skin: skin, Headless: true, Scale: 1.75})
 			if err != nil {
 				t.Fatal(err)
 			}
 			t.Cleanup(s.Close)
-			var list *app.Window
+			var list *ui.Window
 			for _, named := range s.Windows() {
 				if named.Name == "playlist" {
 					list = named.Window

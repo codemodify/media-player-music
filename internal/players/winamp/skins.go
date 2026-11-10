@@ -2,9 +2,9 @@ package winamp
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 const SkinSilver = players.WinampSilverSkin
@@ -30,7 +30,7 @@ func (p *Player) DropSkin()         { p.Host.DropSkin() }
 
 // The toolkit scrolls the full choice list when it exceeds the popup area,
 // including the compact in-window fallback.
-func (p *Player) skinMenu(from widget.Component, at paintengine2d.Point) {
+func (p *Player) skinMenu(from widget.Component, at paint2d.Point) {
 	p.Host.ContextMenu(from, at)
 }
 
@@ -44,10 +44,10 @@ func (p *Player) skinKeys(w interface{ Focus() widget.Component }, e widget.KeyE
 		return true
 	}
 	if e.Key == platform.KeyMenu || (e.Key == platform.KeyF10 && e.Mods.Shift()) {
-		at := paintengine2d.Pt(8, 8)
+		at := paint2d.Pt(8, 8)
 		if f := w.Focus(); f != nil {
 			o := widget.DeviceOrigin(f)
-			at = paintengine2d.Pt(o.X, o.Y+f.Bounds().Dy())
+			at = paint2d.Pt(o.X, o.Y+f.Bounds().Dy())
 			from = f
 		}
 		p.skinMenu(from, at)
@@ -61,6 +61,6 @@ func (p *Player) rightClick(c widget.Component, e widget.MouseEvent) bool {
 		return false
 	}
 	o := widget.DeviceOrigin(c)
-	p.skinMenu(c, paintengine2d.Pt(o.X+e.Pos.X, o.Y+e.Pos.Y))
+	p.skinMenu(c, paint2d.Pt(o.X+e.Pos.X, o.Y+e.Pos.Y))
 	return true
 }

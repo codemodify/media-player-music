@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
 )
 
 func TestClassicDesktopSkinsValidateLayoutsBeforeReplacingCurrentPlayer(t *testing.T) {
@@ -32,7 +32,7 @@ func TestClassicDesktopSkinsValidateLayoutsBeforeReplacingCurrentPlayer(t *testi
 						layouts[role] = map[string]any{"size": []int{720, 520}}
 					}
 				}
-				dir := style.UserSkinDir(skin.id)
+				dir := skins.UserSkinDir(skin.id)
 				if err := os.MkdirAll(dir, 0700); err != nil {
 					t.Fatal(err)
 				}
@@ -40,11 +40,11 @@ func TestClassicDesktopSkinsValidateLayoutsBeforeReplacingCurrentPlayer(t *testi
 				if err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(dir, style.SkinFile), data, 0600); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), data, 0600); err != nil {
 					t.Fatal(err)
 				}
-				style.InvalidateSkinCache()
-				t.Cleanup(style.InvalidateSkinCache)
+				skins.InvalidateSkinCache()
+				t.Cleanup(skins.InvalidateSkinCache)
 				if err := s.SetSkin(skin.id); err == nil || !strings.Contains(err.Error(), fmt.Sprintf("missing layout %q", missing)) {
 					t.Fatalf("missing required layout did not reject the appearance: %v", err)
 				}

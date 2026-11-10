@@ -8,10 +8,10 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
 )
 
 type neutralFixture struct {
@@ -51,11 +51,11 @@ func (e *neutralFixture) snapshot() ([]playback.Command, bool) {
 	return append([]playback.Command(nil), e.commands...), e.closed
 }
 
-func switchFixture(t *testing.T) (*uitoolkit.Application, *Shell, *neutralFixture, *neutralFixture) {
+func switchFixture(t *testing.T) (*ui.Application, *Shell, *neutralFixture, *neutralFixture) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(players.DefaultSkin))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	first := newNeutralFixture(playback.Capabilities{Seek: true, Equalizer: true, Balance: true, Spectrum: true})
 	next := newNeutralFixture(playback.Capabilities{Seek: true})
 	infos := []playback.BackendInfo{{ID: "mpv", Name: "mpv", Executable: "test-mpv", Available: true}, {ID: "vlc", Name: "VLC", Executable: "test-vlc", Available: true}, {ID: "mplayer", Name: "MPlayer"}, {ID: "mpg123", Name: "mpg123", Executable: "test-mpg123", Available: true}}
@@ -74,7 +74,7 @@ func switchFixture(t *testing.T) (*uitoolkit.Application, *Shell, *neutralFixtur
 	return a, s, first, next
 }
 
-func pumpSwitch(t *testing.T, a *uitoolkit.Application, ready func() bool) {
+func pumpSwitch(t *testing.T, a *ui.Application, ready func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(4 * time.Second)
 	for time.Now().Before(deadline) {
@@ -306,7 +306,7 @@ func TestMissingSavedBackendKeepsFrontendAndCanSwitch(t *testing.T) {
 	if err := (players.Settings{Skin: players.DefaultSkin, AudioBackend: "mplayer"}).Save(); err != nil {
 		t.Fatal(err)
 	}
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	engine := newNeutralFixture(playback.Capabilities{Seek: true})
 	s, err := New(a, Options{Headless: true, Remember: true, DetectBackends: func() []playback.BackendInfo {
 		return []playback.BackendInfo{{ID: "mplayer", Name: "MPlayer"}, {ID: "vlc", Name: "VLC", Executable: "test-vlc", Available: true}}

@@ -19,22 +19,22 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	source "github.com/codemodify/media-player-music/internal/skins/sources/half-life-2"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
 
-func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, players.HalfLife2Skin)
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
 	p, err := New(h, Options{Headless: true, Scale: scale})
@@ -47,13 +47,13 @@ func open(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
 	return a, p
 }
 
-func click(w *app.Window, button platform.MouseButton, at paintengine2d.Point) {
+func click(w *ui.Window, button platform.MouseButton, at paint2d.Point) {
 	w.Inject(platform.Event{Kind: platform.EventMouseMove, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseDown, Button: button, Pos: at})
 	w.Inject(platform.Event{Kind: platform.EventMouseUp, Button: button, Pos: at})
 }
 
-func key(a *uitoolkit.Application, w *app.Window, k platform.Key, mods platform.Modifiers) {
+func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifiers) {
 	w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: k, Mods: mods})
 	w.Inject(platform.Event{Kind: platform.EventKeyUp, Key: k, Mods: mods})
 	a.PumpOnce()
@@ -67,7 +67,7 @@ func TestOriginalThreeWindowGeometryAndMasksAtEveryScale(t *testing.T) {
 				t.Fatal("source window composition or sizing policy changed")
 			}
 			for _, window := range []struct {
-				w      *app.Window
+				w      *ui.Window
 				width  int
 				height int
 			}{{p.Main, 339, 300}, {p.Eq, 430, 239}, {p.List, 393, 226}} {
@@ -227,7 +227,7 @@ func TestOriginalCurvedPositionMapsDriveSharedPlayback(t *testing.T) {
 					if best > 2 {
 						t.Fatalf("%s lacks source grayscale near %d", item.name, target)
 					}
-					local := paintengine2d.Pt((float32(point.X)+.5)*scale, (float32(point.Y)+.5)*scale)
+					local := paint2d.Pt((float32(point.X)+.5)*scale, (float32(point.Y)+.5)*scale)
 					if item.f.HitTest(local) != item.f {
 						t.Fatal("original curve point is absent from the control hit map")
 					}
@@ -295,7 +295,7 @@ func TestSeparateEqualizerHooksAndHonestBackendLimits(t *testing.T) {
 	if !p.eqPane.bands[0].Enabled() || !p.eqPane.balance.Enabled() || gain != p.Equaliser.Gains[0] || pan != p.Transport.Pan {
 		t.Fatal("restoring a capable engine erased audio adjustments")
 	}
-	for _, window := range []*app.Window{p.Eq, p.List} {
+	for _, window := range []*ui.Window{p.Eq, p.List} {
 		window.RequestClose()
 		a.PumpOnce()
 		if window.Closed() || window.Visible() || p.Main.Closed() {
@@ -376,9 +376,9 @@ func TestAllThreeViewsAcceptDecodedLocalFileAndFolderCopyDrops(t *testing.T) {
 	}
 	p.Transport.State, p.Transport.Pos = players.Paused, 17*time.Second
 	for _, target := range []struct {
-		w  *app.Window
-		at paintengine2d.Point
-	}{{p.Main, paintengine2d.Pt(150*p.Main.Scale(), 150*p.Main.Scale())}, {p.Eq, widget.DeviceBounds(p.eqPane.bands[0]).Center()}, {p.List, p.listPane.list.AccessibleItems()[0].Bounds.Center()}} {
+		w  *ui.Window
+		at paint2d.Point
+	}{{p.Main, paint2d.Pt(150*p.Main.Scale(), 150*p.Main.Scale())}, {p.Eq, widget.DeviceBounds(p.eqPane.bands[0]).Center()}, {p.List, p.listPane.list.AccessibleItems()[0].Bounds.Center()}} {
 		off := target.w.Surface().(*platform.Offscreen)
 		before := calls
 		off.SimulateDropAction(target.at, map[string][]byte{"text/uri-list": data}, platform.DragCopy|platform.DragMove, platform.DragMove)
@@ -505,7 +505,7 @@ func TestPlaylistResizeBrowseActivateAndInterruptedGesture(t *testing.T) {
 				t.Fatal("pointer exit combined interrupted clicks into playback")
 			}
 			g := list.geometry(list.Look())
-			gutter := widget.DeviceOrigin(list).Add(paintengine2d.Pt(g.Rows.Min.X-2*scale, at.Y-widget.DeviceOrigin(list).Y))
+			gutter := widget.DeviceOrigin(list).Add(paint2d.Pt(g.Rows.Min.X-2*scale, at.Y-widget.DeviceOrigin(list).Y))
 			selected := list.Selected
 			click(p.List, platform.ButtonLeft, gutter)
 			a.PumpOnce()
@@ -531,8 +531,8 @@ func TestSatelliteControlsMatchOriginalWMSRightAndBottomOffsets(t *testing.T) {
 			// The source WMS places both pl_set and vis_set groups at
 			// view.width-78,top5. Their three mapping-image cells begin
 			// at x0,x23,x46; the bottom grip is width-34,height-30.
-			check := func(name string, got paintengine2d.Rect, x, y, w, h int) {
-				want := paintengine2d.XYWH(float32(x)*scale, float32(y)*scale, float32(w)*scale, float32(h)*scale)
+			check := func(name string, got paint2d.Rect, x, y, w, h int) {
+				want := paint2d.XYWH(float32(x)*scale, float32(y)*scale, float32(w)*scale, float32(h)*scale)
 				// Slots snap their margins and extents to device pixels.
 				// One-pixel fractional rounding cannot mask the original
 				// 23px logical shift from an incorrect FromRight margin.
@@ -556,7 +556,7 @@ func TestSatelliteControlsMatchOriginalWMSRightAndBottomOffsets(t *testing.T) {
 				}{{"shuffle", 0, 23}, {"repeat", 23, 23}, {"close", 46, 22}} {
 					check("PL "+key.slot, p.listPane.buttons[key.slot].Bounds(), size[0]-78+key.offset, 5, key.width, 23)
 				}
-				grip, ok := style.SkinSlotRect(p.List.Look(), LayoutPlaylist, "resize", p.listPane.LocalBounds())
+				grip, ok := skins.SkinSlotRect(p.List.Look(), LayoutPlaylist, "resize", p.listPane.LocalBounds())
 				if !ok {
 					t.Fatal("source playlist resize slot missing")
 				}

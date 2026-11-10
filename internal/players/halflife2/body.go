@@ -5,18 +5,19 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p             *Player
-	slots         *widget.Slots
+	slots         *skins.Slots
 	buttons       map[string]*players.GlyphButton
 	play, eq, pl  *players.GlyphButton
 	seek, volume  *curvedSlider
@@ -29,7 +30,7 @@ type body struct {
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), lastVolume: max(p.Transport.Volume, .5)}
+	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), lastVolume: max(p.Transport.Volume, .5)}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("Half Life 2 music player")
@@ -68,7 +69,7 @@ func newBody(p *Player) *body {
 	menu := func() {
 		c := b.buttons["skin"]
 		o := widget.DeviceOrigin(c)
-		p.Host.ContextMenu(c, paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy()))
+		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	}
 	button("logo", "Appearance and settings", players.GlyphSkin, menu, true)
 	button("skin", "Appearance and settings", players.GlyphSkin, menu, false)
@@ -103,8 +104,8 @@ func newBody(p *Player) *body {
 	}{{"seek", b.seek, 33}, {"volume", b.volume, 27}} {
 		item := item
 		item.f.Travel = .001
-		item.f.Painter = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, t float32, _ style.ControlState) bool {
-			return style.DrawSkinSprite(item.f.Look(), ctx, widget.SlotArtRect(item.f, LayoutMain, item.slot), fmt.Sprintf("%s.%d", item.slot, int(t*float32(item.frames-1)+.5)), paintengine2d.Color{})
+		item.f.Painter = func(ctx *paint2d.Context, _ paint2d.Rect, t float32, _ style.ControlState) bool {
+			return skins.DrawSkinSprite(item.f.Look(), ctx, skins.SlotArtRect(item.f, LayoutMain, item.slot), fmt.Sprintf("%s.%d", item.slot, int(t*float32(item.frames-1)+.5)), paint2d.Color{})
 		}
 		b.slots.Bind(item.slot, item.f)
 		b.Add(item.f)
@@ -127,22 +128,22 @@ func newBody(p *Player) *body {
 
 type displayGlass struct{ widget.Base }
 
-func (g *displayGlass) HitTest(paintengine2d.Point) widget.Component { return nil }
-func (g *displayGlass) Paint(ctx *paintengine2d.Context) {
-	style.DrawSkinSprite(g.Look(), ctx, g.LocalBounds(), "glass.foreground", paintengine2d.Color{})
+func (g *displayGlass) HitTest(paint2d.Point) widget.Component { return nil }
+func (g *displayGlass) Paint(ctx *paint2d.Context) {
+	skins.DrawSkinSprite(g.Look(), ctx, g.LocalBounds(), "glass.foreground", paint2d.Color{})
 }
 func (g *displayGlass) Describe(n *a11y.Node) { n.Role, n.Name = a11y.RoleImage, "Display glass" }
 func skinButton(role, slot, name string, glyph players.Glyph, action func()) *players.GlyphButton {
 	c := players.NewGlyphButton(glyph, name, action)
-	c.Art = func(ctx *paintengine2d.Context, _ paintengine2d.Rect, st style.ControlState) bool {
-		return style.DrawSkinSlot(c.Look(), ctx, widget.SlotArtRect(c, role, slot), role, slot, st)
+	c.Art = func(ctx *paint2d.Context, _ paint2d.Rect, st style.ControlState) bool {
+		return skins.DrawSkinSlot(c.Look(), ctx, skins.SlotArtRect(c, role, slot), role, slot, st)
 	}
-	c.Shaper = func(lk style.LookAndFeel, size paintengine2d.Point) *style.Silhouette {
-		return style.SkinSlotShape(lk, size, widget.SlotArtRect(c, role, slot), role, slot)
+	c.Shaper = func(lk style.LookAndFeel, size paint2d.Point) *style.Silhouette {
+		return skins.SkinSlotShape(lk, size, skins.SlotArtRect(c, role, slot), role, slot)
 	}
 	return c
 }
-func orange() paintengine2d.Color { return paintengine2d.RGB(1, .48, .13) }
+func orange() paint2d.Color { return paint2d.RGB(1, .48, .13) }
 func (b *body) cycleShutter() {
 	b.shutter = (b.shutter + 1) % 3
 	b.p.setShape(b.p.Main, LayoutMain)
@@ -194,25 +195,25 @@ func (b *body) transportButton() *players.GlyphButton {
 	}
 	return b.play
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
 	state := []string{"open", "inner", "closed"}[b.shutter]
 	if state == "open" {
 		state += ".base"
 	}
-	style.DrawSkinSprite(lk, ctx, box, "face.main."+state, paintengine2d.Color{})
+	skins.DrawSkinSprite(lk, ctx, box, "face.main."+state, paint2d.Color{})
 	if b.shutter != 0 {
 		return
 	}
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, slot, box); return r }
+	at := func(slot string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, slot, box); return r }
 	title := b.p.Transport.Track().Label()
 	if title == "" {
 		title = "Music Player"

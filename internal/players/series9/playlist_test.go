@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestPlaylistBrowsingActivationAndMetadataStayWithTheSharedQueue(t *testing.T) {
@@ -103,7 +103,7 @@ func TestPlaylistContextScrollbarAndPointerExitInterruptActivation(t *testing.T)
 	}
 	// The guard also handles a public mouse event outside the horizontal
 	// row range; toolkit v0.23.4 RowAt considers only the vertical range.
-	list.MousePress(widget.MouseEvent{Button: platform.ButtonLeft, Pos: paintengine2d.Pt(g.Rows.Min.X-1, g.Rows.Min.Y+g.RowHeight/2)})
+	list.MousePress(widget.MouseEvent{Button: platform.ButtonLeft, Pos: paint2d.Pt(g.Rows.Min.X-1, g.Rows.Min.Y+g.RowHeight/2)})
 	click(p.Main, platform.ButtonLeft, at)
 	a.PumpOnce()
 	if list.Selected != 2 || plays != 0 {
@@ -132,7 +132,7 @@ func TestPlaylistDrawerResizeKeepsRowsAndControlsInsideOneMain(t *testing.T) {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
 			main, native := p.Main, p.Main.Surface()
-			var initialRows paintengine2d.Rect
+			var initialRows paint2d.Rect
 			for i, size := range [][2]int{{596, 468}, {740, 574}} {
 				main.SetSize(size[0], size[1])
 				settle(a, p)
@@ -182,11 +182,11 @@ func TestPlaylistRowsHeaderAndEmptyBackgroundAcceptOnlyLocalCopyDrops(t *testing
 	p.Host.DropFiles = func(paths []string) { calls++; got = paths }
 	off := p.Main.Surface().(*platform.Offscreen)
 	pane := p.body.playlist
-	header, ok := style.SkinSlotRect(pane.Look(), LayoutPlaylist, "header", pane.LocalBounds())
+	header, ok := skins.SkinSlotRect(pane.Look(), LayoutPlaylist, "header", pane.LocalBounds())
 	if !ok || header.Empty() {
 		t.Fatal("playlist has no authored header")
 	}
-	for _, at := range []paintengine2d.Point{
+	for _, at := range []paint2d.Point{
 		pane.list.AccessibleItems()[0].Bounds.Center(),
 		header.Center().Add(widget.DeviceOrigin(pane)),
 	} {

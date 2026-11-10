@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
 )
 
 // The real desk and native event dispatcher can be exercised before a skin is
 // painted. This fixture owns no playback engine and never touches the desktop.
-func groupFixture(t *testing.T, scale float32) (*uitoolkit.Application, *Player) {
+func groupFixture(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, "dark")
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, Scale: scale, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	p := &Player{App: a, Host: h, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
 	var err error
@@ -41,6 +41,7 @@ func groupFixture(t *testing.T, scale float32) (*uitoolkit.Application, *Player)
 	t.Cleanup(p.Close)
 	p.initGroup()
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.AdvanceGeometry(0)
 	return a, p
 }
@@ -75,6 +76,7 @@ func TestSourceArrangementAndDesktopMoveFollowAtEveryScale(t *testing.T) {
 				p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420+step, 250+step)
 			}
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			for i, old := range before {
 				if got := p.Desk.Rack.Pane(i).Box; got != old.Moved(459-before[p.iMain].X, 289-before[p.iMain].Y) {
 					t.Fatalf("pane %d did not follow the final native move: %+v", i, got)
@@ -92,10 +94,13 @@ func TestDetachedPlaylistResizeAndHiddenDockRestore(t *testing.T) {
 	a, p := groupFixture(t, 1.75)
 	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420, 250)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1500, 900)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.List.SetSize(620, 420)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	p.AdvanceGeometry(70 * time.Millisecond)
 	p.ShowEqualiser(false)
 	before := p.Desk.Rack.Boxes()
@@ -113,6 +118,7 @@ func TestDetachedPlaylistResizeAndHiddenDockRestore(t *testing.T) {
 	reopened.ShowEqualiser(false)
 	reopened.RestorePlacement(saved)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	reopened.AdvanceGeometry(0)
 	if got := reopened.Desk.Rack.Boxes(); !reflect.DeepEqual(got, before) {
 		t.Fatalf("restore replaced saved arrangement: got %+v want %+v", got, before)
@@ -122,6 +128,7 @@ func TestDetachedPlaylistResizeAndHiddenDockRestore(t *testing.T) {
 	}
 	reopened.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(490, 295)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	if reopened.Desk.Rack.Pane(reopened.iEq).Box != before[p.iEq].Moved(70, 45) || reopened.Desk.Rack.Pane(reopened.iList).Box != before[p.iList] {
 		t.Fatal("restored Main carried a detached playlist or lost its hidden EQ")
 	}
@@ -133,9 +140,11 @@ func TestMainRejoiningAStationaryForeignPathPreservesGeometry(t *testing.T) {
 	a, p := groupFixture(t, 1.75)
 	p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1400, 800)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	list := p.Desk.Rack.Pane(p.iList).Box
 	p.Eq.Surface().(*platform.Offscreen).SimulateDesktopMove(list.X-37, list.Bottom()+3)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	if p.Desk.Rack.Pane(p.iEq).To != p.iList {
 		t.Fatal("loose EQ did not join the playlist")
 	}
@@ -143,6 +152,7 @@ func TestMainRejoiningAStationaryForeignPathPreservesGeometry(t *testing.T) {
 	want := (rack.Bond{Side: rack.SideRight, Along: 23}).Place(before[p.iEq], MainW, MainH)
 	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(want.X+2, want.Y)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	if p.Desk.Rack.Pane(p.iMain).Box != want || p.Desk.Rack.Pane(p.iEq).To != p.iMain || p.Desk.Rack.Pane(p.iList).To != p.iEq {
 		t.Fatalf("Main rejoin dropped the foreign path: %+v", p.Desk.Rack.Boxes())
 	}

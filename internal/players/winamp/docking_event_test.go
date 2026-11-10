@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/rack"
+	"goframework.io/desktop-ui-rack"
+	"goframework.io/desktop-ui/platform"
 )
 
 func TestDesktopMovesFollowWithoutThePlaybackPulse(t *testing.T) {
@@ -25,6 +25,7 @@ func TestDesktopMovesFollowWithoutThePlaybackPulse(t *testing.T) {
 					o.SimulateDesktopMove(400+i, 260+i)
 				}
 				a.PumpOnce()
+				a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 				dockingAssertTranslated(t, p, before, 479-before[p.iMain].X, 339-before[p.iMain].Y)
 				if p.Transport.State != state || p.Transport.Pos != 13*time.Second {
 					t.Fatal("following a window changed the playback state or clock")
@@ -41,9 +42,11 @@ func TestEventDrivenMainRejoinPreservesAComponentAndHiddenBranches(t *testing.T)
 			p.Advance(0)
 			p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1200, 800)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			list := p.Desk.Rack.Pane(p.iList).Box
 			p.Eq.Surface().(*platform.Offscreen).SimulateDesktopMove(list.X-37, list.Bottom()+3)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			if p.Desk.Rack.Pane(p.iEq).To != p.iList {
 				t.Fatal("the loose equaliser did not join the playlist")
 			}
@@ -58,6 +61,7 @@ func TestEventDrivenMainRejoinPreservesAComponentAndHiddenBranches(t *testing.T)
 			wantMain := (rack.Bond{Side: rack.SideRight, Along: 23}).Place(eq, StripW, StripH)
 			p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(wantMain.X+2, wantMain.Y)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			if got := p.Desk.Rack.Pane(p.iMain); got.To != -1 || got.Box != wantMain {
 				t.Fatalf("Main did not snap as the group anchor: %+v", got)
 			}
@@ -76,6 +80,7 @@ func TestEventDrivenMainRejoinPreservesAComponentAndHiddenBranches(t *testing.T)
 			joined := p.Desk.Rack.Boxes()
 			p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420, 250)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			dockingAssertTranslated(t, p, joined, 420-wantMain.X, 250-wantMain.Y)
 			if p.Desk.Window(hidden).Visible() {
 				t.Fatal("moving the group exposed a hidden branch")
@@ -83,6 +88,7 @@ func TestEventDrivenMainRejoinPreservesAComponentAndHiddenBranches(t *testing.T)
 			fixed := p.Desk.Rack.Boxes()
 			p.List.Surface().(*platform.Offscreen).SimulateDesktopMove(1800, 900)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			if p.Desk.Rack.Pane(p.iList).To >= 0 || !reflect.DeepEqual(p.Desk.Rack.Boxes()[:2], fixed[:2]) {
 				t.Fatal("detaching the playlist moved its former anchors")
 			}
@@ -98,12 +104,14 @@ func TestMainRejoinDoesNotOverwriteACoalescedForeignMove(t *testing.T) {
 			playlist := p.List.Surface().(*platform.Offscreen)
 			playlist.SimulateDesktopMove(1200, 800)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			old := p.Desk.Rack.Pane(p.iList).Box
 			// Both native positions update before this event burst is
 			// dispatched. Main approaches the previous playlist position.
 			p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(old.Right()+2, old.Y+23)
 			playlist.SimulateDesktopMove(1600, 900)
 			a.PumpOnce()
+			a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 			got := p.Desk.Rack.Pane(p.iList)
 			if got.Box.X != 1600 || got.Box.Y != 900 || got.To != -1 || p.Desk.Rack.Pane(p.iMain).To != -1 {
 				t.Fatalf("rejoining replayed stale foreign geometry: %+v", got)
@@ -126,6 +134,7 @@ func TestEventDrivenMainRejoinPreservesThreePaneForeignPath(t *testing.T) {
 	want := (rack.Bond{Side: rack.SideRight, Along: 23}).Place(anchor, StripW, StripH)
 	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(want.X+2, want.Y)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	if p.Desk.Rack.Pane(p.iMain).Box != want || p.Desk.Rack.Pane(branch).To != p.iMain ||
 		p.Desk.Rack.Pane(p.iEq).To != branch || p.Desk.Rack.Pane(p.iList).To != p.iEq {
 		t.Fatalf("rejoining dropped a foreign path link: %+v", p.Desk.Rack.Boxes())
@@ -138,6 +147,7 @@ func TestEventDrivenMainRejoinPreservesThreePaneForeignPath(t *testing.T) {
 	joined := p.Desk.Rack.Boxes()
 	p.Main.Surface().(*platform.Offscreen).SimulateDesktopMove(420, 250)
 	a.PumpOnce()
+	a.PumpOnce() // Desk follows after the configure batch, on the next UI turn.
 	dockingAssertTranslated(t, p, joined, 420-want.X, 250-want.Y)
 }
 

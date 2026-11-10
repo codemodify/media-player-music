@@ -11,11 +11,11 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // A pack the player has never heard of can move the real controls without
@@ -44,7 +44,7 @@ func TestAnExternalSkinCanRearrangeThePlayer(t *testing.T) {
 			for _, key := range []struct {
 				name string
 				c    widget.Component
-				want paintengine2d.Rect
+				want paint2d.Rect
 			}{{"play", s.play, nextBefore}, {"next", s.next, playBefore}} {
 				if d := maxDiff(key.c.Bounds(), key.want); d > 0.5 {
 					t.Errorf("%s did not move to the other key's slot: got %v, want %v", key.name, key.c.Bounds(), key.want)
@@ -77,7 +77,7 @@ func TestAnExternalSkinCanRearrangeThePlayer(t *testing.T) {
 			if p.Transport.State != players.Playing {
 				t.Fatal("the relocated Play control did not start the transport")
 			}
-			for _, win := range []*app.Window{p.Main, p.Eq, p.List} {
+			for _, win := range []*ui.Window{p.Main, p.Eq, p.List} {
 				img := win.Capture()
 				if img == nil || img.Width < 1 || img.Height < 1 || blank(img) {
 					t.Errorf("%s painted nothing in the external skin", win.Title())
@@ -94,10 +94,10 @@ func checkFlexibleExternalSlots(t *testing.T, p *Player, scale float32) {
 	for _, slot := range []struct {
 		name string
 		c    widget.Component
-		want paintengine2d.Rect
+		want paint2d.Rect
 	}{
-		{"skin", s.skinBtn, paintengine2d.XYWH(b.Max.X-12*scale, 8*scale, 8*scale, 40*scale)},
-		{"seek", s.seek, paintengine2d.XYWH(21*scale, 58*scale, b.Dx()-52*scale, 10*scale)},
+		{"skin", s.skinBtn, paint2d.XYWH(b.Max.X-12*scale, 8*scale, 8*scale, 40*scale)},
+		{"seek", s.seek, paint2d.XYWH(21*scale, 58*scale, b.Dx()-52*scale, 10*scale)},
 	} {
 		if d := maxDiff(slot.c.Bounds(), slot.want); d > 0.5 {
 			t.Errorf("external %s slot: got %v, want %v", slot.name, slot.c.Bounds(), slot.want)
@@ -115,7 +115,7 @@ func installExternalPanel(t *testing.T, id string) {
 		t.Fatal(err)
 	}
 	sourceDir := filepath.Join(sourceRoot, Skin)
-	dest := style.UserSkinDir(id)
+	dest := skins.UserSkinDir(id)
 	err := fs.WalkDir(os.DirFS(sourceDir), ".", func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -133,7 +133,7 @@ func installExternalPanel(t *testing.T, id string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	manifest := filepath.Join(dest, style.SkinFile)
+	manifest := filepath.Join(dest, skins.SkinFile)
 	raw, err := os.ReadFile(manifest)
 	if err != nil {
 		t.Fatal(err)
@@ -164,6 +164,6 @@ func installExternalPanel(t *testing.T, id string) {
 	if err := os.WriteFile(manifest, raw, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	style.InvalidateSkinCache()
-	t.Cleanup(style.InvalidateSkinCache)
+	skins.InvalidateSkinCache()
+	t.Cleanup(skins.InvalidateSkinCache)
 }

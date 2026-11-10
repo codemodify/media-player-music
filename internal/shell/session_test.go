@@ -9,15 +9,15 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/standard"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/uitoolkit"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui/style"
 )
 
-func rememberedShell(t *testing.T, skin string) (*uitoolkit.Application, *Shell, *recordingBackend) {
+func rememberedShell(t *testing.T, skin string) (*ui.Application, *Shell, *recordingBackend) {
 	t.Helper()
 	opts := Options{Skin: skin, Headless: true, Remember: true}
 	t.Setenv(style.ThemeEnv, LookFor(SkinFor(opts)))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	b := &recordingBackend{events: make(chan playback.Event, 100)}
 	opts.Backend = b
 	s, err := New(a, opts)
@@ -256,7 +256,7 @@ func TestSessionAutosaveAndScreenshotIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv(style.ThemeEnv, LookFor(winamp.Skin))
-	a := uitoolkit.New(uitoolkit.Options{Headless: true, DisableLookWatch: true})
+	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	shot, err := New(a, Options{Headless: true, Skin: winamp.Skin})
 	if err != nil {
 		t.Fatal(err)

@@ -2,37 +2,38 @@ package amarok
 
 import (
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 var (
-	chrome = paintengine2d.RGB(.93, .93, .95)
-	ink    = paintengine2d.RGB(.08, .08, .1)
-	muted  = paintengine2d.RGB(.3, .3, .36)
-	blue   = paintengine2d.RGB(.37, .37, .66)
-	border = paintengine2d.RGB(.48, .48, .56)
+	chrome = paint2d.RGB(.93, .93, .95)
+	ink    = paint2d.RGB(.08, .08, .1)
+	muted  = paint2d.RGB(.3, .3, .36)
+	blue   = paint2d.RGB(.37, .37, .66)
+	border = paint2d.RGB(.48, .48, .56)
 )
 
 func font(lk style.LookAndFeel, size float32) *style.Font {
 	return players.ScaledFace(lk.Font(), style.Dip(lk, size))
 }
-func bevel(ctx *paintengine2d.Context, r paintengine2d.Rect, down bool, scale float32) {
-	ctx.DrawRect(r, paintengine2d.Fill(chrome))
-	light, dark := paintengine2d.White, border
+func bevel(ctx *paint2d.Context, r paint2d.Rect, down bool, scale float32) {
+	ctx.DrawRect(r, paint2d.Fill(chrome))
+	light, dark := paint2d.White, border
 	if down {
 		light, dark = dark, light
 	}
-	ctx.DrawRect(paintengine2d.XYWH(r.Min.X, r.Min.Y, r.Dx(), scale), paintengine2d.Fill(light))
-	ctx.DrawRect(paintengine2d.XYWH(r.Min.X, r.Min.Y, scale, r.Dy()), paintengine2d.Fill(light))
-	ctx.DrawRect(paintengine2d.XYWH(r.Min.X, r.Max.Y-scale, r.Dx(), scale), paintengine2d.Fill(dark))
-	ctx.DrawRect(paintengine2d.XYWH(r.Max.X-scale, r.Min.Y, scale, r.Dy()), paintengine2d.Fill(dark))
+	ctx.DrawRect(paint2d.XYWH(r.Min.X, r.Min.Y, r.Dx(), scale), paint2d.Fill(light))
+	ctx.DrawRect(paint2d.XYWH(r.Min.X, r.Min.Y, scale, r.Dy()), paint2d.Fill(light))
+	ctx.DrawRect(paint2d.XYWH(r.Min.X, r.Max.Y-scale, r.Dx(), scale), paint2d.Fill(dark))
+	ctx.DrawRect(paint2d.XYWH(r.Max.X-scale, r.Min.Y, scale, r.Dy()), paint2d.Fill(dark))
 }
 func iconButton(p *Player, name, label string, glyph players.Glyph, action func()) *players.GlyphButton {
 	c := players.NewGlyphButton(glyph, label, action)
-	c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+	c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 		lk := p.Main.Look()
 		d := style.Dip(lk, 1)
 		if st.Hovered() || st.Pressed() || st.Checked() {
@@ -50,12 +51,12 @@ func iconButton(p *Player, name, label string, glyph players.Glyph, action func(
 			}
 		}
 		side := min(style.Dip(lk, 22), min(r.Dx(), r.Dy()))
-		box := paintengine2d.XYWH(r.Min.X+(r.Dx()-side)/2, r.Min.Y+(r.Dy()-side)/2, side, side)
-		if !style.DrawSkinSprite(lk, ctx, box, "icon."+art, paintengine2d.Color{}) {
+		box := paint2d.XYWH(r.Min.X+(r.Dx()-side)/2, r.Min.Y+(r.Dy()-side)/2, side, side)
+		if !skins.DrawSkinSprite(lk, ctx, box, "icon."+art, paint2d.Color{}) {
 			players.DrawGlyph(ctx, box, glyph, ink, d)
 		}
 		if st.Disabled() {
-			ctx.DrawRect(r, paintengine2d.Fill(chrome.WithAlpha(.65)))
+			ctx.DrawRect(r, paint2d.Fill(chrome.WithAlpha(.65)))
 		}
 		return true
 	}
@@ -63,7 +64,7 @@ func iconButton(p *Player, name, label string, glyph players.Glyph, action func(
 }
 func textButton(p *Player, text string, action func()) *players.GlyphButton {
 	c := players.NewGlyphButton(players.GlyphNone, text, action)
-	c.Art = func(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+	c.Art = func(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 		bevel(ctx, r, st.Pressed() || st.Checked(), style.Dip(c.Look(), 1))
 		col := ink
 		if st.Disabled() {
@@ -76,7 +77,6 @@ func textButton(p *Player, text string, action func()) *players.GlyphButton {
 }
 
 // fieldLook uses the stock text editor with a KDE3 well and its scaled font.
-// The explicit placeholder avoids the toolkit's documented font-size gap32.
 type fieldLook struct{ style.LookAndFeel }
 
 func (l *fieldLook) Font() *style.Font { return font(l.LookAndFeel, 11) }
@@ -84,19 +84,15 @@ func (l *fieldLook) Palette() style.Palette {
 	p := l.LookAndFeel.Palette()
 	p.Text = ink
 	p.TextMuted = muted
-	p.Field = paintengine2d.White
+	p.Field = paint2d.White
 	p.FieldBorder = border
 	p.Selection = blue
-	p.TextOnAccent = paintengine2d.White
+	p.TextOnAccent = paint2d.White
 	return p
 }
-func (l *fieldLook) DrawTextField(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState, text, placeholder string, caret, a, b int, blink bool, scroll float32, face *style.Font) {
-	ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.White))
-	ctx.DrawRect(r.Inset(style.Dip(l, .5)), paintengine2d.StrokePaint(border, style.Dip(l, 1)))
-	if text == "" && placeholder != "" && !st.Focused() {
-		players.DrawTextIn(ctx, l.Font(), r.Inset(l.Metrics().FieldPad), placeholder, muted, style.AlignStart)
-		placeholder = ""
-	}
+func (l *fieldLook) DrawTextField(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState, text, placeholder string, caret, a, b int, blink bool, scroll float32, face *style.Font) {
+	ctx.DrawRect(r, paint2d.Fill(paint2d.White))
+	ctx.DrawRect(r.Inset(style.Dip(l, .5)), paint2d.StrokePaint(border, style.Dip(l, 1)))
 	l.LookAndFeel.DrawTextField(ctx, r, st|style.StateFrameless, text, placeholder, caret, a, b, blink, scroll, face)
 }
 
@@ -110,7 +106,7 @@ func slider(vertical bool, lo, hi, value float32, label string, on func(float32)
 		f = players.NewBar(lo, hi, value, label, on)
 	}
 	f.Travel = 6
-	f.Painter = func(ctx *paintengine2d.Context, r paintengine2d.Rect, t float32, st style.ControlState) bool {
+	f.Painter = func(ctx *paint2d.Context, r paint2d.Rect, t float32, st style.ControlState) bool {
 		d := style.Dip(f.Look(), 1)
 		track := r
 		if vertical {
@@ -120,14 +116,14 @@ func slider(vertical bool, lo, hi, value float32, label string, on func(float32)
 			track.Min.Y = r.Min.Y + r.Dy()/2 - d
 			track.Max.Y = track.Min.Y + 2*d
 		}
-		ctx.DrawRect(track, paintengine2d.Fill(border))
-		thumb := paintengine2d.XYWH(r.Min.X+t*(r.Dx()-12*d), r.Min.Y+(r.Dy()-14*d)/2, 12*d, 14*d)
+		ctx.DrawRect(track, paint2d.Fill(border))
+		thumb := paint2d.XYWH(r.Min.X+t*(r.Dx()-12*d), r.Min.Y+(r.Dy()-14*d)/2, 12*d, 14*d)
 		if vertical {
-			thumb = paintengine2d.XYWH(r.Min.X+(r.Dx()-18*d)/2, r.Min.Y+(1-t)*(r.Dy()-12*d), 18*d, 12*d)
+			thumb = paint2d.XYWH(r.Min.X+(r.Dx()-18*d)/2, r.Min.Y+(1-t)*(r.Dy()-12*d), 18*d, 12*d)
 		}
 		bevel(ctx, thumb, st.Pressed(), d)
 		if st.Disabled() {
-			ctx.DrawRect(thumb, paintengine2d.Fill(chrome.WithAlpha(.7)))
+			ctx.DrawRect(thumb, paint2d.Fill(chrome.WithAlpha(.7)))
 		}
 		return true
 	}
@@ -150,11 +146,11 @@ func (s *sourceSlider) MouseRelease(e widget.MouseEvent) bool {
 	}
 	return s.Fader.MouseRelease(e)
 }
-func slot(lk style.LookAndFeel, name string, box paintengine2d.Rect) paintengine2d.Rect {
-	r, _ := style.SkinSlotRect(lk, LayoutMain, name, box)
+func slot(lk style.LookAndFeel, name string, box paint2d.Rect) paint2d.Rect {
+	r, _ := skins.SkinSlotRect(lk, LayoutMain, name, box)
 	return r
 }
-func menuAt(c widget.Component) paintengine2d.Point {
+func menuAt(c widget.Component) paint2d.Point {
 	o := widget.DeviceOrigin(c)
-	return paintengine2d.Pt(o.X, o.Y+c.Bounds().Dy())
+	return paint2d.Pt(o.X, o.Y+c.Bounds().Dy())
 }

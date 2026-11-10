@@ -8,7 +8,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/appicon"
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	"github.com/codemodify/paintengine2d"
+	"goframework.io/graphics-paint2d"
 	"golang.org/x/image/draw"
 )
 
@@ -27,9 +27,9 @@ func playerLogoImage(size int) *image.RGBA {
 	return out
 }
 
-func paintPlayerLogo(ctx *paintengine2d.Context, r paintengine2d.Rect) {
-	bitmap := paintengine2d.NewImageFromNRGBA(playerLogoImage(64))
-	ctx.DrawImageRectPaint(bitmap, paintengine2d.XYWH(0, 0, 64, 64), r, paintengine2d.Paint{Color: paintengine2d.White, Filter: paintengine2d.FilterBilinear})
+func paintPlayerLogo(ctx *paint2d.Context, r paint2d.Rect) {
+	bitmap := paint2d.NewImageFromNRGBA(playerLogoImage(64))
+	ctx.DrawImageRectPaint(bitmap, paint2d.XYWH(0, 0, 64, 64), r, paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterBilinear})
 }
 
 // brandMainBitmap changes only the app logo in imported artwork. Other skin

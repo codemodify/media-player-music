@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui/platform"
 )
 
 type compactPresentation interface {
@@ -36,7 +36,7 @@ func TestSeries9RequiresAllFiveLayoutsBeforeReplacingPresentation(t *testing.T) 
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.ITunesSkin)
 			w, model := s.MainWindow(), s.Host.Model
-			dir := style.UserSkinDir(players.Series9Skin)
+			dir := skins.UserSkinDir(players.Series9Skin)
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				t.Fatal(err)
 			}
@@ -50,11 +50,11 @@ func TestSeries9RequiresAllFiveLayoutsBeforeReplacingPresentation(t *testing.T) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := os.WriteFile(filepath.Join(dir, style.SkinFile), data, 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), data, 0600); err != nil {
 				t.Fatal(err)
 			}
-			style.InvalidateSkinCache()
-			t.Cleanup(style.InvalidateSkinCache)
+			skins.InvalidateSkinCache()
+			t.Cleanup(skins.InvalidateSkinCache)
 			if err := s.SetSkin(players.Series9Skin); err == nil || !strings.Contains(err.Error(), fmt.Sprintf("missing layout %q", missing)) {
 				t.Fatalf("incomplete Series 9 override: %v", err)
 			}
@@ -84,8 +84,9 @@ func TestSeries9SkinKeysCycleFromITunesAndRememberChoice(t *testing.T) {
 		{platform.ModCtrl, players.VLCSkin},
 		{platform.ModCtrl, players.RealPlayerSkin},
 		{platform.ModCtrl, players.AmarokSkin},
+		{platform.ModCtrl, players.FancySkin},
 		{platform.ModCtrl, players.DefaultSkin},
-		{platform.ModCtrl | platform.ModShift, players.AmarokSkin},
+		{platform.ModCtrl | platform.ModShift, players.FancySkin},
 	} {
 		s.MainWindow().Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Mods: tc.mods})
 		a.PumpOnce()

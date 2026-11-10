@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codemodify/uitoolkit/platform"
+	"goframework.io/desktop-ui/platform"
 )
 
 // Classified's imported pledit.txt and viscolor.txt must affect the actual

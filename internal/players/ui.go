@@ -3,14 +3,14 @@ package players
 import (
 	"time"
 
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/app"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 // The pieces of interface every face shares.
@@ -57,7 +57,7 @@ const (
 // Everything is worked out from one side length rather than from b's own
 // width and height, so a glyph in a box that is not square is centred and
 // round rather than stretched into an oval.
-func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col paintengine2d.Color, weight float32) {
+func DrawGlyph(ctx *paint2d.Context, b paint2d.Rect, g Glyph, col paint2d.Color, weight float32) {
 	s := min(b.Dx(), b.Dy())
 	if s <= 0 || col.A <= 0 {
 		return
@@ -69,13 +69,13 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 	if weight <= 0 {
 		weight = max(s*0.1, 1)
 	}
-	fill := paintengine2d.Fill(col)
-	stroke := paintengine2d.StrokePaint(col, weight)
-	stroke.Stroke.Cap = paintengine2d.CapRound
-	stroke.Stroke.Join = paintengine2d.JoinRound
+	fill := paint2d.Fill(col)
+	stroke := paint2d.StrokePaint(col, weight)
+	stroke.Stroke.Cap = paint2d.CapRound
+	stroke.Stroke.Join = paint2d.JoinRound
 
 	tri := func(x, y, h float32, left bool) {
-		p := paintengine2d.NewPath()
+		p := paint2d.NewPath()
 		w := h * 0.86
 		if left {
 			p.MoveTo(x+w/2, y-h/2)
@@ -90,7 +90,7 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 		ctx.DrawPath(p, fill)
 	}
 	bar := func(x, y, w, h float32) {
-		ctx.DrawRect(paintengine2d.XYWH(x-w/2, y-h/2, w, h), fill)
+		ctx.DrawRect(paint2d.XYWH(x-w/2, y-h/2, w, h), fill)
 	}
 
 	switch g {
@@ -100,7 +100,7 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 		bar(cx-u*0.5, cy, u*0.52, u*1.9)
 		bar(cx+u*0.5, cy, u*0.52, u*1.9)
 	case GlyphStop:
-		ctx.DrawRect(paintengine2d.XYWH(cx-u*0.85, cy-u*0.85, u*1.7, u*1.7), fill)
+		ctx.DrawRect(paint2d.XYWH(cx-u*0.85, cy-u*0.85, u*1.7, u*1.7), fill)
 	case GlyphPrev:
 		tri(cx+u*0.35, cy, u*1.7, true)
 		bar(cx-u*0.82, cy, u*0.4, u*1.7)
@@ -108,7 +108,7 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 		tri(cx-u*0.35, cy, u*1.7, false)
 		bar(cx+u*0.82, cy, u*0.4, u*1.7)
 	case GlyphEject:
-		p := paintengine2d.NewPath()
+		p := paint2d.NewPath()
 		p.MoveTo(cx-u, cy+u*0.15)
 		p.LineTo(cx, cy-u)
 		p.LineTo(cx+u, cy+u*0.15)
@@ -118,7 +118,7 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 	case GlyphShuffle:
 		// Two lines that cross, with an arrow head on each: the mark every
 		// player settled on once shuffling was a button rather than a menu.
-		p := paintengine2d.NewPath()
+		p := paint2d.NewPath()
 		p.MoveTo(cx-u, cy-u*0.6)
 		p.LineTo(cx+u*0.35, cy+u*0.6)
 		p.MoveTo(cx-u, cy+u*0.6)
@@ -133,27 +133,27 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 		// exactly what a compact player's toggles are — all six land on the
 		// same three rows and read as a box with a dent in it.
 		r := u * 0.86
-		p := paintengine2d.NewPath()
-		p.AddArc(paintengine2d.Pt(cx, cy), r, r, -1.15, 5.5)
+		p := paint2d.NewPath()
+		p.AddArc(paint2d.Pt(cx, cy), r, r, -1.15, 5.5)
 		ctx.DrawPath(p, stroke)
 		tri(cx+r*0.42, cy-r*0.92, u*0.95, false)
 		if g == GlyphRepeatOne {
-			ctx.DrawRect(paintengine2d.XYWH(cx-weight/2, cy-u*0.4, weight, u*0.8), fill)
+			ctx.DrawRect(paint2d.XYWH(cx-weight/2, cy-u*0.4, weight, u*0.8), fill)
 		}
 	case GlyphList:
 		for i := float32(-1); i <= 1; i++ {
 			y := cy + i*u*0.7
-			ctx.DrawRect(paintengine2d.XYWH(cx-u, y-weight/2, weight, weight), fill)
-			ctx.DrawRect(paintengine2d.XYWH(cx-u*0.5, y-weight/2, u*1.5, weight), fill)
+			ctx.DrawRect(paint2d.XYWH(cx-u, y-weight/2, weight, weight), fill)
+			ctx.DrawRect(paint2d.XYWH(cx-u*0.5, y-weight/2, u*1.5, weight), fill)
 		}
 	case GlyphSliders:
 		for i := float32(-1); i <= 1; i++ {
 			x := cx + i*u*0.72
-			ctx.DrawRect(paintengine2d.XYWH(x-weight/2, cy-u, weight, u*2), fill)
+			ctx.DrawRect(paint2d.XYWH(x-weight/2, cy-u, weight, u*2), fill)
 			// The knob sits at a different height on each, so the mark
 			// reads as a set of faders rather than as three lines.
 			ky := cy + u*0.55*[]float32{-1, 0.35, -0.2}[int(i)+1]
-			ctx.DrawRect(paintengine2d.XYWH(x-u*0.42, ky-weight, u*0.84, weight*2), fill)
+			ctx.DrawRect(paint2d.XYWH(x-u*0.42, ky-weight, u*0.84, weight*2), fill)
 		}
 	case GlyphSkin:
 		// Two plates, one over the other: a picture laid on a control, which
@@ -161,8 +161,8 @@ func DrawGlyph(ctx *paintengine2d.Context, b paintengine2d.Rect, g Glyph, col pa
 		// top is solid, so the mark says which is which at any size.
 		side := u * 1.25
 		r := u * 0.28
-		ctx.DrawRoundRect(paintengine2d.XYWH(cx-u, cy-u, side, side), r, r, stroke)
-		ctx.DrawRoundRect(paintengine2d.XYWH(cx+u-side, cy+u-side, side, side), r, r, fill)
+		ctx.DrawRoundRect(paint2d.XYWH(cx-u, cy-u, side, side), r, r, stroke)
+		ctx.DrawRoundRect(paint2d.XYWH(cx+u-side, cy+u-side, side, side), r, r, fill)
 	}
 }
 
@@ -201,7 +201,7 @@ type GlyphButton struct {
 	// and a look the art has nothing for falls back to the face and the
 	// mark. [widgets.ToolButton.Shaper] is where the art says where it
 	// really is.
-	Art func(ctx *paintengine2d.Context, b paintengine2d.Rect, st style.ControlState) bool
+	Art func(ctx *paint2d.Context, b paint2d.Rect, st style.ControlState) bool
 }
 
 // NewGlyphButton is a transport button on the tool face.
@@ -221,7 +221,7 @@ func NewGlyphButton(g Glyph, label string, on func()) *GlyphButton {
 // otherwise the look's own face with the mark drawn on it. The focus ring is
 // drawn over whatever it paints by the button itself — a painter never gets
 // to leave the ring out.
-func (b *GlyphButton) paint(ctx *paintengine2d.Context, r paintengine2d.Rect, st style.ControlState) bool {
+func (b *GlyphButton) paint(ctx *paint2d.Context, r paint2d.Rect, st style.ControlState) bool {
 	lk := b.Look()
 	if b.Art != nil && b.Art(ctx, r, st) {
 		return true
@@ -229,7 +229,7 @@ func (b *GlyphButton) paint(ctx *paintengine2d.Context, r paintengine2d.Rect, st
 	if b.Push {
 		// A push face is a face at rest, so the auto-raise the tool face
 		// asks for is taken back off.
-		lk.DrawButton(ctx, r, st&^style.StateAutoRaise, "")
+		lk.DrawButton(ctx, r, st&^style.StateAutoRaise, style.ButtonDraw{})
 	} else {
 		lk.DrawToolButton(ctx, r, st, "", style.IconNone)
 	}
@@ -268,7 +268,7 @@ func (b *GlyphButton) SetGlyph(g Glyph, label string) {
 // glyph that guessed would be unreadable on whichever skin guessed wrong;
 // what it does instead is stay the label colour and let the *accent* carry
 // "this is switched on", which every skin here draws a dark face for.
-func GlyphInk(lk style.LookAndFeel, st style.ControlState) paintengine2d.Color {
+func GlyphInk(lk style.LookAndFeel, st style.ControlState) paint2d.Color {
 	pal := lk.Palette()
 	switch {
 	case st.Disabled():
@@ -309,7 +309,7 @@ func ScaledFace(f *style.Font, size float32) *style.Font {
 // baseline — and Font.Draw's origin is the *top of the em box*, not the
 // baseline, which is the thing that is easy to get wrong and looks like a
 // layout bug when it is.
-func DrawTextIn(ctx *paintengine2d.Context, f *style.Font, b paintengine2d.Rect, text string, col paintengine2d.Color, align style.Align) {
+func DrawTextIn(ctx *paint2d.Context, f *style.Font, b paint2d.Rect, text string, col paint2d.Color, align style.Align) {
 	if f == nil || text == "" {
 		return
 	}
@@ -325,7 +325,7 @@ func DrawTextIn(ctx *paintengine2d.Context, f *style.Font, b paintengine2d.Rect,
 	case style.AlignEnd:
 		x += b.Dx() - w
 	}
-	f.Draw(ctx, text, paintengine2d.Pt(x, b.Min.Y+(b.Dy()-f.Height())/2), col)
+	f.Draw(ctx, text, paint2d.Pt(x, b.Min.Y+(b.Dy()-f.Height())/2), col)
 }
 
 // DrawScrollingText paints one line that slides when it is wider than its
@@ -343,7 +343,7 @@ func DrawTextIn(ctx *paintengine2d.Context, f *style.Font, b paintengine2d.Rect,
 // clock, so the same moment is always the same picture: a screenshot is
 // comparable with the one before it, and the scroll does not speed up when
 // the window happens to repaint more often.
-func DrawScrollingText(ctx *paintengine2d.Context, lk style.LookAndFeel, f *style.Font, b paintengine2d.Rect, text string, col paintengine2d.Color, pos time.Duration) {
+func DrawScrollingText(ctx *paint2d.Context, lk style.LookAndFeel, f *style.Font, b paint2d.Rect, text string, col paint2d.Color, pos time.Duration) {
 	if f == nil || text == "" || b.Dx() <= 0 {
 		return
 	}
@@ -357,7 +357,7 @@ func DrawScrollingText(ctx *paintengine2d.Context, lk style.LookAndFeel, f *styl
 	y := b.Min.Y + (b.Dy()-f.Height())/2
 	ctx.Save()
 	ctx.ClipRect(b)
-	f.Draw(ctx, text, paintengine2d.Pt(b.Min.X-over*float32(k), y), col)
+	f.Draw(ctx, text, paint2d.Pt(b.Min.X-over*float32(k), y), col)
 	ctx.Restore()
 }
 
@@ -479,7 +479,7 @@ type DragsWindow struct {
 	widget.Base
 	// Win is the window a press moves. A nil one is inert, which is what a
 	// component wants before it has been given its window.
-	Win *app.Window
+	Win *ui.Window
 }
 
 // MousePress starts a window move and takes the press. Only the primary
@@ -498,7 +498,7 @@ func (d *DragsWindow) MousePress(e widget.MouseEvent) bool {
 // CaptionAt says this component is part of the window's own face, so a
 // frame that asks — the toolkit's, on a window it draws — treats a press
 // here as one on the caption.
-func (d *DragsWindow) CaptionAt(paintengine2d.Point) bool { return true }
+func (d *DragsWindow) CaptionAt(paint2d.Point) bool { return true }
 
 // ---- the analyser ------------------------------------------------------------
 
@@ -522,18 +522,18 @@ type AnalyserView struct {
 	// device pixel, for the skin whose art is drawn that way.
 	Pixelated bool
 	// Tint overrides the accent the bars are drawn in.
-	Tint paintengine2d.Color
+	Tint paint2d.Color
 	// Ramp, when set, colours a bar by height instead: the analyser's
 	// height is cut into len(Ramp) equal rows, bottom first, and a bar is
 	// each row's colour where it reaches it. It is the green-to-red climb
 	// of an analyser of this era, which a single tint cannot draw.
-	Ramp []paintengine2d.Color
+	Ramp []paint2d.Color
 	// PeakTint overrides the markers' colour.
-	PeakTint paintengine2d.Color
+	PeakTint paint2d.Color
 	// Drag is the window a press on the analyser moves: an analyser sunk
 	// into a player's display is part of its face, and says so itself
 	// rather than leaving it to whatever is underneath.
-	Drag *app.Window
+	Drag *ui.Window
 }
 
 // MousePress moves the window when the analyser is part of a face.
@@ -546,7 +546,7 @@ func (a *AnalyserView) MousePress(e widget.MouseEvent) bool {
 }
 
 // CaptionAt: an analyser in a player's display is face, not content.
-func (a *AnalyserView) CaptionAt(paintengine2d.Point) bool { return a.Drag != nil }
+func (a *AnalyserView) CaptionAt(paint2d.Point) bool { return a.Drag != nil }
 
 // NewAnalyserView shows s.
 func NewAnalyserView(s *Spectrum) *AnalyserView {
@@ -556,13 +556,13 @@ func NewAnalyserView(s *Spectrum) *AnalyserView {
 	return a
 }
 
-func (a *AnalyserView) Measure(c layout.Constraints) paintengine2d.Point {
-	return c.Constrain(paintengine2d.Pt(style.Dip(a.Look(), 76), style.Dip(a.Look(), 32)))
+func (a *AnalyserView) Measure(c layout.Constraints) paint2d.Point {
+	return c.Constrain(paint2d.Pt(style.Dip(a.Look(), 76), style.Dip(a.Look(), 32)))
 }
 
-func (a *AnalyserView) Arrange(r paintengine2d.Rect) { a.SetBounds(r) }
+func (a *AnalyserView) Arrange(r paint2d.Rect) { a.SetBounds(r) }
 
-func (a *AnalyserView) Paint(ctx *paintengine2d.Context) {
+func (a *AnalyserView) Paint(ctx *paint2d.Context) {
 	if a.Spectrum == nil || a.Spectrum.Bands() == 0 {
 		return
 	}
@@ -590,10 +590,10 @@ func (a *AnalyserView) Paint(ctx *paintengine2d.Context) {
 		return
 	}
 	per := float32(a.Spectrum.Bands()) / float32(n)
-	fill := paintengine2d.Fill(col)
-	peak := paintengine2d.Fill(style.Mix(col, lk.Palette().Text, 0.55))
+	fill := paint2d.Fill(col)
+	peak := paint2d.Fill(style.Mix(col, lk.Palette().Text, 0.55))
 	if a.PeakTint.A > 0 {
-		peak = paintengine2d.Fill(a.PeakTint)
+		peak = paint2d.Fill(a.PeakTint)
 	}
 	radius := float32(0)
 	if !a.Pixelated {
@@ -620,7 +620,7 @@ func (a *AnalyserView) Paint(ctx *paintengine2d.Context) {
 		if h >= 1 && len(a.Ramp) > 0 {
 			a.paintRamp(ctx, b, x, barW, h)
 		} else if h >= 1 {
-			r := paintengine2d.XYWH(x, b.Max.Y-h, barW, h)
+			r := paint2d.XYWH(x, b.Max.Y-h, barW, h)
 			if radius > 0 {
 				ctx.DrawRoundRectCorners(r, radius, radius, 0, 0, fill)
 			} else {
@@ -636,13 +636,13 @@ func (a *AnalyserView) Paint(ctx *paintengine2d.Context) {
 			py, pt = snap(py), snap(pt)
 		}
 		if py >= b.Min.Y && py+pt <= b.Max.Y {
-			ctx.DrawRect(paintengine2d.XYWH(x, py, barW, pt), peak)
+			ctx.DrawRect(paint2d.XYWH(x, py, barW, pt), peak)
 		}
 	}
 }
 
 // paintRamp draws one bar of height h as rows of the ramp's colours.
-func (a *AnalyserView) paintRamp(ctx *paintengine2d.Context, b paintengine2d.Rect, x, w, h float32) {
+func (a *AnalyserView) paintRamp(ctx *paint2d.Context, b paint2d.Rect, x, w, h float32) {
 	n := len(a.Ramp)
 	row := b.Dy() / float32(n)
 	top := b.Max.Y - h
@@ -656,7 +656,7 @@ func (a *AnalyserView) paintRamp(ctx *paintengine2d.Context, b paintengine2d.Rec
 			break
 		}
 		y0 = max(y0, top)
-		ctx.DrawRect(paintengine2d.XYWH(x, y0, w, y1-y0), paintengine2d.Fill(a.Ramp[k]))
+		ctx.DrawRect(paint2d.XYWH(x, y0, w, y1-y0), paint2d.Fill(a.Ramp[k]))
 	}
 }
 
@@ -696,7 +696,7 @@ func snap(v float32) float32 {
 // agree — an X11 window's size was device pixels and a Wayland toplevel's
 // logical, so the same strip had to ask for 481 on one and 275 on the
 // other — and platform converts at its own boundary now.
-func WindowSize(a *app.Application, w, h int) (int, int) {
+func WindowSize(a *ui.Application, w, h int) (int, int) {
 	return max(w, 1), max(h, 1)
 }
 
@@ -706,7 +706,7 @@ func WindowSize(a *app.Application, w, h int) (int, int) {
 // fixed says the window's proportions *are* the design rather than a
 // starting point: the desktop is told it may not be resized at all, so
 // there is no resize band anywhere on its edge.
-func OpenSized(a *app.Application, opts platform.WindowOptions, w, h int, fixed bool) (*app.Window, error) {
+func OpenSized(a *ui.Application, opts platform.WindowOptions, w, h int, fixed bool) (*ui.Window, error) {
 	opts.Width, opts.Height = WindowSize(a, w, h)
 	if fixed {
 		opts.Sizing = platform.SizingFixed
@@ -752,7 +752,7 @@ func (p *Pulse) SetClock(now func() time.Time) {
 // Start begins waking on win's timer. Calling it twice is a no-op, so a
 // player that starts the pulse whenever it starts playing need not track
 // whether it is already running.
-func (p *Pulse) Start(win *app.Window) {
+func (p *Pulse) Start(win *ui.Window) {
 	if p == nil || p.stop != nil || win == nil {
 		return
 	}

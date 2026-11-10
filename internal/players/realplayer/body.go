@@ -3,19 +3,20 @@ package realplayer
 import (
 	"fmt"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/paintengine2d"
-	"github.com/codemodify/uitoolkit/a11y"
-	"github.com/codemodify/uitoolkit/layout"
-	"github.com/codemodify/uitoolkit/platform"
-	"github.com/codemodify/uitoolkit/style"
-	"github.com/codemodify/uitoolkit/widget"
-	"github.com/codemodify/uitoolkit/widgets"
+	"goframework.io/desktop-ui-skins"
+	"goframework.io/desktop-ui-widgets"
+	"goframework.io/desktop-ui/a11y"
+	"goframework.io/desktop-ui/layout"
+	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/style"
+	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 type body struct {
 	widget.Base
 	p            *Player
-	slots        *widget.Slots
+	slots        *skins.Slots
 	buttons      map[string]*players.GlyphButton
 	queue        *queuePane
 	eq           *eqPane
@@ -25,7 +26,7 @@ type body struct {
 }
 
 func newBody(p *Player) *body {
-	b := &body{p: p, slots: widget.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), visualOn: true}
+	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), visualOn: true}
 	b.Init(b)
 	b.SetManagesChildren(true)
 	b.SetAccessibleName("RealPlayer Music Player")
@@ -113,16 +114,16 @@ func (b *body) sync() {
 	b.canvas.sync()
 	b.Invalidate()
 }
-func (b *body) Measure(c layout.Constraints) paintengine2d.Point {
+func (b *body) Measure(c layout.Constraints) paint2d.Point {
 	sz, _ := b.slots.Measure(b.Look(), c)
 	return sz
 }
-func (b *body) Arrange(r paintengine2d.Rect) {
+func (b *body) Arrange(r paint2d.Rect) {
 	b.SetBounds(r)
 	b.slots.Arrange(b.Look(), b.LocalBounds())
-	canvas, _ := style.SkinSlotRect(b.Look(), LayoutMain, "canvas", b.LocalBounds())
-	eq, _ := style.SkinSlotRect(b.Look(), LayoutMain, "equalizer", b.LocalBounds())
-	queue, _ := style.SkinSlotRect(b.Look(), LayoutMain, "playlist", b.LocalBounds())
+	canvas, _ := skins.SkinSlotRect(b.Look(), LayoutMain, "canvas", b.LocalBounds())
+	eq, _ := skins.SkinSlotRect(b.Look(), LayoutMain, "equalizer", b.LocalBounds())
+	queue, _ := skins.SkinSlotRect(b.Look(), LayoutMain, "playlist", b.LocalBounds())
 	if !b.queue.Visible() {
 		canvas.Min.X = queue.Min.X
 		eq.Min.X = queue.Min.X
@@ -133,15 +134,15 @@ func (b *body) Arrange(r paintengine2d.Rect) {
 	b.canvas.Arrange(canvas)
 	b.eq.Arrange(eq)
 }
-func (b *body) Paint(ctx *paintengine2d.Context) {
+func (b *body) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
-	style.DrawSkinLayout(lk, ctx, box, LayoutMain)
-	at := func(slot string) paintengine2d.Rect { r, _ := style.SkinSlotRect(lk, LayoutMain, slot, box); return r }
+	skins.DrawSkinLayout(lk, ctx, box, LayoutMain)
+	at := func(slot string) paint2d.Rect { r, _ := skins.SkinSlotRect(lk, LayoutMain, slot, box); return r }
 	f := players.ScaledFace(lk.Font(), style.Dip(lk, 11))
-	players.DrawTextIn(ctx, players.ScaledFace(lk.BoldFont(), style.Dip(lk, 12)), at("title"), "Music Player", paintengine2d.White, style.AlignStart)
-	players.DrawTextIn(ctx, f, at("location.label"), "Location:", paintengine2d.Black, style.AlignStart)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.BoldFont(), style.Dip(lk, 12)), at("title"), "Music Player", paint2d.White, style.AlignStart)
+	players.DrawTextIn(ctx, f, at("location.label"), "Location:", paint2d.Black, style.AlignStart)
 	r := at("location")
-	ctx.DrawRect(r, paintengine2d.Fill(paintengine2d.White))
+	ctx.DrawRect(r, paint2d.Fill(paint2d.White))
 	drawBevel(ctx, r, false)
 	track := b.p.Transport.Track()
 	location := track.Path
@@ -151,12 +152,12 @@ func (b *body) Paint(ctx *paintengine2d.Context) {
 	if b.p.Transport.List.Len() == 0 {
 		location = "Open a music file"
 	}
-	players.DrawTextIn(ctx, f, r.Inset(style.Dip(lk, 3)), location, paintengine2d.Black, style.AlignStart)
+	players.DrawTextIn(ctx, f, r.Inset(style.Dip(lk, 3)), location, paint2d.Black, style.AlignStart)
 	status := b.p.Host.StatusText()
 	if b.p.Host.Model.Error == "" && b.p.Transport.List.Len() > 0 {
 		status = b.p.Transport.State.String() + " · " + status
 	}
-	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), at("status"), status, ink(lk, "info", paintengine2d.RGB(0, 1, 0)), style.AlignStart)
+	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 10)), at("status"), status, ink(lk, "info", paint2d.RGB(0, 1, 0)), style.AlignStart)
 	length := "--:--"
 	if b.p.Transport.Length() > 0 {
 		length = players.Clock(b.p.Transport.Length())
@@ -165,10 +166,10 @@ func (b *body) Paint(ctx *paintengine2d.Context) {
 	if track.Bitrate > 0 {
 		bitrate = fmt.Sprintf("%d kbps", track.Bitrate/1000)
 	}
-	players.DrawTextIn(ctx, f, at("clock"), players.Clock(b.p.Transport.Pos)+" / "+length+"  "+bitrate, ink(lk, "info", paintengine2d.RGB(0, 1, 0)), style.AlignEnd)
+	players.DrawTextIn(ctx, f, at("clock"), players.Clock(b.p.Transport.Pos)+" / "+length+"  "+bitrate, ink(lk, "info", paint2d.RGB(0, 1, 0)), style.AlignEnd)
 }
 func (b *body) appearances(from widget.Component) {
-	b.p.Host.ContextMenu(from, widget.DeviceOrigin(from).Add(paintengine2d.Pt(0, from.Bounds().Dy())))
+	b.p.Host.ContextMenu(from, widget.DeviceOrigin(from).Add(paint2d.Pt(0, from.Bounds().Dy())))
 }
 func (b *body) menu(kind string, from widget.Component) {
 	h, t, p := b.p.Host, b.p.Transport, b.p
@@ -191,7 +192,7 @@ func (b *body) menu(kind string, from widget.Component) {
 		info.Disabled = true
 		items = []*widgets.MenuItem{info, widgets.Item("Backend settings…", h.OpenSettings)}
 	}
-	widgets.ShowContextMenu(from, widget.DeviceOrigin(from).Add(paintengine2d.Pt(0, from.Bounds().Dy())), items...)
+	widgets.ShowContextMenu(from, widget.DeviceOrigin(from).Add(paint2d.Pt(0, from.Bounds().Dy())), items...)
 }
 func (b *body) MousePress(e widget.MouseEvent) bool {
 	if e.Button == platform.ButtonRight {
