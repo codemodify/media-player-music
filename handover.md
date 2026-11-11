@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-10, commit c64f45b plus the move to rack.Group, uncommitted)
+# Handover: media-player-music (as of 2026-11-11, commit 9d94e8f)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -271,6 +271,32 @@ system-dbus in the KWin audit test and the tray probe.
    vfs-watch for library folders, logging, config.
 
 Ask the owner before starting any of these, and commit only when asked.
+
+
+## goframework round, 2026-11-11 (R66, R33, R34): 51cc616, 9d94e8f
+- internal/players/standard/body.go and internal/players/fancy/body.go
+  import `desktop-ui/fonts/jetbrainsmono`: the default face's clock and
+  countdown and Fancy's clock are drawn in the monospaced face
+  (`lk.MonoFont()`), and since R66 JetBrains Mono is only in a program that
+  imports it. (The player also gets it through desktop-ui-themes-all, whose
+  Amiga look now imports it, but the faces say it themselves.) The winamp
+  faces draw their clock in the skin's LED digits and their text in the
+  skin's pixel font, so the winamp pictures do not depend on it.
+- R33: nothing left in code; the only spelled names are the shell command
+  lines in the comments of three ignore-tagged probes
+  (tools/probes/font_fallback_regressions_test.go, unicode_song_titles.go,
+  font_complex_0238.go), where a Go constant cannot stand.
+- R34: internal/players/toolkit.go's desktop-ui-themes-all import tagged
+  `R28` (themes on demand would let the player link fewer engines).
+- Not changed, for later: tools/probes' widget_regressions_0235_test.go and
+  font_fallback_regressions_test.go use `style.FamilyMono` as a bundled
+  family; they are ignore-tagged framework probes, run by hand, and need
+  the jetbrainsmono import if they are run again.
+- Checked: vet on linux, windows, darwin, freebsd; `go test -race` of
+  internal/players, standard, fancy and internal/skins/... (the generated
+  packs, winamp-silver's included, match the bundle: TestGeneratedPacksMatchBundle).
+  Not run: internal/playback, internal/shell, internal/players/winamp
+  (players, the shell, the bus); the native window tests stay skipped.
 
 ## the owner, 2026-11-11
 - The regenerated winamp-silver pictures are kept.
