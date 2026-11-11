@@ -132,7 +132,7 @@ Results on 2026-11-09 (linux/amd64, go 1.27.3, workspace d445be2):
 | `main.go` | flags (`-skin`, `-scale`, `-audio-backend`, `-shot`, `-at`), the theme, `style.SetFallback`, the app icon, signals, `-shot` mode |
 | `text_complex*.go` | the `font_complex` / `font_emoji` tags bring in desktop-ui-text-complex (shaping, bidi, colour emoji) |
 | `internal/playback` | the external engines: `Engine`, mpv (Unix socket or Windows named pipe via go-winio), VLC (local HTTP), MPlayer, mpg123; discovery (`catalog.go`), process control, the spectrum read from an mpv FIFO |
-| `internal/players` | the shared model and pieces of interface (host, queue view, settings, skins list, `toolkit.go` imports platform-all and themes-all); `racked.go` the four panelled faces' shared Group pieces (windows named once, a layout saved and restored); one package for each face: `standard` (default), `winamp`, `headspace`, `xbox`, `halflife2`, `fandom`, `itunes`, `series9`, `vlc`, `realplayer`, `amarok`, `fancy`; `playertest` holds the test helpers |
+| `internal/players` | the shared model and pieces of interface (host, queue view, settings, skins list, `toolkit.go` imports platform-all and the breeze, luna and win95 engines); `racked.go` the four panelled faces' shared Group pieces (windows named once, a layout saved and restored); one package for each face: `standard` (default), `winamp`, `headspace`, `xbox`, `halflife2`, `fandom`, `itunes`, `series9`, `vlc`, `realplayer`, `amarok`, `fancy`; `playertest` holds the test helpers |
 | `internal/shell` | the running app: face switcher, session (saved queue, position, skin, backend), playback wiring, files and drops, tray |
 | `internal/skins` | skin registration; `plans/` (the Go plans `skingen` renders), `packs/` (the generated skin.json and art), `sources/` (original archives and credits), `cmd/generate` |
 | `internal/appicon` | logo.png made into window and tray icons |
@@ -226,7 +226,7 @@ b98836d), and the X11 preference dropped.
 `widget`, `a11y`, `layout` packages), desktop-ui-widgets,
 desktop-ui-skins, desktop-ui-skingen, desktop-ui-rack,
 desktop-ui-text-complex (behind tags), desktop-ui-platform-all,
-desktop-ui-themes-all, graphics-paint2d, graphics-paint2d-gpu-gles;
+desktop-ui-themes-breeze, -luna and -win95 (R28), graphics-paint2d, graphics-paint2d-gpu-gles;
 system-dbus in the KWin audit test and the tray probe.
 
 **Could use but does not yet:**
@@ -288,6 +288,15 @@ Ask the owner before starting any of these, and commit only when asked.
   font_complex_0238.go), where a Go constant cannot stand.
 - R34: internal/players/toolkit.go's desktop-ui-themes-all import tagged
   `R28` (themes on demand would let the player link fewer engines).
+- R28 (closed 2026-11-11): toolkit.go imports only the engines the player
+  draws with: breeze (the default face's breeze-night, `Themed`), win95
+  and luna (the skins built over win95 and luna, internal/skins/plans).
+  A look.json naming any other pack shows the nearest pack the player
+  has (`style.NearestThemePack`), logged once by desktop-ui (diag, area
+  `theme`). 40.65 to 34.10 MB, stripped, linux/amd64, CGO_ENABLED=0.
+  Checked: vet on 4 systems; `go test -race ./...` passes, internal/skins
+  with `-timeout 40m` as below. JetBrains Mono no longer comes through
+  the Amiga engine: the faces import it themselves (R66).
 - Not changed, for later: tools/probes' widget_regressions_0235_test.go and
   font_fallback_regressions_test.go use `style.FamilyMono` as a bundled
   family; they are ignore-tagged framework probes, run by hand, and need

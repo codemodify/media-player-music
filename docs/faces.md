@@ -544,9 +544,10 @@ launch has an empty queue. The public options are `-skin` with any ID in the tab
 `-scale`, `-audio-backend`, `-shot` and `-at`. Run `./media-player-music -help` for all choices.
 desktop-ui chooses window systems and theme engines by import, not by build
 tag: [internal/players/toolkit.go](../internal/players/toolkit.go) imports
-desktop-ui-platform-all and every era engine (desktop-ui-themes-all), which
+desktop-ui-platform-all and the engines the player draws with (Breeze for
+the default face, Windows 95 and Luna for the skins built over them), which
 every face, the shell and main link, so tests see the same set as the
-program. All skin packs are embedded in every build.
+program. A look.json naming another pack shows the nearest one of these. All skin packs are embedded in every build.
 
 ```bash
 go build .
