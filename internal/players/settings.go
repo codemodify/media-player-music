@@ -20,17 +20,19 @@ type Settings struct {
 	Presentations map[string]PresentationState          `json:"presentations,omitempty"`
 }
 
-// NormalizeAudioBackend resolves old preferences to the default backend.
-// Availability is checked separately; an installed program may disappear
-// without changing the user's saved choice.
+// NormalizeAudioBackend resolves old preferences to the default backend:
+// the built-in engine (goframework's audio-playback), which needs nothing
+// installed. A saved choice of an installed program is kept. Availability
+// is checked separately; an installed program may disappear without
+// changing the user's saved choice.
 func NormalizeAudioBackend(id string) (string, bool) {
 	switch id {
-	case "", "mpv":
-		return "mpv", true
-	case "vlc", "mplayer", "mpg123":
+	case "", "builtin":
+		return "builtin", true
+	case "mpv", "vlc", "mplayer", "mpg123":
 		return id, true
 	default:
-		return "mpv", false
+		return "builtin", false
 	}
 }
 

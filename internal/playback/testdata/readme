@@ -1,0 +1,14 @@
+Sound files for the built-in engine's tests (builtin_test.go), copied as
+they are from goframework's own test files (The Free License, as the
+framework):
+
+- lame-mono22.mp3: goframework.io/codecs-audio-mp3 testdata at 9b46e67,
+  made by its testdata/make.sh: LAME, 32 kbit/s, from one second of a
+  signal ffmpeg's aevalsrc computes (tones, a chirp, bursts, a little
+  noise) at 22.05 kHz mono. No recording of anyone's.
+- ffmpeg-mono22.aac: goframework.io/codecs-audio-aac testdata at bd85214,
+  made by its testdata/make.sh: ffmpeg's AAC LC encoder at 32 kbit/s, ADTS,
+  from the same kind of signal at 22.05 kHz mono.
+
+The tagged MP3s (ID3v2.2, 2.3, 2.4, ID3v1, a PNG cover) are made by the
+tests themselves from lame-mono22.mp3's frames.

@@ -16,9 +16,10 @@ type BackendInfo struct {
 	Capabilities Capabilities
 }
 
-// Detect discovers programs without starting them or changing the machine.
-// PATH wins, followed by common application installation locations. A program
-// being found is distinct from it successfully starting its control interface.
+// Detect lists the built-in engine, always there, then discovers programs
+// without starting them or changing the machine. PATH wins, followed by
+// common application installation locations. A program being found is
+// distinct from it successfully starting its control interface.
 func Detect() []BackendInfo { return detectFor(runtime.GOOS, exec.LookPath, os.Getenv) }
 
 func detectFor(goos string, look func(string) (string, error), env func(string) string) []BackendInfo {
@@ -28,6 +29,7 @@ func detectFor(goos string, look func(string) (string, error), env func(string) 
 		{ID: "mplayer", Name: "MPlayer", Capabilities: Capabilities{Seek: true, Formats: "Most audio formats supported by the installed build"}},
 		{ID: "mpg123", Name: "mpg123", Capabilities: Capabilities{Seek: true, Formats: "MP3 / MPEG audio"}},
 	}
+	builtin := BackendInfo{ID: BuiltinID, Name: "Built-in", Available: true, Capabilities: BuiltinCapabilities}
 	for i := range definitions {
 		info := &definitions[i]
 		candidates := []string{info.ID}
@@ -58,10 +60,13 @@ func detectFor(goos string, look func(string) (string, error), env func(string) 
 			}
 		}
 	}
-	return definitions
+	return append([]BackendInfo{builtin}, definitions...)
 }
 
 func Open(info BackendInfo) (Engine, error) {
+	if info.ID == BuiltinID {
+		return NewBuiltin(BuiltinOptions{}), nil
+	}
 	if !info.Available || info.Executable == "" {
 		return nil, fmt.Errorf("%s is not installed; install it and refresh Settings", info.Name)
 	}

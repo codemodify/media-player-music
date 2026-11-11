@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/tags"
 	"goframework.io/desktop-ui-widgets"
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
@@ -164,8 +165,16 @@ func musicTrack(path string) (players.Track, error) {
 	if err := f.Close(); err != nil {
 		return players.Track{}, fmt.Errorf("close music file: %w", err)
 	}
-	title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	return players.Track{Path: path, Title: title, Kind: "audio"}, nil
+	track := players.Track{Path: path, Title: strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), Kind: "audio"}
+	// The library shows a file's ID3 tags before it plays (MP3 and AAC);
+	// the file's name where it has none.
+	if info, ok := tags.Read(path); ok {
+		if info.Title != "" {
+			track.Title = info.Title
+		}
+		track.Artist, track.Album = info.Artist, info.Album
+	}
+	return track, nil
 }
 
 func mediaExtension(ext string) bool {

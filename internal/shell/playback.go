@@ -8,6 +8,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/tags"
 )
 
 // Transport intent and queue state belong to the frontend. Engine adapters
@@ -116,6 +117,7 @@ func (s *Shell) syncPlayback() {
 	}
 	if newLoad {
 		m.Error = ""
+		s.loadCover(path)
 		p.generation++
 		p.path, p.list, p.index, p.state, p.position = path, t.List, t.List.Index(), t.State, t.Pos
 		p.loading, p.seeking, p.seekOnLoad, p.loadPosition = true, t.Pos > 0, t.Pos, t.Pos
@@ -171,6 +173,37 @@ func (s *Shell) syncAudioFilters() bool {
 	p.dsp = intended
 	return true
 }
+
+// loadCover reads the front cover of the file starting off the UI thread,
+// for the now-playing display (ID3's APIC: MP3 and AAC files).
+func (s *Shell) loadCover(path string) {
+	m := s.Host.Model
+	if m.CoverPath == path {
+		return
+	}
+	m.CoverPath, m.Cover = path, nil
+	if !tags.Tagged(path) {
+		return
+	}
+	s.backendWorkers.Add(1)
+	go func() {
+		defer s.backendWorkers.Done()
+		cover := tags.Cover(path, coverSide)
+		if cover == nil {
+			return
+		}
+		s.App.Post(func() {
+			if !s.closed && s.Host.Model.CoverPath == path {
+				s.Host.Model.Cover = cover
+				s.refresh()
+			}
+		})
+	}()
+}
+
+// coverSide is the largest side a cover is kept at: the display draws it
+// at about 100 pixels, 175 at 1.75 times.
+const coverSide = 256
 
 func (s *Shell) resetSpectrum() { s.playback.spectrumEpoch++; s.Host.Model.Spectrum.Reset() }
 

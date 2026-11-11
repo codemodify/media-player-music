@@ -1,7 +1,11 @@
 # media-player-music
 
 A Go desktop music player with one default layout and twenty-one optional skins.
-Real audio playback uses a selected external mpv, VLC, MPlayer or mpg123 process. Headless screenshots and
+Audio plays in the player itself by default, on goframework's audio-playback
+(MP3, AAC, FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF, AU: nothing to install),
+or through a selected external mpv, VLC, MPlayer or mpg123 process. The playlist
+shows MP3 and AAC files' ID3 tags as they are added, and the default layout
+shows the playing file's front cover. Headless screenshots and
 presentation tests retain invented tracks and a synthetic analyser for
 repeatable pictures.
 
@@ -185,10 +189,11 @@ framework is in goframework's one ledger, `app-requests.md` in the workspace
 
 ## Build and run
 
-Install at least one of **mpv**, **VLC**, **MPlayer** or **mpg123**;
-none is bundled. Detection checks `PATH`, then common macOS Homebrew/app
-locations and Windows installation directories. mpv is the initial default
-and uses Unix socket IPC on Linux/macOS or named pipes on Windows.
+The **Built-in** engine needs nothing installed and is the initial default
+(a saved choice of an installed program is kept). For other formats install
+**mpv**, **VLC**, **MPlayer** or **mpg123**; none is bundled. Detection checks
+`PATH`, then common macOS Homebrew/app locations and Windows installation
+directories. mpv uses Unix socket IPC on Linux/macOS or named pipes on Windows.
 
 ```bash
 go build .
@@ -211,7 +216,7 @@ go build .
 ./media-player-music -skin amarok            # KDE 3 Amarok 1.4 appearance
 ./media-player-music -skin fancy             # blue shaped panels and compact player
 ./media-player-music -scale 1.75              # fractional display scale
-./media-player-music -audio-backend vlc       # choose an installed backend
+./media-player-music -audio-backend vlc       # choose an installed backend (or builtin)
 ./media-player-music -skin default -shot /tmp/player-shots -at 1m37s
 ```
 
@@ -329,6 +334,7 @@ formats produce an immediate explanation recommending mpv or VLC.
 
 | Backend | Playback features |
 | --- | --- |
+| Built-in | goframework's audio-playback in the player's process: MP3 (and MP1/MP2), AAC (LC, HE-AAC, HE-AAC v2; .aac and M4A), FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF and AU, also in MP4 and Matroska. Transport, volume (mpv's curve), balance, ten-band/preamp EQ and the live visualizer on every system. |
 | mpv | Broad format support, transport, volume, balance and ten-band/preamp EQ. Live visualizer on Linux/macOS; Windows visualizer is unavailable. |
 | VLC | Broad format support, transport and volume. VLC 3 reports coarse duration/position and has coarse seeking. |
 | MPlayer | Formats supported by its installed build, transport and volume. |
@@ -336,7 +342,7 @@ formats produce an immediate explanation recommending mpv or VLC.
 
 VLC, MPlayer and mpg123 currently have no app EQ, balance or live visualizer.
 Settings states those limits, unsupported controls are disabled, and saved
-EQ/balance adjustments remain available when returning to mpv. Changing
+EQ/balance adjustments remain available when returning to Built-in or mpv. Changing
 backend preserves the queue and restores track, position, playback state and
 volume after the replacement process starts successfully.
 The VLC adapter keeps the latest slider value during fast drags so obsolete

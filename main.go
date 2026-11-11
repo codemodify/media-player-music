@@ -32,7 +32,7 @@ func run() error {
 	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $"+platform.EnvScale+")")
 	shot := flag.String("shot", "", "paint posed screenshots into this directory and exit")
 	at := flag.Duration("at", 97*time.Second, "playback position in screenshot mode")
-	audioBackend := flag.String("audio-backend", "", "installed playback program: mpv, vlc, mplayer, mpg123 (default: last used, or mpv)")
+	audioBackend := flag.String("audio-backend", "", "playback engine: builtin (in the player, nothing to install), or an installed program: mpv, vlc, mplayer, mpg123 (default: last used, or builtin)")
 	flag.Parse()
 	log.SetFlags(0)
 	log.SetPrefix("media-player-music: ")

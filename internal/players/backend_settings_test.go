@@ -24,6 +24,7 @@ func backendSettingsFixture() BackendSettingsState {
 		{ID: "vlc", Name: "VLC", Available: false},
 		{ID: "mplayer", Name: "MPlayer", Executable: "/usr/bin/mplayer", Available: true},
 		{ID: "mpg123", Name: "mpg123", Executable: "/usr/bin/mpg123", Available: true},
+		{ID: "builtin", Name: "Built-in", Available: true, Equalizer: true, Balance: true, Visualizer: true},
 	}}
 }
 
@@ -40,7 +41,7 @@ func TestBackendPreferencePreservesMissingProgramsAndHistoricalSessions(t *testi
 		{`{"skin":"winamp"}`, ""},
 		{`{"skin":"winamp","audio_backend":"mplayer"}`, "mplayer"},
 		{`{"skin":"winamp","audio_backend":"mpg123"}`, "mpg123"},
-		{`{"skin":"winamp","audio_backend":"unknown"}`, "mpv"},
+		{`{"skin":"winamp","audio_backend":"unknown"}`, "builtin"},
 	} {
 		if err := os.WriteFile(SettingsPath(), []byte(tc.input), 0600); err != nil {
 			t.Fatal(err)
@@ -53,8 +54,11 @@ func TestBackendPreferencePreservesMissingProgramsAndHistoricalSessions(t *testi
 	if err != nil || strings.Contains(string(data), "audio_backend") {
 		t.Fatal("historical zero preference should remain omitted")
 	}
-	if id, ok := NormalizeAudioBackend(""); id != "mpv" || !ok {
-		t.Fatal("missing preference must resolve to mpv")
+	if id, ok := NormalizeAudioBackend(""); id != "builtin" || !ok {
+		t.Fatal("missing preference must resolve to the built-in engine")
+	}
+	if id, ok := NormalizeAudioBackend("mpv"); id != "mpv" || !ok {
+		t.Fatal("a saved mpv must stay mpv")
 	}
 	if _, err := os.Stat(filepath.Dir(SettingsPath())); err != nil {
 		t.Fatal(err)
@@ -137,7 +141,7 @@ func TestBackendSettingsControlsHaveDistinctSelectionAvailabilityAndRealActions(
 			}
 			state.Backends[3].Executable = "/opt/very-long-installed-program-directory/another-very-long-directory/player-binaries/mpg123"
 			p.SetState(state)
-			for _, size := range [][2]int{{BackendSettingsWidth, BackendSettingsHeight}, {560, 440}} {
+			for _, size := range [][2]int{{BackendSettingsWidth, BackendSettingsHeight}, {BackendSettingsMinWidth, BackendSettingsMinHeight}} {
 				w.SetSize(size[0], size[1])
 				a.PumpOnce()
 				for _, row := range p.rows {
@@ -197,7 +201,7 @@ func TestBackendAvailabilityMarksAreGreenAndRedVectorPaths(t *testing.T) {
 
 func TestMPG123FormatScopeIsVisibleBeforeAndAfterSelection(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
-		for _, size := range [][2]int{{BackendSettingsWidth, BackendSettingsHeight}, {560, 440}} {
+		for _, size := range [][2]int{{BackendSettingsWidth, BackendSettingsHeight}, {BackendSettingsMinWidth, BackendSettingsMinHeight}} {
 			t.Run(fmt.Sprintf("%gx/%dx%d", scale, size[0], size[1]), func(t *testing.T) {
 				t.Setenv(style.ThemeEnv, Themed)
 				a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})

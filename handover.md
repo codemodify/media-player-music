@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-11, commit 9d94e8f)
+# Handover: media-player-music (as of 2026-11-11, R36 adopted; see the last section)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -26,9 +26,10 @@ default interface (a 920 × 560 window) and twenty-one optional skins.
 They are called "faces" in the code: eleven Winamp skins with compact
 snapping panels; Windows Media Player's Headspace, Xbox, Half Life 2,
 Fandom and Series 9; iTunes 4 with its MiniPlayer; VLC 0.8, RealPlayer 8
-and Amarok 1.4; and Fancy. Audio is played by an **external program**
-(mpv, VLC, MPlayer or mpg123), driven over its IPC or remote-control
-protocol; nothing is decoded in-process. `-shot DIR` paints posed
+and Amarok 1.4; and Fancy. Audio is played **in the player's process** by
+default (the "Built-in" engine on goframework's audio-playback, since
+2026-11-11, R36), or by an **external program** (mpv, VLC, MPlayer or
+mpg123), driven over its IPC or remote-control protocol. `-shot DIR` paints posed
 screenshots headless with synthetic tracks and starts no audio backend.
 
 Until recently the app was built on the owner's uitoolkit
@@ -131,11 +132,12 @@ Results on 2026-11-09 (linux/amd64, go 1.27.3, workspace d445be2):
 | --- | --- |
 | `main.go` | flags (`-skin`, `-scale`, `-audio-backend`, `-shot`, `-at`), the theme, `style.SetFallback`, the app icon, signals, `-shot` mode |
 | `text_complex*.go` | the `font_complex` / `font_emoji` tags bring in desktop-ui-text-complex (shaping, bidi, colour emoji) |
-| `internal/playback` | the external engines: `Engine`, mpv (Unix socket or Windows named pipe via go-winio), VLC (local HTTP), MPlayer, mpg123; discovery (`catalog.go`), process control, the spectrum read from an mpv FIFO |
+| `internal/playback` | `builtin.go`: the default engine, in-process on goframework's audio-playback (R36, 2026-11-11); the external engines: `Engine`, mpv (Unix socket or Windows named pipe via go-winio), VLC (local HTTP), MPlayer, mpg123; discovery (`catalog.go`), process control, the spectrum read from an mpv FIFO |
 | `internal/players` | the shared model and pieces of interface (host, queue view, settings, skins list, `toolkit.go` imports platform-all and the breeze, luna and win95 engines); `racked.go` the four panelled faces' shared Group pieces (windows named once, a layout saved and restored); one package for each face: `standard` (default), `winamp`, `headspace`, `xbox`, `halflife2`, `fandom`, `itunes`, `series9`, `vlc`, `realplayer`, `amarok`, `fancy`; `playertest` holds the test helpers |
 | `internal/shell` | the running app: face switcher, session (saved queue, position, skin, backend), playback wiring, files and drops, tray |
 | `internal/skins` | skin registration; `plans/` (the Go plans `skingen` renders), `packs/` (the generated skin.json and art), `sources/` (original archives and credits), `cmd/generate` |
 | `internal/appicon` | logo.png made into window and tray icons |
+| `internal/tags` | ID3 tags (codecs-container-id3) for the playlist and the front cover for the default layout's display; `tagstest` writes ID3 tags for tests |
 | `tools/testenv.sh` | runs a command with no display and a private session bus |
 | `docs/faces.md`, `docs/screenshots/` | the long-form design and the README's pictures |
 
@@ -222,7 +224,10 @@ b98836d), and the X11 preference dropped.
 
 ## goframework modules
 
-**Used now** (imported in code): desktop-ui (its `platform`, `style`,
+**Used now** (imported in code): audio-playback (with `/all`: every
+container and codec, MP3 and AAC among them), audio-dsp (eq, spectrum),
+system-audio-spec (and audiotest in tests), codecs-container-id3 (R36,
+2026-11-11); desktop-ui (its `platform`, `style`,
 `widget`, `a11y`, `layout` packages), desktop-ui-widgets,
 desktop-ui-skins, desktop-ui-skingen, desktop-ui-rack,
 desktop-ui-text-complex (behind tags), desktop-ui-platform-all,
@@ -233,11 +238,8 @@ system-dbus in the KWin audit test and the tray probe.
 
 | Module | For |
 | --- | --- |
-| `audio-playback` | gapless in-process playback, written for this player (media.md, "the players"). It has the equaliser, ReplayGain, balance, volume and an analyser tap. It would replace the external mpv, VLC, MPlayer and mpg123 engines, their IPC and the mpv spectrum FIFO in `internal/playback` |
-| `audio-dsp` | `eq`, `replaygain`, `spectrum`, `resample`: the equaliser bands and analyser the faces draw, now faked or done through mpv's filters |
-| `codecs-audio-*` | flac, vorbis, opus, alac, g711 (and the spec). There is no mp3 or aac module yet (media.md lists mp3 next; aac is the owner's decision). mpg123 and MP3 files need the external engine until then |
-| `codecs-container-*` | ogg, mp4 (M4A), matroska, wav, aiff, au: opening the files, and their tags for the playlist and library |
-| `system-audio-*` | the sound output (pulse, alsa, oss, sndio, macos, windows; `-all`), behind audio-playback |
+| `audio-dsp/replaygain` | ReplayGain (audio-playback's Settings.ReplayGain): the built-in engine plays without it, as mpv did by default; a setting for it would be the app's |
+| `codecs-container-*` | the tags of FLAC, Ogg and M4A files for the playlist before they play (now ID3 only, `internal/tags`; the built-in engine reports every format's tags as it plays) |
 | `system-dbus` | MPRIS (media keys, desktop "now playing"); it already replaced godbus in the tests and probes |
 | `system-process-*` | starting and watching the external engines, while they stay (`internal/playback/process.go`, `command_*.go` use os/exec) |
 | `vfs-watch`, `vfs` | watching music folders for the iTunes library and dropped folders |
@@ -260,7 +262,8 @@ system-dbus in the KWin audit test and the tray probe.
    playback, the tray on a private bus).
 4. **Re-shoot the pictures** with `-shot` for every skin at 1× and 1.75×
    and compare them with the uitoolkit pictures, as was done at a5ebdc8.
-5. **Move playback into the framework** (ask the owner: it changes what
+5. **Done 2026-11-11 (R36):** the built-in engine is the default. Left
+   from this step: whether the external engines stay (the owner's call). Was: **Move playback into the framework** (ask the owner: it changes what
    the app is). Add an audio-playback engine beside the external ones,
    behind the same `playback.Engine`, using system-audio-* for output,
    audio-dsp for the equaliser and analyser, and codecs-container-* for
@@ -309,3 +312,69 @@ Ask the owner before starting any of these, and commit only when asked.
 
 ## the owner, 2026-11-11
 - The regenerated winamp-silver pictures are kept.
+
+## goframework round, 2026-11-11 (R36 adopted: MP3, AAC, ID3; R94, R95 found)
+The owner approved adopting R36's audio half. What changed:
+- **The built-in engine** (`internal/playback/builtin.go`, `BuiltinID`
+  "builtin", "Built-in" in Settings, listed first by `Detect`): an
+  `Engine` on audio-playback, `audio-playback/all` imported (MP3, MP1/MP2,
+  AAC LC/HE-AAC/HE-AAC v2 in .aac and M4A, FLAC, Ogg Vorbis/Opus, ALAC,
+  WAV, AIFF, AU, in MP4 and Matroska too) and codecs-container-id3 (the
+  stream's Tags: now-playing title, artist, album). One audio-playback
+  player per load (the frontend owns the queue; a load replaces the
+  player, so nothing of an old generation reaches the new one); commands
+  run in order on the engine's goroutine, off the UI thread. Volume is
+  the slider's cube (mpv's curve), balance and the ten-band EQ are
+  audio-playback's, the analyser's 48 bands are normalised from -60 dB as
+  mpv's were, positions every 50 ms. Sound through system-audio-all.
+- **The default**: `NormalizeAudioBackend("")` and unknown ids give
+  "builtin" (was mpv); a saved choice of mpv, VLC, MPlayer or mpg123 is
+  kept. `-audio-backend builtin`. Settings' window is 550 high (min 520)
+  for five rows. **For the owner:** new installs play in-process; the
+  external engines remain for formats the framework lacks (WMA, APE,
+  Musepack, WavPack...).
+- **ID3 for the library and now-playing** (`internal/tags`): files added
+  (`musicTrack`) show their ID3 title, artist and album at once (MP3, MP2,
+  MP1, .mpga, .aac; v1, v1.1, v2.2, 2.3, 2.4, joined as id3.Read joins
+  them), the file name where there is none; the playing file's front cover
+  (APIC; PIC in 2.2; JPEG or PNG by the standard library, at most 4096 x
+  4096, kept at 256 px) is read off the UI thread at each load
+  (`Shell.loadCover`, `Model.Cover`/`CoverPath`) and drawn at the right of
+  the default layout's display (`standard/body.go`); the skins do not draw
+  it.
+- **R94 (framework bug, row in app-requests.md)**: codecs-container-id3
+  reads an ID3v2.4 frame of 128 bytes or more by its plain size, so the
+  cover and every frame after it are lost. Workaround `readV24` in
+  internal/tags/tags.go (tagged R94): the tag read again with its frames'
+  sizes written as plain integers. Drop it once the module is fixed. The
+  built-in engine's now-playing tags come through the same reader (the
+  Tags registry), so a 2.4 tag's frames after a big one are missing there
+  until the fix; the library's are right.
+- **R95 (framework gap)**: audio-playback cannot start a track at a time
+  (Jump from the start; Seek before the track opens is ErrNoTrack; no
+  Seeked for a seek before anything is heard). Workaround in builtin.go
+  (tagged R95): a load at a position plays paused, Seek retried each 50 ms
+  (5 s at most), then plays as asked; the engine reports UpdateSeeked
+  itself.
+- go.mod: nothing to drop (go-winio is mpv's Windows pipe, x/image the skin
+  plans' BMPs, go-text through desktop-ui-text-complex; no audio or tag
+  library was there).
+- Tests: internal/playback/builtin_test.go (audiotest's sound system in a
+  synctest bubble, no device: MP3 and AAC played to their end with
+  positions, 48 bands, sound in the system; ID3 tags as metadata; a load at
+  600 ms paused then played on; seek, replacement, a missing file, stop,
+  Close), testdata/lame-mono22.mp3 and ffmpeg-mono22.aac copied from the
+  framework's own test files (testdata/readme); internal/tags/tags_test.go
+  (every ID3 version, v1 joined, PNG and JPEG covers scaled, the R94 case),
+  internal/shell/tags_test.go (a folder's tracks with their tags),
+  standard_test.go TestNowPlayingDisplayDrawsTheCover, the backend settings
+  tests with five rows at the new minimum.
+- Size, stripped, linux/amd64, CGO_ENABLED=0: 34.10 to 36.55 MB.
+- Checked: vet on linux, windows, darwin, freebsd; `go test -race` of the
+  root, internal/appicon, internal/tags/..., internal/players, the eleven
+  faces but winamp, internal/skins/...; internal/playback with `-run
+  'TestBuiltin|TestDiscovery'` and internal/shell with `-run` of the file
+  tests (the rest of both start mpv or the shell's playback); the built-in
+  engine was never run against a real sound device (tests only).
+- Next: drop R94's and R95's workarounds when the framework answers; the
+  owner on the external engines' future and on a ReplayGain setting.

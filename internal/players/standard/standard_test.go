@@ -14,6 +14,7 @@ import (
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
 	"goframework.io/desktop-ui/widget"
+	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) { os.Exit(playertest.Main(m)) }
@@ -423,5 +424,34 @@ func TestEqualiserPresetsWorkThroughTheToolkitMenu(t *testing.T) {
 	}
 	if p.Equaliser.Preset != "Full bass" || p.body.eq.bands[0].Value != 9 {
 		t.Fatal("preset selection did not update the equaliser and faders")
+	}
+}
+
+// The file's front cover (ID3's APIC, read by the shell) is drawn at the
+// display's right while its track plays, and nothing there otherwise.
+func TestNowPlayingDisplayDrawsTheCover(t *testing.T) {
+	a, p := open(t, 1)
+	p.Transport.List = players.NewPlaylist(players.Track{Path: "/music/a.mp3", Title: "Harbour Lights", Kind: "audio"}, players.Track{Path: "/music/b.mp3", Title: "Beacon", Kind: "audio"})
+	cover := paint2d.NewImage(8, 8)
+	for i := 0; i < len(cover.Pix); i += 4 {
+		cover.Pix[i+2], cover.Pix[i+3] = 255, 255
+	}
+	cover.Touch()
+	p.Host.Model.Cover, p.Host.Model.CoverPath = cover, "/music/a.mp3"
+	a.PumpOnce()
+	d := p.body.main.display
+	b := d.LocalBounds()
+	blue := func() bool {
+		image := paint2d.NewImage(int(b.Dx()), int(b.Dy()))
+		d.Paint(paint2d.NewContext(image))
+		c := image.NRGBAAt(int(b.Dx()-b.Dy()/2), int(b.Dy()/2))
+		return c.B > 200 && c.R < 40 && c.G < 40
+	}
+	if !blue() {
+		t.Fatal("the cover was not drawn")
+	}
+	p.Transport.List.Advance(1)
+	if blue() {
+		t.Fatal("another track's cover was drawn")
 	}
 }

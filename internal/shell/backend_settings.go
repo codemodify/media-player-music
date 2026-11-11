@@ -80,7 +80,7 @@ func (s *Shell) openSettings() {
 			s.settingsWindow.Activate()
 			return
 		}
-		w, err := players.OpenSized(s.App, platform.WindowOptions{Title: "Music Player Settings", Role: platform.RoleDialog, Center: true, Owner: s.MainWindow().Surface(), Headless: s.opts.Headless, Decorations: platform.DecorationsServer, MinWidth: 560, MinHeight: 440}, 600, 470, false)
+		w, err := players.OpenSized(s.App, platform.WindowOptions{Title: "Music Player Settings", Role: platform.RoleDialog, Center: true, Owner: s.MainWindow().Surface(), Headless: s.opts.Headless, Decorations: platform.DecorationsServer, MinWidth: players.BackendSettingsMinWidth, MinHeight: players.BackendSettingsMinHeight}, players.BackendSettingsWidth, players.BackendSettingsHeight, false)
 		if err != nil {
 			s.backendError = err.Error()
 			s.Host.Model.Error = err.Error()

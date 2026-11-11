@@ -262,8 +262,19 @@ func (d *display) Paint(ctx *paint2d.Context) {
 			detail += fmt.Sprintf("%d kHz", t.Rate)
 		}
 	}
-	players.DrawTextIn(ctx, players.ScaledFace(lk.TitleFont(), dip(23)), paint2d.XYWH(pad, dip(9), b.Dx()-2*pad, dip(30)), title, pal.Text, style.AlignStart)
-	players.DrawTextIn(ctx, lk.Font(), paint2d.XYWH(pad, dip(42), b.Dx()-2*pad, dip(20)), detail, pal.TextMuted, style.AlignStart)
+	textW := b.Dx() - 2*pad
+	if cover := d.p.Host.Model.NowPlayingCover(); cover != nil && d.p.Transport.List.Len() > 0 {
+		// The file's front cover (ID3's APIC) at the display's right, its
+		// shape kept, the text beside it.
+		side := b.Dy() - 2*dip(10)
+		scale := min(side/float32(cover.Width), side/float32(cover.Height))
+		w, h := float32(cover.Width)*scale, float32(cover.Height)*scale
+		box := paint2d.XYWH(b.Dx()-dip(10)-side+(side-w)/2, dip(10)+(side-h)/2, w, h)
+		ctx.DrawImageRect(cover, paint2d.XYWH(0, 0, float32(cover.Width), float32(cover.Height)), box)
+		textW = max(0, textW-side-dip(10))
+	}
+	players.DrawTextIn(ctx, players.ScaledFace(lk.TitleFont(), dip(23)), paint2d.XYWH(pad, dip(9), textW, dip(30)), title, pal.Text, style.AlignStart)
+	players.DrawTextIn(ctx, lk.Font(), paint2d.XYWH(pad, dip(42), textW, dip(20)), detail, pal.TextMuted, style.AlignStart)
 }
 func (d *display) Describe(n *a11y.Node) {
 	n.Role, n.Name = a11y.RoleLabel, d.p.Transport.Track().Label()

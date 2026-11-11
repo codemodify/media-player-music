@@ -14,7 +14,10 @@ import (
 
 const (
 	BackendSettingsWidth  = 600
-	BackendSettingsHeight = 470
+	BackendSettingsHeight = 550
+	// The smallest the settings window is made: five backends' rows fit.
+	BackendSettingsMinWidth  = 560
+	BackendSettingsMinHeight = 520
 )
 
 // BackendInfo describes installed playback programs without making the UI
@@ -223,6 +226,9 @@ func (r *backendSettingsRow) setInfo(info BackendInfo, selected, busy bool) {
 	path := "Not found on PATH"
 	if info.Available {
 		installed, path = "Available", info.Executable
+		if info.ID == "builtin" {
+			path = "Plays in the player itself: nothing to install"
+		}
 	}
 	r.installed.SetText(installed)
 	r.executable.SetText(path)

@@ -29,6 +29,18 @@ type Model struct {
 	// these capabilities without changing the saved EQ or balance values.
 	BackendLimited                                    bool
 	BackendEqualizer, BackendBalance, BackendSpectrum bool
+	// Cover is the front cover of the file at CoverPath (its ID3 APIC
+	// picture), for the now-playing display; nil when it has none.
+	Cover     *paint2d.Image
+	CoverPath string
+}
+
+// NowPlayingCover returns the cover of the track playing, if it has one.
+func (m *Model) NowPlayingCover() *paint2d.Image {
+	if m == nil || m.Cover == nil || m.Transport == nil || m.CoverPath == "" || m.CoverPath != m.Transport.Track().Path {
+		return nil
+	}
+	return m.Cover
 }
 
 func NewModel() *Model {
