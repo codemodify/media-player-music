@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-11, R36 adopted; see the last section)
+# Handover: media-player-music (as of 2026-11-12, R94 and R95 adopted; see the last section)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -378,3 +378,34 @@ The owner approved adopting R36's audio half. What changed:
   engine was never run against a real sound device (tests only).
 - Next: drop R94's and R95's workarounds when the framework answers; the
   owner on the external engines' future and on a ReplayGain setting.
+
+## goframework round, 2026-11-12 (R94 and R95 adopted, workarounds gone)
+- **R94** fixed in codecs-container-id3 9c85ebc (frameSize4's precedence:
+  an ID3v2.4 frame of 128 bytes or more was taken at its plain size). The
+  same bug was in codecs-audio-mp3's own ID3v2 skip (c85724a): an MP3 whose
+  tag's size was 128 bytes or more had that tag unseen, its now-playing
+  text unread through the Tags registry, and one behind a tag past 64 kB
+  (a big cover) did not open at all in the built-in engine. `readV24` is
+  gone from internal/tags/tags.go: `id3.Read` alone, the R94 case of
+  tags_test.go (a 2.4 APIC then TALB, ID3v1 joined) passing on it.
+- **R95** answered by audio-playback 61e7390: `JumpAt(index, at)` starts a
+  track at a time (the stream opening on it), and a Seek right after a
+  load seeks the track loaded though it has not opened; Seeked comes for
+  the first track heard from a time. builtin.go: a load is
+  `JumpAt(0, Position)` (then Pause when asked paused); OpSeek is one
+  `Seek`; UpdateSeeked comes from the player's Seeked event, matched to the
+  last seek's time and carrying its epoch (it comes while paused too, the
+  stream playing silence from the new place). The paused-until-open
+  start, the 50 ms Seek retries and the 5 s give-up are gone.
+- Tests: internal/playback TestBuiltinSeeksBeforeTheTrackOpens (a seek
+  right after a load: one UpdateSeeked of its epoch at 800 ms, heard from
+  there); TestBuiltinLoadsAtAPositionPausedThenPlays and the rest pass as
+  they were.
+- Checked: vet on linux, windows, darwin, freebsd; `go test -race` of
+  internal/tags/..., internal/playback with `-run
+  'TestBuiltin|TestDiscovery'`, internal/shell with `-run
+  TestLibraryTracksCarryTheirID3Tags`, internal/players/standard. Not run:
+  the player, real sound devices, the rest of internal/playback and
+  internal/shell (they start mpv or the shell's playback).
+- Next: the owner on the external engines' future and on a ReplayGain
+  setting.

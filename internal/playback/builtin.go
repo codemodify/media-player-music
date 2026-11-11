@@ -68,15 +68,14 @@ type builtinLoad struct {
 	generation uint64
 	player     *inproc.Player
 	epoch      atomic.Int64
-	started    time.Time
+	// The last seek asked (the load's position too): its time and epoch,
+	// for the player's Seeked event, which comes as it is heard.
+	seekAt    atomic.Int64 // a time.Duration
+	seekEpoch atomic.Int64
 	// The worker's own.
-	paused      bool          // what the frontend asked
-	seekPending bool          // a seek waiting for the track to open
-	seekAt      time.Duration // its time
-	seekEpoch   int64
-	seekTarget  time.Duration // the last seek made, until it is heard
-	seekSince   time.Time
-	bitrate     atomic.Bool // a bitrate was reported
+	seekTarget time.Duration // the last seek made, until it is heard
+	seekSince  time.Time
+	bitrate    atomic.Bool // a bitrate was reported
 }
 
 // NewBuiltin returns a built-in engine; nothing is opened until a load.
@@ -89,7 +88,7 @@ func NewBuiltin(opts BuiltinOptions) *Builtin {
 	return b
 }
 
-func (b *Builtin) Events() <-chan Update       { return b.broker.out }
+func (b *Builtin) Events() <-chan Update      { return b.broker.out }
 func (b *Builtin) Capabilities() Capabilities { return BuiltinCapabilities }
 
 // Apply queues a command for the engine's goroutine; it never waits.
@@ -157,7 +156,7 @@ func (b *Builtin) execute(command Command) error {
 	switch command.Op {
 	case OpLoad:
 		b.drop()
-		l := &builtinLoad{generation: command.Generation, paused: command.Paused, started: time.Now()}
+		l := &builtinLoad{generation: command.Generation}
 		l.epoch.Store(command.Epoch)
 		p, err := inproc.New(inproc.Settings{System: b.opts.System, Name: b.opts.Name, Events: func(event inproc.Event) { b.event(l, event) }})
 		if err != nil {
@@ -172,34 +171,30 @@ func (b *Builtin) execute(command Command) error {
 		p.Add(inproc.File(command.Path))
 		b.load = l
 		b.current.Store(l)
-		if command.Position > 0 {
-			// R95: audio-playback starts a track from its start only, and
-			// Seek needs the track opened. Keep it silent until the seek
-			// is made (trySeek), then play as asked.
-			l.seekPending, l.seekAt, l.seekEpoch = true, command.Position, command.Epoch
+		// The track from the load's position (0 its start), Seeked
+		// reported as it is heard there.
+		at := max(0, command.Position)
+		l.seekAt.Store(int64(at))
+		l.seekEpoch.Store(command.Epoch)
+		if at > 0 {
+			l.seekTarget, l.seekSince = at, time.Now()
 		}
-		if err := p.Play(); err != nil {
+		if err := p.JumpAt(0, at); err != nil {
 			b.drop()
 			return err
 		}
-		if l.paused || l.seekPending {
+		if command.Paused {
 			p.Pause()
 		}
-		b.trySeek(l)
 		return nil
 	case OpPause:
 		if !b.mine(command) {
 			return nil
 		}
-		l := b.load
-		l.paused = command.Paused
-		if l.seekPending {
-			return nil
-		}
 		if command.Paused {
-			return l.player.Pause()
+			return b.load.player.Pause()
 		}
-		return l.player.Play()
+		return b.load.player.Play()
 	case OpStop:
 		if command.Generation == 0 || b.mine(command) {
 			b.drop()
@@ -214,12 +209,16 @@ func (b *Builtin) execute(command Command) error {
 		}
 		l := b.load
 		l.epoch.Store(command.Epoch)
-		l.seekAt, l.seekEpoch = command.Position, command.Epoch
-		if !l.seekPending {
-			l.seekPending = true
-			l.started = time.Now()
+		l.seekAt.Store(int64(command.Position))
+		l.seekEpoch.Store(command.Epoch)
+		// The track the load opens, though it has not opened yet.
+		if err := l.player.Seek(command.Position); err != nil {
+			if errors.Is(err, inproc.ErrNoTrack) {
+				return nil // it failed to open: its own event says so
+			}
+			return err
 		}
-		b.trySeek(l)
+		l.seekTarget, l.seekSince = command.Position, time.Now()
 		return nil
 	case OpVolume:
 		b.volume = max(0, min(1, command.Volume))
@@ -259,27 +258,6 @@ func (b *Builtin) filters(p *inproc.Player) error {
 	return p.SetEqualizer(float64(b.dsp.Preamp), eq.Graphic(gains))
 }
 
-// trySeek makes a pending seek once the track is open, then plays as the
-// frontend asked. A track that never opens gives up after five seconds:
-// its failure is reported by its own event.
-func (b *Builtin) trySeek(l *builtinLoad) {
-	if !l.seekPending {
-		return
-	}
-	err := l.player.Seek(l.seekAt)
-	if errors.Is(err, inproc.ErrNoTrack) && time.Since(l.started) < 5*time.Second {
-		return
-	}
-	l.seekPending = false
-	if err == nil {
-		l.seekTarget, l.seekSince = l.seekAt, time.Now()
-		b.broker.offer(Update{Kind: UpdateSeeked, Generation: l.generation, Epoch: l.seekEpoch})
-	}
-	if !l.paused {
-		l.player.Play()
-	}
-}
-
 // drop closes the load's player.
 func (b *Builtin) drop() {
 	if b.load == nil {
@@ -294,10 +272,6 @@ func (b *Builtin) drop() {
 func (b *Builtin) poll() {
 	l := b.load
 	if l == nil {
-		return
-	}
-	b.trySeek(l)
-	if l.seekPending {
 		return
 	}
 	position := l.player.Position()
@@ -347,6 +321,12 @@ func (b *Builtin) event(l *builtinLoad, event inproc.Event) {
 		b.broker.offer(Update{Kind: UpdateAudioFormat, Generation: l.generation, Info: TrackInfo{SampleRate: info.Format.Rate, Channels: info.Format.Channels, Bitrate: info.Bitrate}})
 		if meta := (TrackInfo{Title: info.Tags["title"], Artist: info.Tags["artist"], Album: info.Tags["album"]}); meta != (TrackInfo{}) {
 			b.broker.offer(Update{Kind: UpdateMetadata, Generation: l.generation, Info: meta})
+		}
+	case inproc.Seeked:
+		// What the last seek asked is heard (one superseded before it was
+		// heard gives none).
+		if int64(event.At) == l.seekAt.Load() {
+			b.broker.offer(Update{Kind: UpdateSeeked, Generation: l.generation, Epoch: l.seekEpoch.Load(), Position: event.At})
 		}
 	case inproc.Ended:
 		b.broker.offer(Update{Kind: UpdateEnded, Generation: l.generation})

@@ -75,7 +75,7 @@ func TestCoverIsJPEGOrPNGAndKeptSmall(t *testing.T) {
 	if err := jpeg.Encode(&data, picture, nil); err != nil {
 		t.Fatal(err)
 	}
-	// ID3v2.4 with a frame past 127 bytes, and one after it (R94).
+	// ID3v2.4 with a frame past 127 bytes, and one after it (goframework R94, read by codecs-container-id3 itself).
 	path := write(t, "big.mp3", tagstest.V2(4,
 		tagstest.Frame{ID: "APIC", Data: tagstest.Picture(4, "image/jpeg", data.Bytes())},
 		tagstest.Frame{ID: "TALB", Data: tagstest.Text(4, "Field Notes")}), frames, tagstest.V1("", "Ruth Alder", ""))

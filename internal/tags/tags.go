@@ -10,13 +10,11 @@ package tags
 
 import (
 	"bytes"
-	"encoding/binary"
 	"image"
 	_ "image/jpeg" // covers are JPEG or PNG
 	_ "image/png"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	id3 "goframework.io/codecs-container-id3"
@@ -96,51 +94,5 @@ func read(path string) (*id3.Tag, bool) {
 	if err != nil {
 		return nil, false
 	}
-	if tag.Version == 4 {
-		// R94: codecs-container-id3 reads an ID3v2.4 frame of 128 bytes
-		// or more by a plain size, so a cover (and every frame after it)
-		// is lost. Read the tag again with its frames' sizes written as
-		// plain integers, which it reads right; ID3v1's frames as Read
-		// joins them.
-		if fixed := readV24(file); fixed != nil {
-			for _, frame := range tag.Frames {
-				if !slices.ContainsFunc(fixed.Frames, func(f id3.Frame) bool { return f.ID == frame.ID }) {
-					fixed.Frames = append(fixed.Frames, frame)
-				}
-			}
-			tag = fixed
-		}
-	}
 	return tag, true
-}
-
-// readV24 reads the ID3v2.4 tag at a file's start, its frames' syncsafe
-// sizes made plain first (R94).
-func readV24(file *os.File) *id3.Tag {
-	head := make([]byte, 10)
-	if _, err := file.ReadAt(head, 0); err != nil {
-		return nil
-	}
-	size := id3.Size(head)
-	if size == 0 || head[3] != 4 || head[5]&0xc0 != 0 || size > 64<<20 {
-		return nil // no 2.4 tag, or one unsynchronised or with an extended header: left as Read reads it
-	}
-	block := make([]byte, size)
-	if _, err := file.ReadAt(block, 0); err != nil {
-		return nil
-	}
-	for at := 10; at+10 <= len(block) && block[at] != 0; {
-		b := block[at+4 : at+8]
-		if (b[0]|b[1]|b[2]|b[3])&0x80 != 0 {
-			return nil
-		}
-		frame := int(b[0])<<21 | int(b[1])<<14 | int(b[2])<<7 | int(b[3])
-		binary.BigEndian.PutUint32(b, uint32(frame))
-		at += 10 + frame
-	}
-	tag, err := id3.Parse(block)
-	if err != nil {
-		return nil
-	}
-	return tag
 }

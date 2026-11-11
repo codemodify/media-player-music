@@ -175,6 +175,28 @@ func TestBuiltinLoadsAtAPositionPausedThenPlays(t *testing.T) {
 	})
 }
 
+// A seek right after a load, before the track has opened, is made as it
+// opens (goframework R95): one Seeked, of the seek's epoch, and the track
+// heard from there.
+func TestBuiltinSeeksBeforeTheTrackOpens(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		b, _ := builtinOn(t)
+		b.Apply(Command{Op: OpLoad, Generation: 5, Path: filepath.Join("testdata", "lame-mono22.mp3"), Epoch: 1})
+		b.Apply(Command{Op: OpSeek, Generation: 5, Position: 800 * time.Millisecond, Epoch: 2})
+		updates := collect(t, b, 5, UpdateSeeked, 5*time.Second)
+		if seeked, _ := find(updates, UpdateSeeked); seeked.Epoch != 2 || seeked.Position != 800*time.Millisecond {
+			t.Fatalf("the seek's report: %+v", seeked)
+		}
+		if u, ok := find(updates, UpdateError); ok {
+			t.Fatalf("an error: %+v", u)
+		}
+		updates = collect(t, b, 5, UpdatePosition, 5*time.Second)
+		if at := updates[len(updates)-1]; at.Position < 800*time.Millisecond {
+			t.Fatalf("after a seek to 800 ms: %+v", at)
+		}
+	})
+}
+
 func TestBuiltinSeekReplaceAndStop(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		b, _ := builtinOn(t)
