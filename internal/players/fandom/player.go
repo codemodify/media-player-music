@@ -49,9 +49,6 @@ type Player struct {
 	// are their members.
 	g            *rack.Group
 	iMain, iList int
-	// listSize is the restored playlist size, kept while the group
-	// settles (R21).
-	listSize players.HeldSize
 	// onClose is the application's word on closing the player (SetOnClose).
 	onClose        func() bool
 	utilityOwnerID string
@@ -122,7 +119,6 @@ func (p *Player) Close() {
 }
 func (p *Player) Pose(pos time.Duration) { p.Host.Pose(pos); p.Refresh() }
 func (p *Player) Advance(time.Duration) {
-	p.listSize.Keep(p.g)
 	p.configureUtilityWindows()
 	p.Refresh()
 }

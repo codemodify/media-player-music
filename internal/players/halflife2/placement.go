@@ -10,5 +10,5 @@ func (p *Player) CapturePlacement() map[string]players.WindowPlacement {
 // RestorePlacement keeps the fixed skin sizes, restores the resizable
 // playlist's, and puts back the saved places and bonds.
 func (p *Player) RestorePlacement(saved map[string]players.WindowPlacement) {
-	p.listSize = players.RestoreGroup(p.g, saved, p.iList, MinListW, MinListH)
+	players.RestoreGroup(p.g, saved, p.iList, MinListW, MinListH)
 }

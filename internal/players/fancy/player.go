@@ -55,9 +55,6 @@ type Player struct {
 	// g is the three panels; iMain, iEq and iList are their members.
 	g                 *rack.Group
 	iMain, iEq, iList int
-	// listSize is the restored playlist size, kept while the group
-	// settles (R21).
-	listSize players.HeldSize
 	// onClose is the application's word on closing the player (SetOnClose).
 	onClose func() bool
 }
@@ -159,7 +156,6 @@ func (p *Player) syncPanels() {
 }
 func (p *Player) Pose(pos time.Duration) { p.Host.Pose(pos); p.Refresh() }
 func (p *Player) Advance(time.Duration) {
-	p.listSize.Keep(p.g)
 	p.retryMode()
 	p.Refresh()
 }

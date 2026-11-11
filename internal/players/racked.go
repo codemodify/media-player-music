@@ -1,8 +1,6 @@
 package players
 
 import (
-	"time"
-
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-rack"
 )
@@ -71,12 +69,9 @@ func CaptureGroup(g *rack.Group) map[string]WindowPlacement {
 // another, and a bond the group refuses (one that would make a cycle, a
 // settings file edited by hand) leaves the panel loose where it was saved.
 // The fixed panels keep the face's sizes. Restored just after the group was
-// realised, the layout is kept past the window manager's own placement.
-//
-// It returns the size it gave the resizable member, for the face to keep
-// while the group settles (HeldSize.Keep).
-func RestoreGroup(g *rack.Group, saved map[string]WindowPlacement, resizable, minW, minH int) HeldSize {
-	var held HeldSize
+// realised, the layout is kept past the window manager's own placement, the
+// resizable member's size too (rack.Group.SetSize, R45).
+func RestoreGroup(g *rack.Group, saved map[string]WindowPlacement, resizable, minW, minH int) {
 	if placement, ok := saved[paneName(g, resizable)]; ok && (placement.Width > 0 || placement.Height > 0) {
 		box := g.Rack.Pane(resizable).Box
 		w, h := box.W, box.H
@@ -87,7 +82,6 @@ func RestoreGroup(g *rack.Group, saved map[string]WindowPlacement, resizable, mi
 			h = max(placement.Height, minH)
 		}
 		g.SetSize(resizable, w, h)
-		held = HeldSize{i: resizable, w: w, h: h, until: time.Now().Add(heldFor)}
 	}
 	// The saved bonds go back from the first member out, so a layout the
 	// user turned round (the playlist under the player, the equaliser under
@@ -140,50 +134,7 @@ func RestoreGroup(g *rack.Group, saved map[string]WindowPlacement, resizable, mi
 			g.Place(i, placement.X, placement.Y)
 		}
 	}
-	return held
 }
-
-// HeldSize is the size RestoreGroup gave a panel, kept while the group
-// settles.
-//
-// R21: rack.Group keeps the bonds and places declared before Realise, or
-// just after it, past the window manager's own placement, but not a size
-// declared with SetSize: as it settles it takes each window's size from the
-// desktop, so the first configure arriving late (the window mapped at the
-// size it opened at, after the program asked for the saved one) puts the
-// restored playlist back to its opening size. Group lacks a declared size
-// kept like a place (SetSize before Realise or while it settles, put back
-// as it settles); until it has one, the face puts the size back on its
-// clock for as long as the group may settle.
-type HeldSize struct {
-	i, w, h int
-	until   time.Time
-}
-
-// heldFor is how long a group may settle: rack's two seconds.
-const heldFor = 2 * time.Second
-
-// Keep puts the held size back on member i of g if its window lost it, for
-// as long as the group may still be settling.
-func (s *HeldSize) Keep(g *rack.Group) {
-	if s.until.IsZero() {
-		return
-	}
-	if time.Now().After(s.until) {
-		s.until = time.Time{}
-		return
-	}
-	w := g.Window(s.i)
-	if g.Mode() != rack.GroupWindows || w == nil || w.Closed() {
-		return
-	}
-	if width, height := w.Size(); width != s.w || height != s.h {
-		g.SetSize(s.i, s.w, s.h)
-	}
-}
-
-// Release lets the size go: the user is resizing the panel.
-func (s *HeldSize) Release() { s.until = time.Time{} }
 
 // paneName is member i's name in g's rack, or "" for none.
 func paneName(g *rack.Group, i int) string {

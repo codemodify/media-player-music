@@ -52,9 +52,6 @@ type Player struct {
 
 	// iMain, iEq, iList are the panels' members (-1 for one not opened).
 	iMain, iEq, iList int
-	// listSize is the restored playlist size, kept while the group
-	// settles (R21).
-	listSize players.HeldSize
 	// onClose is the application's word on closing the player (SetOnClose).
 	onClose        func() bool
 	utilityOwnerID string
@@ -217,7 +214,6 @@ func (p *Player) Pose(pos time.Duration) {
 // playlist caption's drop policy and the satellites' owner. The group keeps
 // the panels together itself, on the desktop's word.
 func (p *Player) Advance(time.Duration) {
-	p.listSize.Keep(p.g)
 	p.bindPlaylistCaption()
 	p.configureUtilityWindows()
 	p.refresh()

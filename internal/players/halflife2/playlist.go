@@ -211,6 +211,5 @@ func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	if e.Button != platform.ButtonLeft {
 		return false
 	}
-	g.p.listSize.Release()
 	return g.p.g.StartResize(g.p.iList, platform.EdgeBottom|platform.EdgeRight)
 }

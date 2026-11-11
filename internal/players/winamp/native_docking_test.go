@@ -37,9 +37,9 @@ func TestNativeDesktopMovesFollowAndRejoinWithoutPlaybackTicks(t *testing.T) {
 			opened := time.Now()
 			pumpNativeUtility(a.PumpOnce, p)
 			// The group puts its declared bonds back until the windows have
-			// stood still a fifth of a second (two seconds at most); a move
-			// before then is undone (R21: a press during the settle does not
-			// end it).
+			// stood still a fifth of a second (two seconds at most); a
+			// program's move before then is undone, while a press ends the
+			// settle for its member (R45). Wait for it, as a person would.
 			playertest.SettleGroup(t, a, p.g)
 			t.Logf("the group settled %v after opening", time.Since(opened).Round(10*time.Millisecond))
 			p.Transport.Stop()
