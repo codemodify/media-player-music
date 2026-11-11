@@ -7,6 +7,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"goframework.io/desktop-ui-widgets"
 	"goframework.io/desktop-ui/a11y"
+	_ "goframework.io/desktop-ui/fonts/jetbrainsmono" // the clock and countdown are drawn in the monospaced face (R66)
 	"goframework.io/desktop-ui/layout"
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
