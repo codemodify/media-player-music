@@ -271,3 +271,6 @@ system-dbus in the KWin audit test and the tray probe.
    vfs-watch for library folders, logging, config.
 
 Ask the owner before starting any of these, and commit only when asked.
+
+## the owner, 2026-11-11
+- The regenerated winamp-silver pictures are kept.
