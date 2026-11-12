@@ -70,7 +70,6 @@ type View struct {
 	help     *helpPage
 
 	track     *widgets.Label
-	times     *widgets.Label
 	progress  *widgets.ProgressBar
 	modes     *widgets.Label
 	transport *ui.Flex
@@ -113,12 +112,11 @@ func (thisRef *View) Build() ui.Widget {
 
 	thisRef.track = widgets.NewLabel("")
 	thisRef.track.SetTruncate(widgets.TruncateEnd)
-	thisRef.times = widgets.NewLabel("")
-	// R122: the bar draws its percent; the times are a label beside it
+	// the bar draws the times after it, in place of its percent (R122)
 	thisRef.progress = widgets.NewProgressBar()
 	thisRef.modes = widgets.NewLabel("")
 	thisRef.modes.SetTone(widgets.ToneMuted)
-	thisRef.transport = ui.Row(thisRef.times, thisRef.progress, thisRef.modes)
+	thisRef.transport = ui.Row(thisRef.progress, thisRef.modes)
 	thisRef.transport.SetGap(1)
 	thisRef.message = widgets.NewLabel("")
 	thisRef.message.SetTruncate(widgets.TruncateEnd)
@@ -307,7 +305,7 @@ func (thisRef *View) showTimes() {
 	} else {
 		thisRef.progress.SetProgress(0)
 	}
-	thisRef.times.SetText(text)
+	thisRef.progress.SetLabel(text)
 }
 
 // call calls the daemon off the UI goroutine, in the order the keys came,

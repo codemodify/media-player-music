@@ -438,8 +438,9 @@ func TestTransport(t *testing.T) {
 	h.service.Inject(playback.Update{Kind: playback.UpdateLoaded, Generation: h.service.Generation()})
 	h.service.Inject(playback.Update{Kind: playback.UpdateDuration, Generation: h.service.Generation(), Duration: 3 * time.Minute})
 	h.service.Inject(playback.Update{Kind: playback.UpdatePosition, Generation: h.service.Generation(), Position: 90 * time.Second})
-	h.shows("▶ ABBA - When I Kissed the Teacher", "1:30/3:00", "50%", "rep off")
-	h.matches(`vol \d+% rep off`)
+	h.shows("▶ ABBA - When I Kissed the Teacher", "1:30/3:00", "rep off")
+	h.hides("50%") // the bar's label is the times (R122)
+	h.matches(`1:30/3:00 vol \d+% rep off`)
 	volume := h.view.state.Volume
 	screenshot(t, h.driver, "tui-transport.txt")
 
