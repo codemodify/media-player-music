@@ -3,6 +3,7 @@ package shell
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/codemodify/media-player-music/internal/playback"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -108,7 +109,7 @@ func TestITunesModesKeepNativeMainPlaybackAndTray(t *testing.T) {
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
 	}
-	identify(s, 91)
+	loaded(s)
 	model, transport, queue := s.Host.Model, s.Host.Model.Transport, s.Host.Model.Transport.List
 	transport.Pos = 17 * time.Second
 	s.Host.SetVolume(.37)
@@ -118,7 +119,7 @@ func TestITunesModesKeepNativeMainPlaybackAndTray(t *testing.T) {
 	s.Start()
 	p := iTunesModes(t, s)
 	main, native, pulse := s.MainWindow(), s.MainWindow().Surface(), s.Pulse()
-	loads, stops := countCommand(backend, "loadfile"), countCommand(backend, "stop")
+	loads, stops := countCommand(backend, playback.OpLoad), countCommand(backend, playback.OpStop)
 	settle := func() { a.PumpOnce(); s.presentation.Advance(0) }
 	main.Move(420, 210)
 	main.SetSize(940, 650)
@@ -147,7 +148,7 @@ func TestITunesModesKeepNativeMainPlaybackAndTray(t *testing.T) {
 		if s.Host.Model != model || model.Transport != transport || transport.List != queue || transport.State != players.Playing || transport.Pos != 17*time.Second || transport.Volume != .37 || transport.Pan != -.4 || !model.PlaylistVisible || !model.EqualizerVisible {
 			t.Fatal("mode switch changed playback or requested area visibility")
 		}
-		if countCommand(backend, "loadfile") != loads || countCommand(backend, "stop") != stops || backend.closed || a.Quitting() {
+		if countCommand(backend, playback.OpLoad) != loads || countCommand(backend, playback.OpStop) != stops || backend.closed || a.Quitting() {
 			t.Fatal("mode switch interrupted the live backend/application")
 		}
 	}
@@ -209,7 +210,7 @@ func TestITunesSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t
 			}
 		}
 	}
-	if got := iTunesModes(t, s).CaptureState(); !reflect.DeepEqual(got, want) || countCommand(backend, "loadfile") != 0 {
+	if got := iTunesModes(t, s).CaptureState(); !reflect.DeepEqual(got, want) || countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatalf("family switch lost iTunes modes or started playback: %+v", got)
 	}
 	s.Close()
@@ -219,7 +220,7 @@ func TestITunesSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t
 	}
 	x, y, known := reopened.MainWindow().Position()
 	w, h := reopened.MainWindow().Size()
-	if !known || x != 420 || y != 210 || w != 430 || h != 62 || countCommand(nextBackend, "loadfile") != 0 || reopened.Host.Model.EqualizerVisible || reopened.Host.Model.PlaylistVisible {
+	if !known || x != 420 || y != 210 || w != 430 || h != 62 || countCommand(nextBackend, playback.OpLoad) != 0 || reopened.Host.Model.EqualizerVisible || reopened.Host.Model.PlaylistVisible {
 		t.Fatalf("restored MiniPlayer lost position, geometry or area preferences: %d,%d,%t %dx%d", x, y, known, w, h)
 	}
 	iTunesModes(t, reopened).SetMiniPlayer(false)

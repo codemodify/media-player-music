@@ -187,7 +187,6 @@ func (b *body) eqMenu() {
 		balance = append(balance, widgets.RadioItem(name, "balance", b.p.Transport.Pan == pan, func() { b.p.Host.SetPan(pan) }))
 	}
 	panMenu := widgets.Submenu("Balance", balance...)
-	panMenu.Disabled = !b.p.Host.BalanceAvailable()
 	items = append(items, panMenu, widgets.Sep())
 	for _, pr := range players.EqPresets() {
 		name := pr.Name
@@ -207,14 +206,11 @@ func (b *body) sync() {
 	b.pl.SetChecked(p.Host.Model.PlaylistVisible)
 	for _, c := range b.eqControls {
 		c.SetVisible(eq)
-		c.SetEnabled(p.Host.EqualizerAvailable())
 	}
 	for i, f := range b.bands {
 		f.Set(p.Equaliser.Gains[i])
-		f.Tip = p.Host.FeatureTip("EQ", p.Host.EqualizerAvailable())
 	}
 	b.visual.SetVisible(!eq)
-	b.visual.SetAccessibleDescription(p.Host.FeatureTip("Visualizer", p.Host.SpectrumAvailable()))
 	b.visual.Invalidate()
 	if !b.seek.Dragging() {
 		b.seek.Set(t.Fraction())

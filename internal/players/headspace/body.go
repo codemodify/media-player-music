@@ -241,21 +241,14 @@ func (b *body) sync() {
 	}
 	b.volume.Set(t.Volume * 100)
 	b.balance.Set(t.Pan)
-	b.balance.SetEnabled(p.Host.BalanceAvailable())
-	b.balance.Tip = p.Host.FeatureTip("Balance", p.Host.BalanceAvailable())
 	if !b.seek.Dragging() {
 		b.seek.Set(t.Fraction())
 	}
 	for i, f := range b.bands {
 		f.Set(p.Equaliser.Gains[i])
-		f.SetEnabled(p.Host.EqualizerAvailable())
-		f.Tip = p.Host.FeatureTip("EQ", p.Host.EqualizerAvailable())
 	}
-	b.buttons["eq.reset"].SetEnabled(p.Host.EqualizerAvailable())
-	b.buttons["eq.reset"].SetAccessibleDescription(p.Host.FeatureTip("EQ", p.Host.EqualizerAvailable()))
 	b.list.syncQueue()
 	b.list.Invalidate()
-	b.visual.SetAccessibleDescription(p.Host.FeatureTip("Visualizer", p.Host.SpectrumAvailable()))
 	b.visual.Invalidate()
 	b.Invalidate()
 }

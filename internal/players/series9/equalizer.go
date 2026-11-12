@@ -64,22 +64,13 @@ func (b *eqPane) Arrange(r paint2d.Rect) {
 	}
 }
 func (b *eqPane) sync() {
-	e, available := b.p.Equaliser, b.p.Host.EqualizerAvailable()
-	for _, slot := range []string{"on", "reset", "preset"} {
-		c := b.buttons[slot]
-		c.SetEnabled(available)
-		c.Tip = b.p.Host.FeatureTip("EQ", available)
-	}
+	e := b.p.Equaliser
 	b.buttons["on"].SetChecked(e.On)
 	for i, f := range b.bands {
-		f.SetEnabled(available)
-		f.Tip = b.p.Host.FeatureTip("EQ", available)
 		if !f.Dragging() {
 			f.Set(e.Gains[i])
 		}
 	}
-	b.balance.SetEnabled(b.p.Host.BalanceAvailable())
-	b.balance.Tip = b.p.Host.FeatureTip("Balance", b.p.Host.BalanceAvailable())
 	if !b.balance.Dragging() {
 		b.balance.Set(b.p.Transport.Pan)
 	}
@@ -106,9 +97,6 @@ func (b *eqPane) Paint(ctx *paint2d.Context) {
 	lk, box := b.Look(), b.LocalBounds()
 	f := players.ScaledFace(lk.Font(), style.Dip(lk, 9))
 	ink := paint2d.RGB(.08, .12, .19)
-	if !b.p.Host.EqualizerAvailable() {
-		ink = paint2d.RGB(.5, .5, .5)
-	}
 	d := style.Dip(lk, 1)
 	for i, name := range players.EqBands {
 		r := b.bandRect(i)

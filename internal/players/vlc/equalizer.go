@@ -59,25 +59,13 @@ func (e *eqPane) presetMenu() {
 	widgets.ShowContextMenu(e.presets, at, items...)
 }
 func (e *eqPane) sync() {
-	available := e.p.Host.EqualizerAvailable()
-	tip := e.p.Host.FeatureTip("EQ", available)
-	for _, c := range []widget.Component{e.on, e.auto, e.presets, e.reset, e.preamp} {
-		c.SetEnabled(available)
-	}
-	e.on.SetAccessibleDescription(tip)
-	e.auto.SetAccessibleDescription(tip)
-	e.presets.Tip, e.reset.Tip, e.preamp.Tip = tip, tip, tip
 	e.on.Checked, e.auto.Checked = e.p.Equaliser.On, e.p.Equaliser.Auto
 	e.on.Invalidate()
 	e.auto.Invalidate()
 	e.preamp.Set(e.p.Equaliser.Preamp)
 	for i, f := range e.bands {
-		f.SetEnabled(available)
-		f.Tip = tip
 		f.Set(e.p.Equaliser.Gains[i])
 	}
-	e.balance.SetEnabled(e.p.Host.BalanceAvailable())
-	e.balance.Tip = e.p.Host.FeatureTip("Balance", e.p.Host.BalanceAvailable())
 	e.balance.Set(e.p.Transport.Pan)
 	e.Invalidate()
 }

@@ -60,10 +60,6 @@ func TestEqualizerFileRoundTripAtomicValidationAndAudioNotification(t *testing.T
 			t.Fatal("invalid import partially mutated EQ")
 		}
 	}
-	p.Host.Model.BackendLimited = true
-	if err := p.applyEqualizerFile(state); err == nil || changes != 1 {
-		t.Fatal("unsupported backend accepted live EQ import")
-	}
 	for _, bad := range [][]byte{
 		append(append([]byte(nil), data...), []byte(" {}")...),
 		bytes.Replace(data, []byte(`"version":1`), []byte(`"version":1,"mystery":2`), 1),

@@ -48,7 +48,7 @@ func (b *transportPane) addTransportControls() {
 		o := widget.DeviceOrigin(c)
 		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	})
-	b.button("logo", "Audio backend settings", players.GlyphNone, p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
+	b.button("logo", "Playback settings", players.GlyphNone, p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
 	b.volume = newSourceSlider(false, 0, 100, p.Transport.Volume*100, "Volume", func(v float32) { p.Host.SetVolume(v / 100) }, "volume")
 	b.volume.Step, b.volume.Page = 2, 10
 	b.volume.Format = func(v float32) string { return fmt.Sprintf("%d%%", int(v+.5)) }

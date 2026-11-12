@@ -168,8 +168,8 @@ func TestSpriteTransportMouseKeyboardAndAccessibilityUseSharedHost(t *testing.T)
 	}
 }
 
-func TestSharedLevelsEqualizerAndBackendCapabilities(t *testing.T) {
-	a, p := open(t, 1.75)
+func TestSharedLevelsAndEqualizer(t *testing.T) {
+	_, p := open(t, 1.75)
 	syncs := 0
 	p.Host.SyncPlayback = func() { syncs++ }
 	for _, f := range []*players.Fader{p.body.seek, p.body.volume, p.body.balance} {
@@ -190,36 +190,6 @@ func TestSharedLevelsEqualizerAndBackendCapabilities(t *testing.T) {
 	p.Equaliser.Changed = func() { eqChanges++; refresh() }
 	if !p.Main.AccessibleAction(p.body.bands[0].ID(), a11y.ActionIncrement) || eqChanges != 1 || p.Equaliser.Gains[0] <= 0 {
 		t.Fatal("EQ sprite slider did not edit and notify the shared equalizer")
-	}
-	pan, gain := p.Transport.Pan, p.Equaliser.Gains[0]
-	p.Host.AudioBackend = "VLC"
-	p.Host.Model.BackendLimited = true
-	p.Host.Model.Live = true
-	p.Refresh()
-	a.PumpOnce()
-	limited := []widget.Component{p.body.balance, p.body.buttons["eq.reset"]}
-	for _, f := range p.body.bands {
-		limited = append(limited, f)
-	}
-	for _, c := range limited {
-		if c.Enabled() || p.Main.AccessibleAction(c.ID(), a11y.ActionIncrement) || p.Main.AccessibleAction(c.ID(), a11y.ActionDefault) {
-			t.Fatalf("unsupported DSP remained usable: %T", c)
-		}
-	}
-	if !p.body.volume.Enabled() || !strings.Contains(p.body.balance.Tooltip(), "VLC") || !strings.Contains(p.Host.StatusText(), "visualizer") {
-		t.Fatal("limited backend disabled basic volume or hid the capability limits")
-	}
-	p.Host.Model.BackendBalance, p.Host.Model.BackendEqualizer, p.Host.Model.BackendSpectrum = true, true, true
-	p.Host.AudioBackend = "mpv"
-	p.Refresh()
-	a.PumpOnce()
-	for _, c := range limited {
-		if !c.Enabled() {
-			t.Fatal("returning to a capable backend did not restore DSP controls")
-		}
-	}
-	if p.Transport.Pan != pan || p.Equaliser.Gains[0] != gain {
-		t.Fatal("backend limitations erased stored adjustments")
 	}
 }
 

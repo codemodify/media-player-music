@@ -150,7 +150,7 @@ func newBody(p *Player) *body {
 		}
 	})
 	sidebarButton("addfiles", "Add music files…", func() { p.Host.OpenFiles(b.buttons["addfiles"], true) })
-	sidebarButton("backends", "Audio backend…", p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
+	sidebarButton("backends", "Playback…", p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
 	sidebarButton("skins", "Appearance…", func() {
 		c := b.buttons["skins"]
 		o := widget.DeviceOrigin(c)
@@ -223,8 +223,7 @@ func (b *body) sync() {
 	if !b.volume.Dragging() {
 		b.volume.Set(t.Volume * 100)
 	}
-	b.analyser.SetVisible(b.visualOn && b.p.Host.SpectrumAvailable())
-	b.analyser.SetAccessibleDescription(b.p.Host.FeatureTip("Visualizer", b.p.Host.SpectrumAvailable()))
+	b.analyser.SetVisible(b.visualOn)
 	b.analyser.Invalidate()
 	b.list.Invalidate()
 	b.Invalidate()

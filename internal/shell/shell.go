@@ -35,46 +35,36 @@ type Options struct {
 	Remember bool
 	Headless bool
 	Scale    float32
-	// Backend is a legacy MPV transport hook for protocol tests. The shell owns it.
-	Backend playback.Backend
-	// Engine injects an executable adapter using the common playback contract.
-	Engine         playback.Engine
-	DetectBackends func() []playback.BackendInfo
-	OpenBackend    func(playback.BackendInfo) (playback.Engine, error)
-	AudioBackend   string
+	// Engine plays the queue: a built-in engine on the system's sound
+	// when nil. Tests give a fake one, or a built-in engine on
+	// audiotest's sound system. The shell owns and closes it.
+	Engine playback.Engine
 }
 
 type Shell struct {
 	App  *ui.Application
 	Host *players.Host
 
-	opts              Options
-	settings          players.Settings
-	presentation      Presentation
-	skin              string
-	pulse             *players.Pulse
-	switching         bool
-	engine            playback.Engine
-	engineEpoch       uint64
-	backendID         string
-	backendInfos      []playback.BackendInfo
-	backendSwitching  bool
-	backendTransition bool
-	backendWorkers    sync.WaitGroup
-	backendError      string
-	settingsWindow    *ui.Window
-	settingsPanel     *players.BackendSettingsPanel
-	lifecycleDone     chan struct{}
-	playback          playbackState
-	closed            bool
-	eventStop         chan struct{}
-	eventDone         chan struct{}
-	fileWindow        *ui.Window
-	fileLoader        *fileLoader
-	rememberIn        time.Duration
-	lastSaved         []byte
-	tray              platform.StatusItem
-	trayHidden        map[string]bool
+	opts           Options
+	settings       players.Settings
+	presentation   Presentation
+	skin           string
+	pulse          *players.Pulse
+	switching      bool
+	engine         playback.Engine
+	workers        sync.WaitGroup // cover reads
+	settingsWindow *ui.Window
+	settingsPanel  *players.SettingsPanel
+	playback       playbackState
+	closed         bool
+	eventStop      chan struct{}
+	eventDone      chan struct{}
+	fileWindow     *ui.Window
+	fileLoader     *fileLoader
+	rememberIn     time.Duration
+	lastSaved      []byte
+	tray           platform.StatusItem
+	trayHidden     map[string]bool
 }
 
 func SkinFor(opts Options) string {
@@ -99,7 +89,7 @@ func LookFor(skin string) string {
 }
 
 func New(a *ui.Application, opts Options) (*Shell, error) {
-	s := &Shell{App: a, opts: opts, settings: players.LoadSettings(), lifecycleDone: make(chan struct{})}
+	s := &Shell{App: a, opts: opts, settings: players.LoadSettings()}
 	s.Host = &players.Host{
 		App: a, Model: players.NewModel(),
 		Run: s.Command, Shared: s.Keys,
@@ -115,42 +105,14 @@ func New(a *ui.Application, opts Options) (*Shell, error) {
 	s.Host.LoadFiles, s.Host.DeleteTrack, s.Host.SyncPlayback = s.openFiles, s.removeTrack, s.syncPlayback
 	s.Host.DropFiles = s.dropFiles
 	s.Host.ShowSettings = s.openSettings
-	if opts.Backend != nil || opts.Engine != nil || opts.OpenBackend != nil || !opts.Headless {
+	if opts.Engine != nil || !opts.Headless {
 		s.Host.Model.Live = true
 		s.Host.Model.Spectrum.Live = true
 		s.Host.Model.Transport.List = players.NewPlaylist()
-		s.backendID, _ = players.NormalizeAudioBackend(s.settings.AudioBackend)
-		if opts.AudioBackend != "" {
-			id, ok := players.NormalizeAudioBackend(opts.AudioBackend)
-			if !ok {
-				return nil, fmt.Errorf("unknown playback backend %q", opts.AudioBackend)
-			}
-			s.backendID = id
-		}
-		if opts.Backend != nil {
-			s.engine = playback.WrapMPV(opts.Backend)
-			s.backendID = "mpv"
-		}
-		if opts.Engine != nil {
-			s.engine = opts.Engine
-		}
-		s.backendInfos = s.detectBackends()
+		s.engine = opts.Engine
 		if s.engine == nil {
-			for _, info := range s.backendInfos {
-				if info.ID == s.backendID {
-					engine, err := s.openBackend(info)
-					if err != nil {
-						s.backendError = err.Error()
-						s.Host.Model.Error = err.Error()
-					} else {
-						s.engine = engine
-						s.settings.AudioBackend = s.backendID
-					}
-					break
-				}
-			}
+			s.engine = playback.NewBuiltin(playback.BuiltinOptions{})
 		}
-		s.updateBackendStatus()
 		if opts.Remember {
 			s.restoreSession()
 		}
@@ -164,12 +126,10 @@ func New(a *ui.Application, opts Options) (*Shell, error) {
 	}
 	if s.engine != nil {
 		s.startPlaybackEvents()
+		s.applyReplayGain()
 		s.syncPlayback()
 	}
 	s.openTray()
-	if s.engine == nil && s.Host.Model.Live && !opts.Headless {
-		s.openSettings()
-	}
 	return s, nil
 }
 
@@ -193,7 +153,6 @@ func (s *Shell) Close() {
 	}
 	s.remember()
 	s.closed = true
-	close(s.lifecycleDone)
 	s.pulse.Stop()
 	s.closeTray()
 	s.cancelFileLoads()
@@ -206,7 +165,7 @@ func (s *Shell) Close() {
 	if s.eventDone != nil {
 		<-s.eventDone
 	}
-	s.backendWorkers.Wait()
+	s.workers.Wait()
 	if s.fileWindow != nil {
 		s.fileWindow.Close()
 		s.fileWindow = nil

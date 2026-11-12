@@ -79,7 +79,7 @@ func newMainPane(p *Player, compact bool) *mainPane {
 	add("shuffle", "Shuffle", "RND", players.GlyphNone, func() { p.Host.Command(players.CmdShuffle) }).Toggle = true
 	add("repeat", "Repeat", "REP", players.GlyphNone, func() { p.Host.Command(players.CmdRepeat) }).Toggle = true
 	add("mute", "Mute", "MUTE", players.GlyphNone, func() { p.Host.Command(players.CmdMute) }).Toggle = true
-	add("settings", "Audio backend settings", "", players.GlyphSliders, p.Host.OpenSettings)
+	add("settings", "Playback settings", "", players.GlyphSliders, p.Host.OpenSettings)
 	b.volume = slider(false, true, 0, 100, p.Transport.Volume*100, "Volume", func(v float32) { p.Host.SetVolume(v / 100) })
 	b.volume.Step, b.volume.Page = 2, 10
 	b.volume.Format = func(v float32) string { return fmt.Sprintf("%d%%", int(v+.5)) }
@@ -122,15 +122,13 @@ func (b *mainPane) sync() {
 	if !b.compact {
 		b.volume.Set(t.Volume * 100)
 		b.balance.Set(t.Pan)
-		b.balance.SetEnabled(b.p.Host.BalanceAvailable())
-		b.balance.Tip = b.p.Host.FeatureTip("Balance", b.p.Host.BalanceAvailable())
 		b.buttons["eq"].SetChecked(b.p.Host.Model.EqualizerVisible)
 		b.buttons["pl"].SetChecked(b.p.Host.Model.PlaylistVisible)
 		b.buttons["shuffle"].SetChecked(t.Random)
 		b.buttons["repeat"].SetChecked(t.Repeat != players.RepeatOff)
 		b.buttons["repeat"].Tip = "Repeat: " + t.Repeat.String()
 		b.buttons["mute"].SetChecked(t.Volume == 0)
-		b.analyser.SetVisible(b.p.Host.SpectrumAvailable())
+		b.analyser.SetVisible(true)
 	}
 	b.Invalidate()
 }

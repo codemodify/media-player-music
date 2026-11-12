@@ -161,7 +161,7 @@ func newBody(p *Player) *body {
 		p.Host.ContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()))
 	})
 	setting("settings.equalizer", "Equalizer", func() { p.ShowEqualiser(true) })
-	setting("settings.backends", "Audio backend", p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
+	setting("settings.backends", "Playback", p.Host.OpenSettings).SetEnabled(p.Host.ShowSettings != nil)
 	setting("settings.nowplaying", "Now Playing", func() { p.ShowEqualiser(false) })
 	setting("settings.about", "About", b.aboutMenu)
 	c := button("settings.close", "Hide settings panel", players.GlyphNone, func() { b.setSettingsVisible(false) })
@@ -257,20 +257,15 @@ func (b *body) sync() {
 	b.buttons["settings.nowplaying"].SetChecked(!eq)
 	for _, c := range b.eqControls {
 		c.SetVisible(eq)
-		c.SetEnabled(p.Host.EqualizerAvailable())
 	}
-	b.balance.SetEnabled(p.Host.BalanceAvailable())
-	b.balance.Tip = p.Host.FeatureTip("Balance", p.Host.BalanceAvailable())
 	b.buttons["eq.on"].SetChecked(p.Equaliser.On)
 	b.buttons["eq.auto"].SetChecked(p.Equaliser.Auto)
 	for i, f := range b.bands {
 		f.Set(p.Equaliser.Gains[i])
-		f.Tip = p.Host.FeatureTip("EQ", p.Host.EqualizerAvailable())
 	}
 	b.preamp.Set(p.Equaliser.Preamp)
 	b.balance.Set(t.Pan)
 	b.visual.SetVisible(!eq)
-	b.visual.SetAccessibleDescription(p.Host.FeatureTip("Visualizer", p.Host.SpectrumAvailable()))
 	b.visual.Invalidate()
 	b.seek.SetEnabled(t.Length() > 0)
 	if !b.seek.Dragging() {
@@ -354,8 +349,6 @@ func (b *body) Paint(ctx *paint2d.Context) {
 			}
 			players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), style.Dip(lk, 8)), paint2d.XYWH(r.Min.X, r.Max.Y+style.Dip(lk, 1), r.Dx(), style.Dip(lk, 10)), label, green(), style.AlignCenter)
 		}
-	} else if !b.p.Host.SpectrumAvailable() {
-		players.DrawTextIn(ctx, f, at("analyser"), b.p.Host.FeatureTip("Visualizer", false), paint2d.RGB(.45, .48, .44), style.AlignCenter)
 	}
 }
 func bandSlots() []string {

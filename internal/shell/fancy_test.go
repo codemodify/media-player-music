@@ -3,6 +3,7 @@ package shell
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/codemodify/media-player-music/internal/playback"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -117,7 +118,7 @@ func TestFancyCompactAndTrayKeepPlaybackAndCurrentWindows(t *testing.T) {
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
 	}
-	identify(s, 91)
+	loaded(s)
 	model, transport, queue := s.Host.Model, s.Host.Model.Transport, s.Host.Model.Transport.List
 	transport.Pos = 17 * time.Second
 	s.Host.SetVolume(.37)
@@ -126,7 +127,7 @@ func TestFancyCompactAndTrayKeepPlaybackAndCurrentWindows(t *testing.T) {
 	s.presentation.ShowPlaylist(true)
 	s.Start()
 	main, native, pulse := s.MainWindow(), s.MainWindow().Surface(), s.Pulse()
-	loads, stops := countCommand(backend, "loadfile"), countCommand(backend, "stop")
+	loads, stops := countCommand(backend, playback.OpLoad), countCommand(backend, playback.OpStop)
 	settle := func() { a.PumpOnce(); s.presentation.Advance(0) }
 	main.Move(420, 210)
 	p := fancyModes(t, s)
@@ -147,7 +148,7 @@ func TestFancyCompactAndTrayKeepPlaybackAndCurrentWindows(t *testing.T) {
 		if s.Host.Model != model || model.Transport != transport || transport.List != queue || transport.State != players.Playing || transport.Pos != 17*time.Second || transport.Volume != .37 || transport.Pan != -.4 || !model.EqualizerVisible || !model.PlaylistVisible {
 			t.Fatal("compact switch changed playback or requested panel visibility")
 		}
-		if s.Pulse() != pulse || !pulse.Running() || s.tray != tray || len(a.StatusItems()) != 1 || backend.closed || countCommand(backend, "loadfile") != loads || countCommand(backend, "stop") != stops {
+		if s.Pulse() != pulse || !pulse.Running() || s.tray != tray || len(a.StatusItems()) != 1 || backend.closed || countCommand(backend, playback.OpLoad) != loads || countCommand(backend, playback.OpStop) != stops {
 			t.Fatal("compact switch interrupted backend, tray or update timer")
 		}
 	}
@@ -182,7 +183,7 @@ func TestFancyCompactAndTrayKeepPlaybackAndCurrentWindows(t *testing.T) {
 		t.Fatal(err)
 	}
 	settle()
-	if !main.Closed() || s.MainWindow() == main || !fancyModes(t, s).Compact() || s.tray != tray || s.Host.Model != model || backend.closed || countCommand(backend, "loadfile") != loads {
+	if !main.Closed() || s.MainWindow() == main || !fancyModes(t, s).Compact() || s.tray != tray || s.Host.Model != model || backend.closed || countCommand(backend, playback.OpLoad) != loads {
 		t.Fatal("family replacement lost remembered mode or captured a stale main/backend")
 	}
 }
@@ -224,7 +225,7 @@ func TestFancySessionRestoresCompactAndAllPanelPlacementIndependently(t *testing
 			}
 		}
 	}
-	if !reflect.DeepEqual(fancyModes(t, s).CaptureState(), state) || !reflect.DeepEqual(s.presentation.CapturePlacement(), placement) || countCommand(backend, "loadfile") != 0 {
+	if !reflect.DeepEqual(fancyModes(t, s).CaptureState(), state) || !reflect.DeepEqual(s.presentation.CapturePlacement(), placement) || countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatal("family roundtrip changed Fancy mode/placement or started playback")
 	}
 	s.Close()
@@ -232,7 +233,7 @@ func TestFancySessionRestoresCompactAndAllPanelPlacementIndependently(t *testing
 	if reopened.Skin() != players.FancySkin || !fancyModes(t, reopened).Compact() || !reflect.DeepEqual(fancyModes(t, reopened).CaptureState(), state) || !reflect.DeepEqual(reopened.presentation.CapturePlacement(), placement) || len(reopened.Windows()) != 3 {
 		t.Fatal("saved session lost Fancy compact state or named window placement")
 	}
-	if presentationFamily(reopened.Skin()) != players.FancySkin || reopened.settings.Windows[players.DefaultSkin]["main"].X != 720 || countCommand(nextBackend, "loadfile") != 0 || reopened.Host.Model.EqualizerVisible || !reopened.Host.Model.PlaylistVisible {
+	if presentationFamily(reopened.Skin()) != players.FancySkin || reopened.settings.Windows[players.DefaultSkin]["main"].X != 720 || countCommand(nextBackend, playback.OpLoad) != 0 || reopened.Host.Model.EqualizerVisible || !reopened.Host.Model.PlaylistVisible {
 		t.Fatal("saved Fancy session merged families, autoplayed or forgot panel preferences")
 	}
 	for _, named := range reopened.Windows() {

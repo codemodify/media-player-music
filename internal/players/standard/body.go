@@ -153,9 +153,6 @@ func (m *mainPane) sync() {
 	}
 	m.volume.Set(t.Volume * 100)
 	m.balance.Set(t.Pan)
-	m.balance.SetEnabled(m.p.Host.BalanceAvailable())
-	m.balance.Tip = m.p.Host.FeatureTip("Balance", m.p.Host.BalanceAvailable())
-	m.analyser.SetAccessibleDescription(m.p.Host.FeatureTip("Visualizer", m.p.Host.SpectrumAvailable()))
 	m.shuffle.SetChecked(t.Random)
 	m.repeat.SetChecked(t.Repeat != players.RepeatOff)
 	m.repeat.SetGlyph(players.GlyphRepeat, t.Repeat.String())

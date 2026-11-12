@@ -282,18 +282,6 @@ func TestPrimarySliderInputCapabilitiesAndMeasuredAnalyzer(t *testing.T) {
 	if changes != 2 {
 		t.Fatal("EQ actions duplicated")
 	}
-	beforeEq := snapshotEqualizer(p.Equaliser)
-	p.Host.Model.BackendLimited = true
-	p.Eq().RequestFocus(p.eqPane.bands[2])
-	p.Refresh()
-	a.PumpOnce()
-	if p.body.balance.Enabled() || p.eqPane.preamp.Enabled() || p.eqPane.bands[2].Enabled() || p.Eq().Focus() != p.eqPane.buttons["close"] || p.body.analyser.Visible() {
-		t.Fatal("unsupported controls remained interactive")
-	}
-	if !reflect.DeepEqual(snapshotEqualizer(p.Equaliser), beforeEq) {
-		t.Fatal("backend capabilities erased EQ values")
-	}
-	p.Host.Model.BackendEqualizer, p.Host.Model.BackendBalance, p.Host.Model.BackendSpectrum = true, true, true
 	p.Spectrum.Live = true
 	p.Spectrum.SetLevels([]float32{.8, 1, .6, .9})
 	p.Refresh()

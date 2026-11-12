@@ -1,6 +1,6 @@
 // Package players holds the shared model, controls and keyboard commands
 // for the default UI and its optional skins. The shell connects this
-// model to the selected audio backend; screenshot mode uses a simulated clock.
+// model to the playback engine; screenshot mode uses a simulated clock.
 // Window composition and appearance switching belong to internal/shell.
 package players
 
@@ -690,8 +690,6 @@ func Library() []Track {
 // NewLibrary is the invented library as a playlist.
 func NewLibrary() *Playlist { return NewPlaylist(Library()...) }
 
-// Shared playback requirement for About dialogs and accessibility.
-const (
-	Disclaimer = "Audio playback requires an installed backend; choose one in Settings."
-	Short      = "playback through the selected backend"
-)
+// Disclaimer describes the analyser when nothing plays for real: the
+// screenshot fixtures' simulated bands.
+const Disclaimer = "Simulated frequency bands of the screenshot fixture"

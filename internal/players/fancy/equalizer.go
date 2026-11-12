@@ -67,21 +67,12 @@ func (b *equalizerPane) presetMenu() {
 	widgets.ShowContextMenu(c, widget.DeviceOrigin(c).Add(paint2d.Pt(0, c.Bounds().Dy())), items...)
 }
 func (b *equalizerPane) sync() {
-	available := b.p.Host.EqualizerAvailable()
 	eq := b.p.Equaliser
-	for _, slot := range []string{"on", "auto", "load", "reset", "presets"} {
-		b.buttons[slot].SetEnabled(available)
-		b.buttons[slot].Tip = b.p.Host.FeatureTip("EQ", available)
-	}
 	b.buttons["on"].SetChecked(eq.On)
 	b.buttons["auto"].SetChecked(eq.Auto)
 	b.preamp.Set(eq.Preamp)
-	b.preamp.SetEnabled(available)
-	b.preamp.Tip = b.p.Host.FeatureTip("EQ", available)
 	for i, s := range b.bands {
 		s.Set(eq.Gains[i])
-		s.SetEnabled(available)
-		s.Tip = b.p.Host.FeatureTip("EQ", available)
 	}
 	if w := b.p.Eq(); w != nil && w.Focus() != nil && !w.Focus().Enabled() {
 		w.RequestFocus(b.buttons["close"])

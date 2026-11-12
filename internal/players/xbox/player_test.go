@@ -304,7 +304,7 @@ func TestOriginalSpriteActionsAndShortcutBubblingAtEveryScale(t *testing.T) {
 	}
 }
 
-func TestInsetEqualizerFocusLevelsAndBackendLimits(t *testing.T) {
+func TestInsetEqualizerFocusAndLevels(t *testing.T) {
 	a, p := open(t, 1.75)
 	p.ShowEqualiser(true)
 	a.PumpOnce()
@@ -345,28 +345,13 @@ func TestInsetEqualizerFocusLevelsAndBackendLimits(t *testing.T) {
 		t.Fatal("closing the inset stranded focus or retained hidden EQ controls")
 	}
 	key(a, p.Main, platform.KeyE, platform.ModCtrl)
-	p.Host.Model.Live, p.Host.Model.BackendLimited = true, true
-	p.Host.AudioBackend = "VLC"
-	p.Refresh()
-	a.PumpOnce()
 	for _, c := range p.body.eqControls {
-		if !c.Visible() || c.Enabled() || p.Main.AccessibleAction(c.ID(), a11y.ActionIncrement) || p.Main.AccessibleAction(c.ID(), a11y.ActionDefault) {
-			t.Fatal("unsupported equalizer remained usable")
-		}
-	}
-	if !p.body.volume.Enabled() || !strings.Contains(p.body.bands[0].Tooltip(), "VLC") || !strings.Contains(p.Host.StatusText(), "visualizer") {
-		t.Fatal("backend limits disabled basic volume or hid the limitation")
-	}
-	p.Host.Model.BackendEqualizer, p.Host.Model.BackendSpectrum, p.Host.Model.BackendBalance = true, true, true
-	p.Host.AudioBackend = "mpv"
-	p.Refresh()
-	for _, c := range p.body.eqControls {
-		if !c.Enabled() {
-			t.Fatal("capable backend did not restore inset controls")
+		if !c.Visible() || !c.Enabled() {
+			t.Fatal("the reopened inset's controls are not usable")
 		}
 	}
 	if p.Equaliser.Gains[0] != gain {
-		t.Fatal("backend selection erased saved EQ adjustments")
+		t.Fatal("closing the inset erased saved EQ adjustments")
 	}
 }
 

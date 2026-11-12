@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"github.com/codemodify/media-player-music/internal/playback"
 	"os"
 	"path/filepath"
 	"strings"
@@ -130,12 +131,12 @@ func TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies(t *testing.T) 
 			t.Fatalf("%s placement crossed families: %d,%d,%t", pos.id, x, y, known)
 		}
 	}
-	if len(s.settings.Windows) != len(positions) || countCommand(backend, "loadfile") != 0 {
+	if len(s.settings.Windows) != len(positions) || countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatal("window family state was merged or started playback")
 	}
 	s.Close()
 	_, reopened, nextBackend := rememberedShell(t, "")
-	if reopened.Skin() != players.HalfLife2Skin || len(reopened.Windows()) != 3 || countCommand(nextBackend, "loadfile") != 0 {
+	if reopened.Skin() != players.HalfLife2Skin || len(reopened.Windows()) != 3 || countCommand(nextBackend, playback.OpLoad) != 0 {
 		t.Fatal("Half Life 2 session did not reopen all windows without autoplay")
 	}
 	seen := map[string]bool{}

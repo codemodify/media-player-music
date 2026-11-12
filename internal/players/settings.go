@@ -9,31 +9,50 @@ import (
 	"goframework.io/desktop-ui/style"
 )
 
-// Settings remembers the audio backend, appearance and desktop session. Window
-// positions are logical desktop pixels and are grouped by presentation family.
+// Settings remembers the appearance, the ReplayGain settings and the desktop
+// session. Window positions are logical desktop pixels and are grouped by
+// presentation family.
 type Settings struct {
 	Skin          string                                `json:"skin"`
-	AudioBackend  string                                `json:"audio_backend,omitempty"`
+	ReplayGain    ReplayGain                            `json:"replaygain,omitzero"`
 	Playlist      *SavedPlaylist                        `json:"playlist,omitempty"`
 	Panels        *SavedPanels                          `json:"panels,omitempty"`
 	Windows       map[string]map[string]WindowPlacement `json:"windows,omitempty"`
 	Presentations map[string]PresentationState          `json:"presentations,omitempty"`
 }
 
-// NormalizeAudioBackend resolves old preferences to the default backend:
-// the built-in engine (goframework's audio-playback), which needs nothing
-// installed. A saved choice of an installed program is kept. Availability
-// is checked separately; an installed program may disappear without
-// changing the user's saved choice.
-func NormalizeAudioBackend(id string) (string, bool) {
-	switch id {
-	case "", "builtin":
-		return "builtin", true
-	case "mpv", "vlc", "mplayer", "mpg123":
-		return id, true
-	default:
-		return "builtin", false
+// ReplayGain is how tracks are levelled by their ReplayGain tags.
+type ReplayGain struct {
+	// Mode is ReplayGainOff (""), ReplayGainTrack or ReplayGainAlbum.
+	Mode string `json:"mode,omitempty"`
+	// Preamp is added to the tags' gain, in dB, from MinPreamp to MaxPreamp.
+	Preamp float64 `json:"preamp_db,omitempty"`
+}
+
+// The ReplayGain modes, as saved.
+const (
+	ReplayGainOff   = ""
+	ReplayGainTrack = "track"
+	ReplayGainAlbum = "album"
+)
+
+// The preamp's range, in dB.
+const (
+	MinPreamp = -15
+	MaxPreamp = 15
+)
+
+// Normal returns the settings with an unknown mode as off and the preamp
+// within its range.
+func (r ReplayGain) Normal() ReplayGain {
+	if r.Mode != ReplayGainTrack && r.Mode != ReplayGainAlbum {
+		r.Mode = ReplayGainOff
 	}
+	if !(r.Preamp >= MinPreamp) { // NaN too
+		r.Preamp = MinPreamp
+	}
+	r.Preamp = min(r.Preamp, MaxPreamp)
+	return r
 }
 
 type SavedPlaylist struct {
@@ -84,15 +103,12 @@ func SettingsPath() string {
 	return filepath.Join(style.ConfigDir(), settingsName)
 }
 
-// NormalizeSkin also accepts names written by older versions of the app.
+// NormalizeSkin returns a skin's canonical name (the default UI's look,
+// Themed, as the menus give it, is DefaultSkin); ok is false for a name the
+// player does not have.
 func NormalizeSkin(id string) (string, bool) {
-	switch id {
-	case "", DefaultSkin, Themed, "dark", "breeze-night":
+	if id == "" || id == DefaultSkin || id == Themed {
 		return DefaultSkin, true
-	case "minim-classic":
-		return WinampSkin, true
-	case "minim-silver":
-		return WinampSilverSkin, true
 	}
 	if IsSkinned(id) {
 		return id, true
@@ -100,33 +116,21 @@ func NormalizeSkin(id string) (string, bool) {
 	return "", false
 }
 
-// LoadSettings migrates the old per-face preference when possible. Removed
-// faces, malformed files and unknown packs fall back to the default UI.
+// LoadSettings reads the saved settings. A malformed file gives the
+// defaults; a skin the player does not have, the default UI.
 func LoadSettings() Settings {
-	var saved struct {
-		Settings
-		Face  string            `json:"face"`
-		Skins map[string]string `json:"skins"`
-	}
-	// The file saved under uitoolkit's folder is read until the first Save
-	// writes desktop-ui's own.
-	data, err := os.ReadFile(style.ConfigSource(settingsName))
+	var saved Settings
+	data, err := os.ReadFile(SettingsPath())
 	if err != nil || json.Unmarshal(data, &saved) != nil {
 		return Settings{Skin: DefaultSkin}
 	}
-	id := saved.Skin
-	if saved.AudioBackend != "" {
-		saved.AudioBackend, _ = NormalizeAudioBackend(saved.AudioBackend)
-	}
-	if id == "" && saved.Face == "minim" {
-		id = saved.Skins[saved.Face]
-	}
-	if skin, ok := NormalizeSkin(id); ok {
+	saved.ReplayGain = saved.ReplayGain.Normal()
+	if skin, ok := NormalizeSkin(saved.Skin); ok {
 		saved.Skin = skin
-		return saved.Settings
+	} else {
+		saved.Skin = DefaultSkin
 	}
-	saved.Skin = DefaultSkin
-	return saved.Settings
+	return saved
 }
 
 func (s Settings) Save() error {

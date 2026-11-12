@@ -103,28 +103,17 @@ func (b *eqPane) presetMenu() {
 	widgets.ShowContextMenu(c, paint2d.Pt(o.X, o.Y+c.Bounds().Dy()), items...)
 }
 func (b *eqPane) sync() {
-	e, available := b.p.Equaliser, b.p.Host.EqualizerAvailable()
-	for _, slot := range []string{"on", "auto", "reset", "preset"} {
-		c := b.buttons[slot]
-		c.SetEnabled(available)
-		c.Tip = b.p.Host.FeatureTip("EQ", available)
-	}
+	e := b.p.Equaliser
 	b.buttons["on"].SetChecked(e.On)
 	b.buttons["auto"].SetChecked(e.Auto)
-	b.preamp.SetEnabled(available)
-	b.preamp.Tip = b.p.Host.FeatureTip("EQ", available)
 	if !b.preamp.Dragging() {
 		b.preamp.Set(e.Preamp)
 	}
 	for i, f := range b.bands {
-		f.SetEnabled(available)
-		f.Tip = b.p.Host.FeatureTip("EQ", available)
 		if !f.Dragging() {
 			f.Set(e.Gains[i])
 		}
 	}
-	b.balance.SetEnabled(b.p.Host.BalanceAvailable())
-	b.balance.Tip = b.p.Host.FeatureTip("Balance", b.p.Host.BalanceAvailable())
 	if !b.balance.Dragging() {
 		b.balance.Set(b.p.Transport.Pan)
 	}

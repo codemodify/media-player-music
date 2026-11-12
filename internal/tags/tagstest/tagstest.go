@@ -51,6 +51,52 @@ func Picture(major int, mime string, data []byte) []byte {
 	return b.Bytes()
 }
 
+// UserText is a TXXX frame's contents: a description and its value, in
+// the version's usual encoding as Text.
+func UserText(major int, description, value string) []byte {
+	field := Text(major, description)
+	switch major {
+	case 2:
+		return append(append(field, 0), latin1(value)...)
+	case 3:
+		return append(append(field, 0, 0), utf16BOM(value)...)
+	}
+	return append(append(field, 0), value...)
+}
+
+// RVA2 is an ID3v2.4 RVA2 frame's contents: the master volume's adjustment
+// in dB (to 1/512 dB) and its peak, a fraction of full scale, in 16 bits;
+// identification names it ("track", "album").
+func RVA2(identification string, gain, peak float64) []byte {
+	b := append([]byte(identification), 0, 1)
+	b = binary.BigEndian.AppendUint16(b, uint16(int16(gain*512)))
+	b = append(b, 16)
+	return binary.BigEndian.AppendUint16(b, uint16(min(peak*32768, 65535)))
+}
+
+// APE is an APEv2 tag with a header and a footer, its items UTF-8 text, as
+// mp3gain writes them at a file's end (before an ID3v1 tag).
+func APE(items ...[2]string) []byte {
+	var body bytes.Buffer
+	for _, item := range items {
+		body.Write(binary.LittleEndian.AppendUint32(nil, uint32(len(item[1]))))
+		body.Write([]byte{0, 0, 0, 0})
+		body.WriteString(item[0])
+		body.WriteByte(0)
+		body.WriteString(item[1])
+	}
+	frame := func(flags uint32) []byte {
+		b := append([]byte("APETAGEX"), binary.LittleEndian.AppendUint32(nil, 2000)...)
+		b = binary.LittleEndian.AppendUint32(b, uint32(body.Len()+32))
+		b = binary.LittleEndian.AppendUint32(b, uint32(len(items)))
+		b = binary.LittleEndian.AppendUint32(b, flags)
+		return append(b, make([]byte, 8)...)
+	}
+	out := frame(1<<31 | 1<<29) // a header, and this is it
+	out = append(out, body.Bytes()...)
+	return append(out, frame(1<<31)...)
+}
+
 // V2 is an ID3v2 tag of major version 2, 3 or 4 holding frames.
 func V2(major int, frames ...Frame) []byte {
 	var body bytes.Buffer

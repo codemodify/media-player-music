@@ -281,7 +281,7 @@ func TestEmptyLivePlaylistAndPlaybackStatus(t *testing.T) {
 	if p.Main.Title() != "Music Player" || p.body.status.Parts()[0] != p.Host.StatusText() {
 		t.Fatal("ordinary UI retained demo title/status")
 	}
-	p.Host.Model.Error = "mpv executable unavailable"
+	p.Host.Model.Error = "song.wma: WMA files are not supported."
 	p.Refresh()
 	if p.body.status.Parts()[0] != p.Host.Model.Error {
 		t.Fatal("playback error did not reach the status bar")

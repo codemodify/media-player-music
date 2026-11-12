@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"github.com/codemodify/media-player-music/internal/playback"
 	"os"
 	"path/filepath"
 	"strings"
@@ -121,12 +122,12 @@ func TestFandomSessionKeepsItsMainAndPlaylistSeparateFromEveryFamily(t *testing.
 			t.Fatalf("%s placement crossed families: %d,%d,%t", pos.id, x, y, known)
 		}
 	}
-	if len(s.settings.Windows) != len(positions) || countCommand(backend, "loadfile") != 0 {
+	if len(s.settings.Windows) != len(positions) || countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatal("window family state was merged or started playback")
 	}
 	s.Close()
 	_, reopened, nextBackend := rememberedShell(t, "")
-	if reopened.Skin() != players.FandomSkin || len(reopened.Windows()) != 2 || countCommand(nextBackend, "loadfile") != 0 {
+	if reopened.Skin() != players.FandomSkin || len(reopened.Windows()) != 2 || countCommand(nextBackend, playback.OpLoad) != 0 {
 		t.Fatal("Fandom session did not reopen both windows without autoplay")
 	}
 	seen := map[string]bool{}

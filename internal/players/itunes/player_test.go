@@ -5,7 +5,6 @@ import (
 	"math"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -248,8 +247,8 @@ func TestModeShortcutsPreserveTransportAndMoveFocusToVisibleContent(t *testing.T
 	}
 }
 
-func TestEqualizerUsesSharedHooksAndHonorsBackendCapabilities(t *testing.T) {
-	a, p := open(t, 1.75)
+func TestEqualizerUsesSharedHooks(t *testing.T) {
+	_, p := open(t, 1.75)
 	changes := 0
 	refresh := p.Equaliser.Changed
 	p.Equaliser.Changed = func() {
@@ -265,25 +264,8 @@ func TestEqualizerUsesSharedHooksAndHonorsBackendCapabilities(t *testing.T) {
 	if !p.Eq.AccessibleAction(band.ID(), a11y.ActionIncrement) || changes != 1 || p.Equaliser.Gains[3] <= 0 {
 		t.Fatal("equalizer accessibility input did not use shared hook")
 	}
-	gain := p.Equaliser.Gains[3]
-	p.Host.Model.Live = true
-	p.Host.Model.BackendLimited = true
-	p.Host.AudioBackend = "VLC"
-	p.Refresh()
-	a.PumpOnce()
-	for _, f := range p.eqPane.bands {
-		if f.Enabled() {
-			t.Fatal("unsupported equalizer control is enabled")
-		}
-	}
-	if !strings.Contains(p.Host.StatusText(), "unavailable") {
-		t.Fatal("backend capability limitation is not visible")
-	}
-	p.Host.Model.BackendEqualizer = true
-	p.Refresh()
-	a.PumpOnce()
-	if !band.Enabled() || p.Equaliser.Gains[3] != gain || changes != 1 {
-		t.Fatal("restoring EQ capability lost intended gain or produced user-input feedback")
+	if !band.Enabled() {
+		t.Fatal("the equalizer band is not enabled")
 	}
 }
 

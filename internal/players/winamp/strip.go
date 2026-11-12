@@ -176,9 +176,6 @@ func (s *strip) sync() {
 	}
 	s.volume.Set(t.Volume * 100)
 	s.balance.Set(t.Pan)
-	s.balance.SetEnabled(s.p.Host.BalanceAvailable())
-	s.balance.Tip = s.p.Host.FeatureTip("Balance", s.p.Host.BalanceAvailable())
-	s.analyser.SetAccessibleDescription(s.p.Host.FeatureTip("Visualizer", s.p.Host.SpectrumAvailable()))
 	s.readout.Invalidate()
 	s.analyser.Invalidate()
 	s.seek.Invalidate()

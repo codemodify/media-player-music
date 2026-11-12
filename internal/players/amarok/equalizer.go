@@ -57,21 +57,12 @@ func (e *eqPane) presetMenu() {
 	widgets.ShowContextMenu(e.presets, menuAt(e.presets), items...)
 }
 func (e *eqPane) sync() {
-	available := e.p.Host.EqualizerAvailable()
-	tip := e.p.Host.FeatureTip("Equalizer", available)
-	for _, c := range []widget.Component{e.on, e.auto, e.presets, e.reset, e.preamp} {
-		c.SetEnabled(available)
-	}
 	e.on.SetChecked(e.p.Equaliser.On)
 	e.auto.SetChecked(e.p.Equaliser.Auto)
 	e.preamp.Set(e.p.Equaliser.Preamp)
 	for i, f := range e.bands {
-		f.SetEnabled(available)
-		f.Tip = tip
 		f.Set(e.p.Equaliser.Gains[i])
 	}
-	e.balance.SetEnabled(e.p.Host.BalanceAvailable())
-	e.balance.Tip = e.p.Host.FeatureTip("Balance", e.p.Host.BalanceAvailable())
 	e.balance.Set(e.p.Transport.Pan)
 	e.Invalidate()
 }
@@ -103,9 +94,6 @@ func (e *eqPane) Paint(ctx *paint2d.Context) {
 	ctx.DrawRect(r, paint2d.Fill(chrome))
 	ctx.DrawRect(r.Inset(d(.5)), paint2d.StrokePaint(border, d(1)))
 	title := "Equalizer · " + e.p.Equaliser.Preset
-	if !e.p.Host.EqualizerAvailable() {
-		title = e.p.Host.FeatureTip("Equalizer", false)
-	}
 	players.DrawTextIn(ctx, font(lk, 11), paint2d.XYWH(d(6), d(2), r.Dx()-d(12), d(22)), title, ink, style.AlignStart)
 	players.DrawTextIn(ctx, font(lk, 9), paint2d.XYWH(e.balance.Bounds().Min.X, d(14), e.balance.Bounds().Dx(), d(14)), "Balance", muted, style.AlignCenter)
 	for i, f := range append([]*sourceSlider{e.preamp}, e.bands...) {

@@ -1,7 +1,7 @@
 // Package winamp builds the application's Winamp panel presentations from
 // application-owned skin layouts and artwork. Each presentation has a main
 // strip, an equaliser and a playlist sharing the application's player model.
-// Playback actions go through the shared host and its system mpv backend.
+// Playback actions go through the shared host and the playback engine.
 package winamp
 
 import (

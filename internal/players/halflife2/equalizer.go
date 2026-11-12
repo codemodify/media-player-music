@@ -41,15 +41,13 @@ func newEqualizerPane(p *Player) *equalizerPane {
 	button("eq.next", "Next equalizer preset", players.GlyphNone, func() { b.stepPreset(true) })
 	button("reset", "Reset equalizer and balance", players.GlyphNone, func() {
 		p.Equaliser.Flat()
-		if p.Host.BalanceAvailable() {
-			p.Host.SetPan(0)
-		}
+		p.Host.SetPan(0)
 	})
 	button("on", "Equalizer on", players.GlyphSliders, func() { p.Equaliser.SetOn(!p.Equaliser.On) }).Toggle = true
 	for _, item := range []struct{ slot, label string }{{"crossfade", "Crossfade"}, {"srs", "SRS WOW Effects"}, {"speaker", "SRS speaker processing"}} {
 		c := button(item.slot, item.label, players.GlyphNone, nil)
 		c.SetEnabled(false)
-		c.Tip = item.label + " is unavailable with the current playback backends"
+		c.Tip = item.label + " is not in this player"
 		c.SetAccessibleDescription(c.Tip)
 	}
 	preset := button("preset", "Equalizer presets and preamp", players.GlyphNone, b.presetMenu)
@@ -88,7 +86,7 @@ func newEqualizerPane(p *Player) *equalizerPane {
 		f.Travel = 5.5
 		paintHorizontal(f, "effect")
 		f.SetEnabled(false)
-		f.Tip = item.label + " is unavailable with the current playback backends"
+		f.Tip = item.label + " is not in this player"
 		f.SetAccessibleDescription(f.Tip)
 		b.slots.Bind(item.slot, f)
 		b.legacy = append(b.legacy, f)
@@ -162,21 +160,11 @@ func (b *equalizerPane) presetMenu() {
 }
 func (b *equalizerPane) sync() {
 	eq := b.p.Equaliser
-	available := b.p.Host.EqualizerAvailable()
-	for _, slot := range []string{"eq.prev", "eq.next", "reset", "on", "preset"} {
-		c := b.buttons[slot]
-		c.SetEnabled(available)
-		c.Tip = b.p.Host.FeatureTip("EQ", available)
-	}
 	b.buttons["on"].SetChecked(eq.On)
 	for i, f := range b.bands {
 		f.Set(eq.Gains[i])
-		f.SetEnabled(available)
-		f.Tip = b.p.Host.FeatureTip("EQ", available)
 	}
 	b.balance.Set(b.p.Transport.Pan)
-	b.balance.SetEnabled(b.p.Host.BalanceAvailable())
-	b.balance.Tip = b.p.Host.FeatureTip("Balance", b.p.Host.BalanceAvailable())
 	b.Invalidate()
 }
 func (b *equalizerPane) Measure(c layout.Constraints) paint2d.Point {

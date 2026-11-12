@@ -133,9 +133,7 @@ func (b *mainPane) sync() {
 	b.buttons["pl"].SetChecked(b.p.Host.Model.PlaylistVisible)
 	b.buttons["eq"].SetChecked(b.p.Host.Model.EqualizerVisible)
 	b.buttons["vis"].SetChecked(b.visualOn)
-	available := b.p.Host.SpectrumAvailable()
-	b.buttons["vis"].Tip = b.p.Host.FeatureTip("Visualizer", available)
-	b.analyser.SetVisible(b.visualOn && available)
+	b.analyser.SetVisible(b.visualOn)
 	b.analyser.Invalidate()
 	b.Invalidate()
 }

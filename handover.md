@@ -26,11 +26,11 @@ default interface (a 920 × 560 window) and twenty-one optional skins.
 They are called "faces" in the code: eleven Winamp skins with compact
 snapping panels; Windows Media Player's Headspace, Xbox, Half Life 2,
 Fandom and Series 9; iTunes 4 with its MiniPlayer; VLC 0.8, RealPlayer 8
-and Amarok 1.4; and Fancy. Audio is played **in the player's process** by
-default (the "Built-in" engine on goframework's audio-playback, since
-2026-11-11, R36), or by an **external program** (mpv, VLC, MPlayer or
-mpg123), driven over its IPC or remote-control protocol. `-shot DIR` paints posed
-screenshots headless with synthetic tracks and starts no audio backend.
+and Amarok 1.4; and Fancy. Audio is played **in the player's process**, by
+its one engine on goframework's audio-playback (R36), with ReplayGain. The
+external engines (mpv, VLC, MPlayer, mpg123) were removed on 2026-11-12 (the
+owner: "there is no backward compatibility, this is a new app"). `-shot DIR`
+paints posed screenshots headless with synthetic tracks and plays nothing.
 
 Until recently the app was built on the owner's uitoolkit
 (github.com/codemodify/uitoolkit). The uncommitted work moves it to
@@ -88,10 +88,12 @@ $C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XD
   go test -race -timeout 40m . ./internal/appicon ./internal/players ./internal/players/playertest ./internal/skins/...
 $C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XDG_RUNTIME_DIR=$T/run \
   go test -race ./internal/players/{amarok,fancy,fandom,halflife2,headspace,itunes,realplayer,series9,standard,vlc,xbox}
-# the rest only with the owner's agreement (see the audio warning):
-$E tools/testenv.sh go test ./internal/playback ./internal/shell ./internal/players/winamp
+# the engine, the tags, the shell and winamp: since 2026-11-12 they play only into
+# audiotest's sound system or drive a fake engine, so they run on the host too:
+$C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XDG_RUNTIME_DIR=$T/run \
+  go test -race ./internal/playback ./internal/tags/... ./internal/shell ./internal/players/winamp
 $E go generate ./internal/skins                              # after changing a skin plan: rewrites internal/skins/packs
-$E go run . -skin default -shot "$(mktemp -d)" -at 1m37s     # headless pictures, no audio backend
+$E go run . -skin default -shot "$(mktemp -d)" -at 1m37s     # headless pictures, nothing played
 ```
 
 Results on 2026-11-09 (linux/amd64, go 1.27.3, workspace d445be2):
@@ -113,13 +115,13 @@ Results on 2026-11-09 (linux/amd64, go 1.27.3, workspace d445be2):
   folder matches every other pack byte for byte). Re-shooting the
   pictures (next steps) would show it.
 
-- **Audio warning:** some playback and spectrum tests in internal/shell
-  and internal/playback start the installed mpv (and VLC, MPlayer,
-  mpg123) with null audio output; internal/players/winamp's tests run
-  the shell (`shell.Start` plays the queue), and shell's tray tests and
-  tools/testenv.sh use a session bus (a private one). They skip when the program is
-  missing. Under the "never play audio" rule, run only the packages you
-  need, or `-run` around those tests, unless the owner agrees to them.
+- **Audio (since 2026-11-12):** no test starts a program or reaches a sound
+  device. internal/playback's tests give the engine audiotest's sound
+  system (in memory); the shell's tests give it a fake engine
+  (`fakeEngine` in playback_test.go) or the real one on audiotest
+  (builtin_test.go). A shell made without `Options.Engine` and not headless
+  opens the system's sound: only `main` does that. The tray tests use the
+  toolkit's fake tray (`platform.EnvTray` "fake").
 - The native opt-in tests (`MUSIC_PLAYER_NATIVE_XDND_TEST`,
   `MEDIA_PLAYER_NATIVE_WINDOW_TEST`) need a real X11 display. Do not run
   them without the owner.
@@ -130,14 +132,14 @@ Results on 2026-11-09 (linux/amd64, go 1.27.3, workspace d445be2):
 
 | Path | What |
 | --- | --- |
-| `main.go` | flags (`-skin`, `-scale`, `-audio-backend`, `-shot`, `-at`), the theme, `style.SetFallback`, the app icon, signals, `-shot` mode |
+| `main.go` | flags (`-skin`, `-scale`, `-shot`, `-at`), the theme, `style.SetFallback`, the app icon, signals, `-shot` mode |
 | `text_complex*.go` | the `font_complex` / `font_emoji` tags bring in desktop-ui-text-complex (shaping, bidi, colour emoji) |
-| `internal/playback` | `builtin.go`: the default engine, in-process on goframework's audio-playback (R36, 2026-11-11); the external engines: `Engine`, mpv (Unix socket or Windows named pipe via go-winio), VLC (local HTTP), MPlayer, mpg123; discovery (`catalog.go`), process control, the spectrum read from an mpv FIFO |
+| `internal/playback` | the one engine, `Builtin` (builtin.go), in-process on goframework's audio-playback, with ReplayGain; `Engine` (engine.go) is its contract, which the shell's tests fake; `Formats`, `Playable`, `UnsupportedFormat` and `UnsupportedMessage` say what plays |
 | `internal/players` | the shared model and pieces of interface (host, queue view, settings, skins list, `toolkit.go` imports platform-all and the breeze, luna and win95 engines); `racked.go` the four panelled faces' shared Group pieces (windows named once, a layout saved and restored); one package for each face: `standard` (default), `winamp`, `headspace`, `xbox`, `halflife2`, `fandom`, `itunes`, `series9`, `vlc`, `realplayer`, `amarok`, `fancy`; `playertest` holds the test helpers |
-| `internal/shell` | the running app: face switcher, session (saved queue, position, skin, backend), playback wiring, files and drops, tray |
+| `internal/shell` | the running app: face switcher, session (saved queue, position, skin, ReplayGain), playback wiring, the settings window (settings.go), files and drops, tray |
 | `internal/skins` | skin registration; `plans/` (the Go plans `skingen` renders), `packs/` (the generated skin.json and art), `sources/` (original archives and credits), `cmd/generate` |
 | `internal/appicon` | logo.png made into window and tray icons |
-| `internal/tags` | ID3 tags (codecs-container-id3) for the playlist and the front cover for the default layout's display; `tagstest` writes ID3 tags for tests |
+| `internal/tags` | ID3 tags (codecs-container-id3) for the playlist and the front cover for the default layout's display; ReplayGain from ID3 TXXX/RVA2 and APE tags (replaygain.go, R97/R98); `tagstest` writes ID3 (TXXX, RVA2 too) and APEv2 tags for tests |
 | `tools/testenv.sh` | runs a command with no display and a private session bus |
 | `docs/faces.md`, `docs/screenshots/` | the long-form design and the README's pictures |
 
@@ -225,7 +227,8 @@ b98836d), and the X11 preference dropped.
 ## goframework modules
 
 **Used now** (imported in code): audio-playback (with `/all`: every
-container and codec, MP3 and AAC among them), audio-dsp (eq, spectrum),
+container and codec, MP3 and AAC among them), audio-dsp (eq, spectrum,
+replaygain),
 system-audio-spec (and audiotest in tests), codecs-container-id3 (R36,
 2026-11-11); desktop-ui (its `platform`, `style`,
 `widget`, `a11y`, `layout` packages), desktop-ui-widgets,
@@ -238,10 +241,8 @@ system-dbus in the KWin audit test and the tray probe.
 
 | Module | For |
 | --- | --- |
-| `audio-dsp/replaygain` | ReplayGain (audio-playback's Settings.ReplayGain): the built-in engine plays without it, as mpv did by default; a setting for it would be the app's |
 | `codecs-container-*` | the tags of FLAC, Ogg and M4A files for the playlist before they play (now ID3 only, `internal/tags`; the built-in engine reports every format's tags as it plays) |
 | `system-dbus` | MPRIS (media keys, desktop "now playing"); it already replaced godbus in the tests and probes |
-| `system-process-*` | starting and watching the external engines, while they stay (`internal/playback/process.go`, `command_*.go` use os/exec) |
 | `vfs-watch`, `vfs` | watching music folders for the iTunes library and dropped folders |
 | `config-*` / `vfs-statefile` | the saved session and settings, now a JSON file through `style.ConfigSource` |
 | `codecs-text-charsets` | old ID3 and other tags in legacy encodings |
@@ -257,21 +258,15 @@ system-dbus in the KWin audit test and the tray probe.
 2. **Native Wayland with the owner**: the faces under KWin and sway over
    Wayland (one window per part, a panel dragged out and docked back),
    and the saved layout across a Wayland and an X11 session.
-3. **Run the skipped tests** with the owner's agreement: internal/playback,
-   internal/shell and internal/players/winamp (audio engines, the shell's
-   playback, the tray on a private bus).
+3. **The skipped tests: done 2026-11-12.** internal/playback, internal/shell
+   and internal/players/winamp run on the host now (no external engine;
+   audiotest or a fake engine). Two shell tests fail, at HEAD before the
+   2026-11-12 change too (see the last section).
 4. **Re-shoot the pictures** with `-shot` for every skin at 1× and 1.75×
    and compare them with the uitoolkit pictures, as was done at a5ebdc8.
-5. **Done 2026-11-11 (R36):** the built-in engine is the default. Left
-   from this step: whether the external engines stay (the owner's call). Was: **Move playback into the framework** (ask the owner: it changes what
-   the app is). Add an audio-playback engine beside the external ones,
-   behind the same `playback.Engine`, using system-audio-* for output,
-   audio-dsp for the equaliser and analyser, and codecs-container-* for
-   tags. Keep mpv and the others for MP3 and AAC until the codecs exist,
-   and log what is missing (MP3 first) as gaps.
+5. **Done 2026-11-12:** the built-in engine is the only engine (the owner).
 6. **MPRIS on system-dbus.**
-7. **Smaller uses**: system-process for the external engines,
-   vfs-watch for library folders, logging, config.
+7. **Smaller uses**: vfs-watch for library folders, logging, config.
 
 Ask the owner before starting any of these, and commit only when asked.
 
@@ -409,3 +404,94 @@ The owner approved adopting R36's audio half. What changed:
   internal/shell (they start mpv or the shell's playback).
 - Next: the owner on the external engines' future and on a ReplayGain
   setting.
+
+## The owner's decisions, 2026-11-12: one engine, ReplayGain
+"There is no backward compatibility, this is a new app, previously it was a
+test." What changed:
+- **The external engines are gone**: mpv, VLC, MPlayer and mpg123, with
+  everything of theirs: internal/playback's mpv*, vlc*, mplayer*, mpg123*,
+  process*, spectrum* (mpv's FIFO analyser), ipc_*, command_*, catalog*
+  (discovery) and their tests; the `Engine` interface lost `Capabilities`
+  and `EngineOptions`; the update broker moved to broker.go. The shell's
+  engine switching (`SetBackend`, `detectBackends`, `openBackend`,
+  `backendError`, `backendSwitching`, `backendTransition`, `engineEpoch`,
+  `lifecycleDone`), the "choose an installed backend" paths, and
+  `Options.Backend` (the legacy mpv hook), `DetectBackends`, `OpenBackend`,
+  `AudioBackend`; the `-audio-backend` flag; the Settings window's engine
+  rows (players/backend_settings.go and its three tests); every face's
+  capability gating (`Host.AudioBackend`, `Model.BackendLimited`,
+  `BackendEqualizer/Balance/Spectrum`, `EqualizerAvailable`,
+  `BalanceAvailable`, `SpectrumAvailable`, `FeatureTip`) and the tests of it;
+  the menu labels "Audio backend…" (now "Playback…"/"Playback settings");
+  tools/probes/backend_settings.go; go-winio (mpv's Windows pipe) and the
+  indirect x/sys out of go.mod and go.sum (edited by hand, no tidy).
+- **Old compatibility code removed**: `NormalizeAudioBackend` and the saved
+  `audio_backend` field (an old value is ignored: unknown JSON); the
+  settings migration from the per-face preference (`face`, `skins`) and
+  the old skin names (`minim-classic`, `minim-silver`, `dark`,
+  `breeze-night`); reading the settings from uitoolkit's folder until the
+  first save (`style.ConfigSource`; now `SettingsPath()` only). Kept:
+  `Themed` as an alias of the default UI (the menus pass it at run time),
+  the ignore-tagged uitoolkit-era probes in tools/probes (developer probes,
+  not the app's code paths).
+- **Formats it does not play**: `playback.Formats` (in Settings),
+  `Playable` (a folder scan takes only those), `UnsupportedFormat` (WMA,
+  APE, Musepack, WavPack, TTA, AC-3, DTS, AMR, DSD, M4P, MIDI, trackers,
+  Shorten, OptimFROG, TAK, CAF): an explicit file of one is refused with
+  "song.wma: WMA files are not supported. The player plays MP3, AAC …"; a
+  folder leaves them out and says how many and which formats; a file
+  failing as ErrUnknownFormat or an unsupported codec gets the same
+  message from the engine. Ledger R101 asks the framework for WMA and
+  Monkey's Audio decoders (verdict: they pass the boundary test).
+- **ReplayGain**: `players.Settings.ReplayGain` (`mode` "", "track",
+  "album"; `preamp_db` -15..+15), saved; Settings window: Off / Track gain /
+  Album gain radios and a Preamp slider (520 × 480, min 460 × 460); the
+  shell sends `OpReplayGain` at start and on change; the engine makes each
+  load's player with `replaygain.Settings` (audio-playback's
+  `Settings.ReplayGain`, its Guard limiting past full scale). The tags'
+  peak always holds the gain (no switch). A track without the chosen gain
+  takes the other.
+  - **R97** (codecs-container-id3's `Tags` gives no TXXX REPLAYGAIN_* and
+    no RVA2) and **R98** (no APE tag reader in goframework): workaround
+    `internal/tags/replaygain.go` (`ReplayGain(path)`: APE items, then RVA2,
+    then TXXX, each replacing the last, parsed by audio-dsp/replaygain's
+    `Parse`), used by `Builtin.replayGain` (internal/playback/builtin.go,
+    tagged R97, R98): when it finds a gain, the player gets Mode Off with
+    the computed gain as its Fallback; else audio-playback reads the
+    stream's tags itself (Vorbis comments, MP4 freeform items).
+  - **R100** (audio-playback takes ReplayGain only at New): no
+    workaround; a change is heard from the next track (said in Settings).
+- Tests: internal/playback/replaygain_test.go (MP3s tagged by the test with
+  ID3v2.3/2.4 TXXX, RVA2, APEv2 + ID3v1, TXXX and APE together; a FLAC tone
+  written by codecs-audio-flac with Vorbis comments; each mode, a preamp,
+  +20 dB held by the peak at full scale; a WMA file's message), played into
+  audiotest in synctest and compared by energy to 0.3 dB;
+  internal/tags/replaygain_test.go (the reader, broken APE sizes);
+  internal/players/settings_test.go and settings_panel_test.go (old fields
+  ignored, ReplayGain saved and normalised; the panel by keyboard and
+  accessibility at 1× and 1.75×, preferred and minimum size); the shell's
+  tests moved from the mpv protocol fakes to `fakeEngine`
+  (playback_test.go, spectrum, tray, files, session and the faces' shell
+  tests), metadata_test.go (mpv's audio-params recovery) and
+  playback_integration_test.go (real mpv) and the engine-switch tests
+  deleted; new: unsupported files, ReplayGain reaching the engine and
+  saved, and builtin_test.go (a two-track tagged queue through the shell
+  with the real engine on audiotest, played to its end).
+- Size, stripped, linux/amd64, CGO_ENABLED=0: 36.55 to 33.17 MB
+  (36,544,672 to 33,173,664 bytes).
+- Checked: vet on linux, windows, darwin, freebsd, with `-tags
+  font_complex` and `font_emoji`, and the 53 probes; `go test -race` of the
+  root, internal/appicon, internal/playback, internal/tags/...,
+  internal/players and all twelve faces (winamp included, about 13
+  minutes), internal/skins/...: pass. internal/shell: everything passes
+  but four tests that fail at HEAD before this change too (checked in a
+  worktree of 21c45ef): TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped,
+  TestFandomSessionKeepsItsMainAndPlaylistSeparateFromEveryFamily,
+  TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies and
+  TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay (a
+  restored or followed panel window reads 0,0 headless: the rack.Group
+  move, never run before because the package started mpv). goframework's
+  footprint.py --check passes. Not run: the player, a real sound device.
+- Next: the four shell placement tests (with rack.Group); R97, R98, R100,
+  R101 when the framework answers (drop `internal/tags/replaygain.go`'s
+  readers then); the owner on R101 (WMA, APE decoders).

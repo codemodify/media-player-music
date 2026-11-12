@@ -28,7 +28,7 @@ func newCanvasPane(p *Player) *canvasPane {
 	return b
 }
 func (b *canvasPane) sync() {
-	b.analyser.SetVisible(b.p.body.visualOn && b.p.Host.SpectrumAvailable())
+	b.analyser.SetVisible(b.p.body.visualOn)
 	b.analyser.Invalidate()
 	b.Invalidate()
 }
@@ -57,9 +57,6 @@ func (b *canvasPane) Paint(ctx *paint2d.Context) {
 		artist = "Open files or drop a folder onto the player"
 	}
 	players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), 11*d), paint2d.XYWH(66*d, 37*d, max(0, r.Dx()-80*d), 19*d), artist, paint2d.Black, style.AlignStart)
-	if !b.p.Host.SpectrumAvailable() {
-		players.DrawTextIn(ctx, players.ScaledFace(lk.Font(), 10*d), paint2d.XYWH(14*d, 74*d, max(0, r.Dx()-28*d), max(0, r.Dy()-88*d)), b.p.Host.FeatureTip("Visualizer", false), paint2d.RGB(.4, .4, .4), style.AlignCenter)
-	}
 }
 func (b *canvasPane) Describe(n *a11y.Node) { n.Role, n.Name = a11y.RoleGroup, "Now playing" }
 func timeFraction(length time.Duration, f float32) time.Duration {

@@ -2,11 +2,15 @@ package playback
 
 import (
 	"errors"
+	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/tags"
 	"goframework.io/audio-dsp/eq"
+	"goframework.io/audio-dsp/replaygain"
 	"goframework.io/audio-dsp/spectrum"
 	inproc "goframework.io/audio-playback"
 	// Every format audio-playback plays: MP3 (codecs-audio-mp3: .mp3,
@@ -16,19 +20,14 @@ import (
 	_ "goframework.io/audio-playback/all"
 	// ID3 tags (v1, v2.2 to 2.4) of MP3 and ADTS files in the stream's
 	// Tags: the now-playing title, artist and album.
+	aspec "goframework.io/codecs-audio-spec"
 	_ "goframework.io/codecs-container-id3"
+	container "goframework.io/codecs-container-spec"
 	sound "goframework.io/system-audio-spec"
 )
 
-// BuiltinID names the engine that plays in the player's own process, on
-// goframework's audio-playback, through the system's sound
-// (system-audio-all): nothing to install.
-const BuiltinID = "builtin"
-
-// BuiltinCapabilities are the built-in engine's: audio-playback's
-// equaliser, balance and analyser.
-var BuiltinCapabilities = Capabilities{Seek: true, Equalizer: true, Balance: true, Spectrum: true,
-	Formats: "MP3, AAC (M4A, .aac), FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF, AU"}
+// Formats are what the engine plays.
+const Formats = "MP3, AAC (M4A, .aac), FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF and AU"
 
 // BuiltinOptions make a built-in engine.
 type BuiltinOptions struct {
@@ -59,6 +58,7 @@ type Builtin struct {
 	load   *builtinLoad
 	volume float32
 	dsp    DSP
+	rg     ReplayGain
 	levels []float64
 	bars   []float32
 }
@@ -88,8 +88,7 @@ func NewBuiltin(opts BuiltinOptions) *Builtin {
 	return b
 }
 
-func (b *Builtin) Events() <-chan Update      { return b.broker.out }
-func (b *Builtin) Capabilities() Capabilities { return BuiltinCapabilities }
+func (b *Builtin) Events() <-chan Update { return b.broker.out }
 
 // Apply queues a command for the engine's goroutine; it never waits.
 func (b *Builtin) Apply(command Command) error {
@@ -158,7 +157,8 @@ func (b *Builtin) execute(command Command) error {
 		b.drop()
 		l := &builtinLoad{generation: command.Generation}
 		l.epoch.Store(command.Epoch)
-		p, err := inproc.New(inproc.Settings{System: b.opts.System, Name: b.opts.Name, Events: func(event inproc.Event) { b.event(l, event) }})
+		p, err := inproc.New(inproc.Settings{System: b.opts.System, Name: b.opts.Name, ReplayGain: b.replayGain(command.Path),
+			Events: func(event inproc.Event) { b.event(l, event) }})
 		if err != nil {
 			return err
 		}
@@ -226,6 +226,11 @@ func (b *Builtin) execute(command Command) error {
 			b.load.player.SetVolume(gain(b.volume))
 		}
 		return nil
+	case OpReplayGain:
+		// audio-playback takes its ReplayGain as a player is made, so the
+		// settings are heard from the next load (R100).
+		b.rg = command.ReplayGain
+		return nil
 	case OpDSP:
 		b.dsp = command.DSP
 		if b.load != nil {
@@ -236,6 +241,27 @@ func (b *Builtin) execute(command Command) error {
 	default:
 		return errors.New("built-in: unsupported operation")
 	}
+}
+
+// replayGain is the ReplayGain a load's player plays at: the tags' gain by
+// the settings' mode and preamp, lowered so that the tags' peak does not
+// clip, or none.
+func (b *Builtin) replayGain(path string) replaygain.Settings {
+	settings := replaygain.Settings{Mode: replaygain.Track, Preamp: b.rg.Preamp}
+	switch b.rg.Mode {
+	case ReplayGainOff:
+		return replaygain.Settings{Mode: replaygain.Off}
+	case ReplayGainAlbum:
+		settings.Mode = replaygain.Album
+	}
+	// R97, R98: ID3's and APE's gains are not in the stream's tags, where
+	// audio-playback looks: read here, and given as the gain of every
+	// track (Mode Off's fallback), the peak already applied.
+	if found, ok := tags.ReplayGain(path); ok {
+		gain, _ := settings.Gain(found)
+		return replaygain.Settings{Mode: replaygain.Off, Fallback: gain}
+	}
+	return settings
 }
 
 // gain is the volume's: the cube of the slider, as mpv's volume is, so
@@ -335,6 +361,9 @@ func (b *Builtin) event(l *builtinLoad, event inproc.Event) {
 		if event.Err != nil {
 			message = event.Err.Error()
 		}
+		if Unsupported(event.Err) {
+			message = UnsupportedMessage(event.Name)
+		}
 		if event.Track < 0 {
 			// The sound stream itself: the engine has to be chosen again.
 			b.broker.offer(Update{Kind: UpdateError, Error: "the sound output stopped: " + message})
@@ -342,4 +371,50 @@ func (b *Builtin) event(l *builtinLoad, event inproc.Event) {
 		}
 		b.broker.offer(Update{Kind: UpdateError, Generation: l.generation, Error: message})
 	}
+}
+
+// Unsupported reports whether an error says a file's format, or its
+// codec, is not one the engine plays.
+func Unsupported(err error) bool {
+	return errors.Is(err, container.ErrUnknownFormat) || errors.Is(err, aspec.ErrUnsupported)
+}
+
+// UnsupportedMessage says that a file's format does not play, naming it
+// when its extension is a known one.
+func UnsupportedMessage(path string) string {
+	name := filepath.Base(path)
+	if format, ok := unsupported[strings.ToLower(filepath.Ext(path))]; ok {
+		return name + ": " + format + " files are not supported. The player plays " + Formats + "."
+	}
+	return name + ": this format is not supported. The player plays " + Formats + "."
+}
+
+// unsupported are the formats a music library holds that the engine does
+// not play, by extension (goframework has no decoder for them).
+var unsupported = map[string]string{
+	".wma": "WMA", ".asf": "WMA", ".ape": "Monkey's Audio (APE)", ".mpc": "Musepack", ".mp+": "Musepack",
+	".wv": "WavPack", ".tta": "TTA", ".ac3": "AC-3", ".dts": "DTS", ".amr": "AMR", ".dsf": "DSD", ".dff": "DSD",
+	".m4p": "Protected AAC (M4P)", ".ra": "RealAudio", ".rm": "RealAudio", ".mid": "MIDI", ".midi": "MIDI",
+	".mod": "tracker module", ".xm": "tracker module", ".it": "tracker module", ".s3m": "tracker module",
+	".shn": "Shorten", ".ofr": "OptimFROG", ".tak": "TAK", ".caf": "Core Audio (CAF)",
+}
+
+// UnsupportedFormat names the format of a file the engine does not play,
+// by its extension; ok is false for others.
+func UnsupportedFormat(path string) (string, bool) {
+	format, ok := unsupported[strings.ToLower(filepath.Ext(path))]
+	return format, ok
+}
+
+// Playable reports whether a file found in a folder is one the engine
+// plays, by its extension: audio files, and the audio of MP4, Matroska
+// and WebM videos.
+func Playable(path string) bool {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".mp3", ".mp2", ".mp1", ".mpga", ".aac", ".m4a", ".m4b", ".mp4", ".m4v", ".mov", ".3gp",
+		".flac", ".ogg", ".oga", ".opus", ".wav", ".wave", ".aif", ".aiff", ".aifc", ".au", ".snd",
+		".mka", ".mkv", ".webm":
+		return true
+	}
+	return false
 }

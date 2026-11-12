@@ -171,7 +171,7 @@ func TestVLCRealPointerKeyboardAndAccessibleQueueActivation(t *testing.T) {
 	}
 }
 
-func TestVLCActionsDropAndBackendCapabilities(t *testing.T) {
+func TestVLCActionsDropAndEqualizer(t *testing.T) {
 	a, p := open(t, 1.75)
 	var opened []bool
 	p.Host.LoadFiles = func(_ widget.Component, appendToList bool) { opened = append(opened, appendToList) }
@@ -193,28 +193,17 @@ func TestVLCActionsDropAndBackendCapabilities(t *testing.T) {
 	if p.body.Drop(e) || len(dropped) != 0 {
 		t.Fatal("move drop was accepted")
 	}
-	p.Host.Model.BackendLimited = true
-	p.Host.Model.BackendEqualizer = false
-	p.Host.Model.BackendBalance = false
-	p.Host.Model.BackendSpectrum = false
 	p.Equaliser.Set(4, 6)
 	p.Equaliser.SetPreamp(-2)
 	p.Host.SetPan(.25)
 	p.Refresh()
 	p.ShowPlaylist(false)
 	a.PumpOnce()
-	if p.body.eq.on.Enabled() || p.body.eq.bands[4].Enabled() || p.body.eq.balance.Enabled() || p.body.analyser.Visible() {
-		t.Fatal("unavailable backend controls remain active")
+	if !p.body.eq.on.Enabled() || !p.body.eq.bands[4].Enabled() || !p.body.eq.balance.Enabled() || !p.body.analyser.Visible() {
+		t.Fatal("equaliser, balance or analyser not offered")
 	}
 	if p.Equaliser.Gains[4] != 6 || p.Equaliser.Preamp != -2 || p.Transport.Pan != .25 {
-		t.Fatal("capability changes erased shared settings")
-	}
-	p.Host.Model.BackendEqualizer = true
-	p.Host.Model.BackendBalance = true
-	p.Host.Model.BackendSpectrum = true
-	p.Refresh()
-	if !p.body.eq.on.Enabled() || !p.body.eq.balance.Enabled() || !p.body.analyser.Visible() {
-		t.Fatal("restored backend capabilities stay disabled")
+		t.Fatal("a refresh changed the shared settings")
 	}
 	closed := 0
 	p.Main.SetOnCloseRequest(func() bool { closed++; return false })

@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"github.com/codemodify/media-player-music/internal/playback"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,7 +21,7 @@ func writeMusicEntry(t *testing.T, root, relative string) string {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte("fixture; decoding is covered by real mpv integration"), 0600); err != nil {
+	if err := os.WriteFile(path, []byte("fixture; decoding belongs to the engine's tests"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	return path
@@ -58,7 +59,7 @@ func TestTrackedChooserOwnerAndCancelSurviveSkinReplacement(t *testing.T) {
 			}
 			chooser.RequestClose()
 			a.PumpOnce()
-			if !chooser.Closed() || s.fileWindow != nil || s.Host.Model.Transport.List.Len() != 0 || countCommand(b, "loadfile") != 0 {
+			if !chooser.Closed() || s.fileWindow != nil || s.Host.Model.Transport.List.Len() != 0 || countCommand(b, playback.OpLoad) != 0 {
 				t.Fatal("frame cancellation retained the chooser or changed playback")
 			}
 			s.Host.OpenFiles(s.MainWindow().Content(), false)
@@ -110,7 +111,7 @@ func TestLoadFolderUsesRecursiveDeterministicAudioOrder(t *testing.T) {
 			t.Fatalf("entry %d=%+v, want %q", i, got, path)
 		}
 	}
-	if list.Index() != 0 || s.Host.Model.Transport.State != players.Playing || countCommand(b, "loadfile") != 1 {
+	if list.Index() != 0 || s.Host.Model.Transport.State != players.Playing || countCommand(b, playback.OpLoad) != 1 {
 		t.Fatal("opening folder did not start its first track exactly once")
 	}
 }
@@ -120,11 +121,11 @@ func TestDroppedFolderAppendsAudioFromMediaContainers(t *testing.T) {
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
 	}
-	identify(s, 303)
+	loaded(s)
 	tr := s.Host.Model.Transport
 	tr.State, tr.Pos = players.Paused, 12*time.Second
 	s.playback.state, s.playback.position = tr.State, tr.Pos
-	loads := countCommand(b, "loadfile")
+	loads := countCommand(b, playback.OpLoad)
 	root := t.TempDir()
 	want := []string{
 		writeMusicEntry(t, root, "A-song.MP4"),
@@ -142,7 +143,7 @@ func TestDroppedFolderAppendsAudioFromMediaContainers(t *testing.T) {
 			t.Fatalf("folder entry %d out of order: %q", i, tr.List.At(i+1).Path)
 		}
 	}
-	if tr.List.Index() != 0 || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, "loadfile") != loads {
+	if tr.List.Index() != 0 || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, playback.OpLoad) != loads {
 		t.Fatal("folder append interrupted existing playback")
 	}
 	if s.Host.Model.Error != "" {
@@ -191,23 +192,23 @@ func TestFileValidationIsAtomicAndExplicitFormatsAreNotFiltered(t *testing.T) {
 	if err := s.LoadFiles([]string{first}, false); err != nil {
 		t.Fatal(err)
 	}
-	identify(s, 301)
+	loaded(s)
 	tr := s.Host.Model.Transport
 	tr.State, tr.Pos = players.Paused, 12*time.Second
 	s.playback.state, s.playback.position = tr.State, tr.Pos
-	list, loads := tr.List, countCommand(b, "loadfile")
+	list, loads := tr.List, countCommand(b, playback.OpLoad)
 	for _, paths := range [][]string{{second, filepath.Join(root, "missing.wav")}, {t.TempDir()}} {
 		if err := s.LoadFiles(paths, false); err == nil {
 			t.Fatalf("invalid replacement accepted: %v", paths)
 		}
-		if tr.List != list || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, "loadfile") != loads {
+		if tr.List != list || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, playback.OpLoad) != loads {
 			t.Fatal("invalid replacement changed the current queue or transport")
 		}
 	}
 	if err := s.LoadFiles([]string{second}, true); err != nil {
 		t.Fatal(err)
 	}
-	if tr.List != list || list.Len() != 2 || list.At(1).Path != second || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, "loadfile") != loads {
+	if tr.List != list || list.Len() != 2 || list.At(1).Path != second || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, playback.OpLoad) != loads {
 		t.Fatal("append restarted or replaced the current transport")
 	}
 }
@@ -220,11 +221,11 @@ func TestFolderSkipsUnreadableEntriesWithoutInterruptingCurrentAudio(t *testing.
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
 	}
-	identify(s, 302)
+	loaded(s)
 	tr := s.Host.Model.Transport
 	tr.State, tr.Pos = players.Paused, 9*time.Second
 	s.playback.state, s.playback.position = tr.State, tr.Pos
-	loads, stops := countCommand(b, "loadfile"), countCommand(b, "stop")
+	loads, stops := countCommand(b, playback.OpLoad), countCommand(b, playback.OpStop)
 	root := t.TempDir()
 	good := writeMusicEntry(t, root, "good.mp3")
 	blocked := writeMusicEntry(t, root, "blocked.wav")
@@ -243,7 +244,7 @@ func TestFolderSkipsUnreadableEntriesWithoutInterruptingCurrentAudio(t *testing.
 	if err := s.LoadFiles([]string{root}, true); err != nil {
 		t.Fatal(err)
 	}
-	if tr.List.Len() != 2 || tr.List.At(1).Path != good || tr.State != players.Paused || tr.Pos != 9*time.Second || countCommand(b, "loadfile") != loads || countCommand(b, "stop") != stops {
+	if tr.List.Len() != 2 || tr.List.At(1).Path != good || tr.State != players.Paused || tr.Pos != 9*time.Second || countCommand(b, playback.OpLoad) != loads || countCommand(b, playback.OpStop) != stops {
 		t.Fatal("unreadable folder entries disrupted playable music")
 	}
 	if !strings.Contains(s.Host.Model.Error, "skipped 3 unreadable entries") {
@@ -261,7 +262,7 @@ func TestAsyncFileAndFolderDropsAppendInInvocationOrder(t *testing.T) {
 	last := writeMusicEntry(t, t.TempDir(), "last.custom-format")
 	s.Host.DropFiles([]string{root})
 	s.Host.DropFiles([]string{last})
-	if s.Host.Model.Transport.List.Len() != 0 || countCommand(b, "loadfile") != 0 {
+	if s.Host.Model.Transport.List.Len() != 0 || countCommand(b, playback.OpLoad) != 0 {
 		t.Fatal("drop mutated the UI model before the posted commit")
 	}
 	waitFileLoad(t, a, "ordered drop commits", func() bool { return s.Host.Model.Transport.List.Len() == count+1 })
@@ -271,7 +272,7 @@ func TestAsyncFileAndFolderDropsAppendInInvocationOrder(t *testing.T) {
 			t.Fatalf("folder entry %d out of order", i)
 		}
 	}
-	if tr.List.At(count).Path != last || tr.List.Index() != 0 || tr.State != players.Playing || countCommand(b, "loadfile") != 1 {
+	if tr.List.At(count).Path != last || tr.List.Index() != 0 || tr.State != players.Playing || countCommand(b, playback.OpLoad) != 1 {
 		t.Fatal("later drop overtook the folder or restarted the selected track")
 	}
 }
@@ -282,10 +283,10 @@ func TestAsyncFileLoadErrorAndClosePreserveQueue(t *testing.T) {
 		if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 			t.Fatal(err)
 		}
-		list, loads, stops := s.Host.Model.Transport.List, countCommand(b, "loadfile"), countCommand(b, "stop")
+		list, loads, stops := s.Host.Model.Transport.List, countCommand(b, playback.OpLoad), countCommand(b, playback.OpStop)
 		s.Host.DropFiles([]string{filepath.Join(t.TempDir(), "missing.wav")})
 		waitFileLoad(t, a, "drop failure", func() bool { return s.Host.Model.Error != "" })
-		if s.Host.Model.Transport.List != list || s.Host.Model.Transport.State != players.Playing || countCommand(b, "loadfile") != loads || countCommand(b, "stop") != stops {
+		if s.Host.Model.Transport.List != list || s.Host.Model.Transport.State != players.Playing || countCommand(b, playback.OpLoad) != loads || countCommand(b, playback.OpStop) != stops {
 			t.Fatal("bad drop interrupted the existing queue/audio")
 		}
 	})
@@ -304,7 +305,7 @@ func TestAsyncFileLoadErrorAndClosePreserveQueue(t *testing.T) {
 			t.Fatal("folder loader did not stop on Close")
 		}
 		a.PumpOnce()
-		if s.Host.Model.Transport.List.Len() != 0 || countCommand(b, "loadfile") != 0 {
+		if s.Host.Model.Transport.List.Len() != 0 || countCommand(b, playback.OpLoad) != 0 {
 			t.Fatal("completed scan changed a closed player")
 		}
 	})

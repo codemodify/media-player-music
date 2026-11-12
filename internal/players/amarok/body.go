@@ -66,7 +66,7 @@ func newBody(p *Player) *body {
 	button("eq", "Show or hide equalizer", players.GlyphSliders, func() { p.ShowEqualiser(!p.Host.Model.EqualizerVisible) }).Toggle = true
 	button("playlist", "Show or hide playlist", players.GlyphList, func() { p.ShowPlaylist(!p.Host.Model.PlaylistVisible) }).Toggle = true
 	button("appearance", "Appearance", players.GlyphSkin, func() { p.Host.ContextMenu(b.buttons["appearance"], menuAt(b.buttons["appearance"])) })
-	button("settings", "Audio backend settings", players.GlyphNone, p.Host.OpenSettings)
+	button("settings", "Playback settings", players.GlyphNone, p.Host.OpenSettings)
 	button("shuffle", "Shuffle", players.GlyphShuffle, func() { p.Host.Command(players.CmdShuffle) }).Toggle = true
 	button("repeat", "Repeat", players.GlyphRepeat, func() { p.Host.Command(players.CmdRepeat) }).Toggle = true
 	for _, caption := range []struct {
@@ -203,8 +203,6 @@ func (b *body) sync() {
 	}
 	b.eq.sync()
 	b.syncRows()
-	b.analyser.SetEnabled(b.p.Host.SpectrumAvailable())
-	b.analyser.SetAccessibleDescription(b.p.Host.FeatureTip("Visualizer", b.p.Host.SpectrumAvailable()))
 	b.analyser.Invalidate()
 	b.Invalidate()
 }
@@ -322,7 +320,7 @@ func (b *body) paintContext(ctx *paint2d.Context, r paint2d.Rect) {
 	y += d(132)
 	players.DrawTextIn(ctx, font(lk, 10), paint2d.XYWH(x, y, w, d(18)), "No cover artwork", muted, style.AlignCenter)
 	y += d(26)
-	lines := []string{fmt.Sprintf("%s · %s", b.p.Transport.State, players.Clock(t.Length)), b.p.Host.AudioBackend}
+	lines := []string{fmt.Sprintf("%s · %s", b.p.Transport.State, players.Clock(t.Length))}
 	if t.Rate > 0 {
 		lines = append(lines, fmt.Sprintf("%d kHz · %d channels", t.Rate, t.Channels))
 	}

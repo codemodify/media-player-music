@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"goframework.io/desktop-ui"
@@ -24,7 +23,7 @@ import (
 
 // This opt-in integration crosses the actual native XDND selection protocol,
 // rather than injecting an already decoded DropEvent. It creates only its own
-// windows and uses a recording playback backend, so no audio is played.
+// windows and uses a fake playback engine, so no audio is played.
 func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 	if runtime.GOOS != "linux" || os.Getenv("MUSIC_PLAYER_NATIVE_XDND_TEST") != "1" {
 		t.Skip("set MUSIC_PLAYER_NATIVE_XDND_TEST=1 with an X11 display to test external XDND")
@@ -65,8 +64,8 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			t.Setenv(style.ThemeEnv, LookFor(skin))
 			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})
-			backend := &recordingBackend{events: make(chan playback.Event, 100)}
-			s, err := New(a, Options{Skin: skin, Scale: 1.75, Backend: backend})
+			backend := newFakeEngine()
+			s, err := New(a, Options{Skin: skin, Scale: 1.75, Engine: backend})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -118,7 +117,7 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 				if s.Host.Model.Error != "" {
 					t.Fatalf("native folder loading failed: %s", s.Host.Model.Error)
 				}
-				t.Logf("native %s-preferred folder drop negotiated Copy and added %d entries (recording backend; no audio)", preferred, len(want.tracks))
+				t.Logf("native %s-preferred folder drop negotiated Copy and added %d entries (fake engine; no audio)", preferred, len(want.tracks))
 			}
 		})
 	}

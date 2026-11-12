@@ -168,14 +168,6 @@ func TestRealPlayerActionsUseHostAndModel(t *testing.T) {
 	if p.Equaliser.Gains[0] == 0 {
 		t.Fatal("EQ gain")
 	}
-	p.Host.Model.BackendLimited = true
-	p.Host.Model.BackendEqualizer = false
-	p.Host.Model.BackendBalance = false
-	p.Host.Model.BackendSpectrum = false
-	p.Refresh()
-	if p.body.eq.bands[0].Enabled() || p.body.eq.balance.Enabled() || p.body.buttons["visual"].Enabled() || p.body.canvas.analyser.Visible() {
-		t.Fatal("unsupported backend features exposed")
-	}
 	requested := 0
 	p.Main.SetOnCloseRequest(func() bool { requested++; return false })
 	click(a, p.Main, p.body.buttons["close"])

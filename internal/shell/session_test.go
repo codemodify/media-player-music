@@ -13,13 +13,13 @@ import (
 	"goframework.io/desktop-ui/style"
 )
 
-func rememberedShell(t *testing.T, skin string) (*ui.Application, *Shell, *recordingBackend) {
+func rememberedShell(t *testing.T, skin string) (*ui.Application, *Shell, *fakeEngine) {
 	t.Helper()
 	opts := Options{Skin: skin, Headless: true, Remember: true}
 	t.Setenv(style.ThemeEnv, LookFor(SkinFor(opts)))
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
-	b := &recordingBackend{events: make(chan playback.Event, 100)}
-	opts.Backend = b
+	b := newFakeEngine()
+	opts.Engine = b
 	s, err := New(a, opts)
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +65,7 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 			if model.EqualizerVisible || !model.PlaylistVisible {
 				t.Fatal("lost panel visibility")
 			}
-			if model.Transport.State != players.Stopped || countCommand(backend, "loadfile") != 0 {
+			if model.Transport.State != players.Stopped || countCommand(backend, playback.OpLoad) != 0 {
 				t.Fatal("restoring a session automatically started media")
 			}
 			if x, y, ok := next.MainWindow().Position(); !ok || x != 420 || y != 210 {
@@ -77,7 +77,7 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 				}
 			}
 			next.Command(players.CmdPlay)
-			if countCommand(backend, "loadfile") != 1 || next.playback.seekOnLoad != 9250*time.Millisecond {
+			if countCommand(backend, playback.OpLoad) != 1 || next.playback.seekOnLoad != 9250*time.Millisecond {
 				t.Fatal("Play did not load the restored selection at its saved offset")
 			}
 		})
@@ -184,7 +184,7 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 	if len(s.Windows()) != 2 || s.settings.Windows[players.HeadspaceSkin]["main"].X != 510 || s.settings.Windows[players.XboxSkin]["main"].X != 850 || s.settings.Windows[players.WinampSkin]["main"].X != 380 || s.settings.Windows[players.DefaultSkin]["main"].X != 720 {
 		t.Fatalf("presentation families overwrote each other: %v", s.settings.Windows)
 	}
-	if countCommand(backend, "loadfile") != 0 {
+	if countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatal("changing presentation started the restored empty queue")
 	}
 	s.Close()
@@ -192,7 +192,7 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 	if reopened.Skin() != players.XboxSkin || len(reopened.Windows()) != 2 {
 		t.Fatal("saved Xbox selection did not reopen its own presentation")
 	}
-	if x, y, ok := reopened.MainWindow().Position(); !ok || x != 850 || y != 400 || countCommand(nextBackend, "loadfile") != 0 {
+	if x, y, ok := reopened.MainWindow().Position(); !ok || x != 850 || y != 400 || countCommand(nextBackend, playback.OpLoad) != 0 {
 		t.Fatalf("Xbox reopened at (%d,%d,%t) or started playback", x, y, ok)
 	}
 	for _, named := range reopened.Windows() {

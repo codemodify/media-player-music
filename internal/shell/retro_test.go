@@ -3,6 +3,7 @@ package shell
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/codemodify/media-player-music/internal/playback"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -62,9 +63,9 @@ func TestClassicDesktopFamiliesPreservePlaybackAndOwnTheirWindowPlacement(t *tes
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
 	}
-	identify(s, 61)
+	loaded(s)
 	model, transport, queue, pulse := s.Host.Model, s.Host.Model.Transport, s.Host.Model.Transport.List, s.Pulse()
-	loads := countCommand(backend, "loadfile")
+	loads := countCommand(backend, playback.OpLoad)
 	placements := map[string]map[string]players.WindowPlacement{}
 	for i, skin := range []string{players.VLCSkin, players.RealPlayerSkin, players.AmarokSkin} {
 		if err := s.SetSkin(skin); err != nil {
@@ -81,7 +82,7 @@ func TestClassicDesktopFamiliesPreservePlaybackAndOwnTheirWindowPlacement(t *tes
 		a.PumpOnce()
 		s.presentation.Advance(0)
 		placements[skin] = s.presentation.CapturePlacement()
-		if presentationFamily(skin) != skin || s.Host.Model != model || model.Transport != transport || transport.List != queue || transport.State != players.Playing || countCommand(backend, "loadfile") != loads || s.Pulse() != pulse || s.tray != tray || backend.closed {
+		if presentationFamily(skin) != skin || s.Host.Model != model || model.Transport != transport || transport.List != queue || transport.State != players.Playing || countCommand(backend, playback.OpLoad) != loads || s.Pulse() != pulse || s.tray != tray || backend.closed {
 			t.Fatalf("%s changed shared playback, tray or its placement family", skin)
 		}
 	}

@@ -1,7 +1,6 @@
 package shell
 
 import (
-	"errors"
 	"log"
 	"math"
 	"time"
@@ -11,8 +10,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/tags"
 )
 
-// Transport intent and queue state belong to the frontend. Engine adapters
-// supply the actual audio clock and translate their own command/event protocol.
+// Transport intent and queue state belong to the frontend. The engine
+// supplies the actual audio clock.
 type playbackState struct {
 	initialized   bool
 	path          string
@@ -33,7 +32,7 @@ type playbackState struct {
 
 func (s *Shell) startPlaybackEvents() {
 	s.eventStop, s.eventDone = make(chan struct{}), make(chan struct{})
-	engine, stop, done, epoch := s.engine, s.eventStop, s.eventDone, s.engineEpoch
+	engine, stop, done := s.engine, s.eventStop, s.eventDone
 	go func() {
 		defer close(done)
 		for {
@@ -47,7 +46,7 @@ func (s *Shell) startPlaybackEvents() {
 					return
 				}
 				s.App.Post(func() {
-					if !s.closed && s.engineEpoch == epoch {
+					if !s.closed {
 						s.engineEvent(event)
 					}
 				})
@@ -61,10 +60,6 @@ func (s *Shell) apply(command playback.Command) bool {
 		return false
 	}
 	if err := s.engine.Apply(command); err != nil {
-		if errors.Is(err, playback.ErrClosed) {
-			s.backendError = err.Error()
-			s.refreshSettings()
-		}
 		s.playbackError(err.Error())
 		return false
 	}
@@ -72,18 +67,7 @@ func (s *Shell) apply(command playback.Command) bool {
 }
 
 func (s *Shell) syncPlayback() {
-	if s.closed || s.backendTransition || s.playback.syncing {
-		return
-	}
-	if s.engine == nil {
-		if !s.Host.Model.Live {
-			return
-		}
-		if s.Host.Model.Transport.State != players.Stopped {
-			s.Host.Model.Transport.State = players.Stopped
-			s.Host.Model.Error = "Choose an installed playback backend in Settings"
-			s.refresh()
-		}
+	if s.closed || s.engine == nil || s.playback.syncing {
 		return
 	}
 	p := &s.playback
@@ -154,23 +138,10 @@ func (s *Shell) syncAudioFilters() bool {
 	if p.initialized && p.dsp == dsp {
 		return true
 	}
-	intended := dsp
-	caps := s.engine.Capabilities()
-	if !caps.Balance {
-		dsp.Balance = 0
+	if !s.apply(playback.Command{Op: playback.OpDSP, Generation: p.generation, DSP: dsp, Epoch: p.spectrumEpoch}) {
+		return false
 	}
-	if !caps.Equalizer {
-		dsp.Enabled = false
-		dsp.Preamp = 0
-		dsp.Gains = [10]float32{}
-	}
-	if caps.Equalizer || caps.Balance || caps.Spectrum {
-		if !s.apply(playback.Command{Op: playback.OpDSP, Generation: p.generation, DSP: dsp, Epoch: p.spectrumEpoch}) {
-			return false
-		}
-	}
-	// Preserve intended DSP across engines, even if one cannot apply it.
-	p.dsp = intended
+	p.dsp = dsp
 	return true
 }
 
@@ -185,9 +156,9 @@ func (s *Shell) loadCover(path string) {
 	if !tags.Tagged(path) {
 		return
 	}
-	s.backendWorkers.Add(1)
+	s.workers.Add(1)
 	go func() {
-		defer s.backendWorkers.Done()
+		defer s.workers.Done()
 		cover := tags.Cover(path, coverSide)
 		if cover == nil {
 			return
@@ -213,10 +184,6 @@ func (s *Shell) engineEvent(event playback.Update) {
 		return
 	}
 	if event.Kind == playback.UpdateError {
-		if event.Generation == 0 {
-			s.backendError = event.Error
-			s.refreshSettings()
-		}
 		s.playbackError(event.Error)
 		return
 	}
@@ -285,7 +252,7 @@ func (s *Shell) engineEvent(event playback.Update) {
 }
 
 func (s *Shell) playbackError(message string) {
-	log.Printf("playback (%s): %s", s.backendID, message)
+	log.Printf("playback: %s", message)
 	if s.engine != nil {
 		// A rejected load may never have adopted the frontend generation.
 		// Stop the active audio regardless of that failed request's identity.

@@ -47,7 +47,7 @@ func newBody(p *Player) *body {
 	button("open", "Open music files", players.GlyphEject, func() { p.Host.OpenFiles(b.buttons["open"], false) })
 	button("add", "Add music files", players.GlyphEject, func() { p.Host.OpenFiles(b.buttons["add"], true) })
 	button("mute", "Mute", players.GlyphNone, func() { p.Host.Command(players.CmdMute) }).Toggle = true
-	button("settings", "Backend settings", players.GlyphNone, p.Host.OpenSettings)
+	button("settings", "Playback settings", players.GlyphNone, p.Host.OpenSettings)
 	button("visual", "Spectrum analyser", players.GlyphNone, func() { b.visualOn = !b.visualOn; b.sync() }).Toggle = true
 	button("logo", "Appearances", players.GlyphNone, func() { b.appearances(b.buttons["logo"]) })
 	button("close", "Close Music Player", players.GlyphNone, p.Main.RequestClose)
@@ -97,9 +97,7 @@ func (b *body) sync() {
 	b.buttons["pause"].SetEnabled(t.State != players.Stopped)
 	b.buttons["queue"].SetChecked(b.p.Host.Model.PlaylistVisible)
 	b.buttons["eq"].SetChecked(b.p.Host.Model.EqualizerVisible)
-	b.buttons["visual"].SetEnabled(b.p.Host.SpectrumAvailable())
 	b.buttons["visual"].SetChecked(b.visualOn)
-	b.buttons["visual"].Tip = b.p.Host.FeatureTip("Visualizer", b.p.Host.SpectrumAvailable())
 	b.seek.SetEnabled(t.Length() > 0)
 	if !b.seek.Dragging() {
 		b.seek.Set(t.Fraction())
@@ -186,11 +184,11 @@ func (b *body) menu(kind string, from widget.Component) {
 			}
 		}), widgets.Item("Stop", func() { h.Command(players.CmdStop) }), widgets.Item("Previous track", func() { h.Command(players.CmdPrev) }), widgets.Item("Next track", func() { h.Command(players.CmdNext) }), widgets.Sep(), widgets.CheckItem("Shuffle", t.Random, func() { h.Command(players.CmdShuffle) }), widgets.Item("Repeat: "+t.Repeat.String(), func() { h.Command(players.CmdRepeat) })}
 	case "tools":
-		items = []*widgets.MenuItem{widgets.Item("Backend settings…", h.OpenSettings), widgets.Submenu("Appearance", h.SkinItems()...), widgets.Item("Equalizer presets…", b.eq.presetMenu)}
+		items = []*widgets.MenuItem{widgets.Item("Playback settings…", h.OpenSettings), widgets.Submenu("Appearance", h.SkinItems()...), widgets.Item("Equalizer presets…", b.eq.presetMenu)}
 	case "help":
 		info := widgets.Item("Music Player · classic RealPlayer 8 appearance", nil)
 		info.Disabled = true
-		items = []*widgets.MenuItem{info, widgets.Item("Backend settings…", h.OpenSettings)}
+		items = []*widgets.MenuItem{info, widgets.Item("Playback settings…", h.OpenSettings)}
 	}
 	widgets.ShowContextMenu(from, widget.DeviceOrigin(from).Add(paint2d.Pt(0, from.Bounds().Dy())), items...)
 }

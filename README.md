@@ -1,9 +1,10 @@
 # media-player-music
 
 A Go desktop music player with one default layout and twenty-one optional skins.
-Audio plays in the player itself by default, on goframework's audio-playback
-(MP3, AAC, FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF, AU: nothing to install),
-or through a selected external mpv, VLC, MPlayer or mpg123 process. The playlist
+Audio plays in the player itself, on goframework's audio-playback (MP3, AAC,
+FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF, AU: nothing to install), with
+ReplayGain (off, track or album; a preamp; the peak keeps it from clipping).
+WMA, APE (Monkey's Audio), Musepack and WavPack files do not play. The playlist
 shows MP3 and AAC files' ID3 tags as they are added, and the default layout
 shows the playing file's front cover. Headless screenshots and
 presentation tests retain invented tracks and a synthetic analyser for
@@ -76,11 +77,11 @@ controls leave keyboard focus on the shutter button so it can reopen them.
 ![Win Media Player - Half Life 2](docs/screenshots/half-life-2-group.png)
 
 The original Play/Pause, Stop, Previous, Next, Open and mute controls drive
-the shared playback backend. The lower buttons toggle the visualizer,
+the shared playback engine. The lower buttons toggle the visualizer,
 equalizer and playlist. The central Lambda logo and small menu button open
 appearances and Settings. The equalizer supports ten bands, balance and
 presets; its preset name opens On/Auto, preamp and reset. Original SRS WOW,
-TruBass and crossfade controls remain disabled because the backends do not
+TruBass and crossfade controls remain disabled because the player does not
 provide those effects. The original archive and notices are retained in
 [Half Life 2 sources](internal/skins/sources/half-life-2/README.md).
 Video, promotional web views, startup animations and skin sound effects
@@ -88,7 +89,7 @@ are preserved as source material; the music player uses the three audio views.
 
 **Win Media Player - Fandom** recreates the supplied silver player reference
 with an embedded settings wing, green spectrum, inset equalizer and a
-separate resizable playlist. Its controls use the same selected audio backend,
+separate resizable playlist. Its controls use the same playback engine,
 queue and app settings. The original skin name, creator and archive have not
 been verified; this is a reference adaptation with artwork generated using
 the built-in image tool, rather than an imported original WMP skin.
@@ -159,17 +160,17 @@ controls, with original transport artwork where available:
 a 420 × 220 main player, a separate equalizer and a resizable playlist.
 Ctrl+Shift+M switches the same main window between the full player and its
 420 × 40 compact mode while playback continues.
-The panels and compact mode use the shared queue, audio backend and tray behavior.
+The panels and compact mode use the shared queue, playback and tray behavior.
 The app draws the artwork and defines the layout from the supplied reference.
 
 ![Fancy](docs/screenshots/fancy-main.png)
 
 ![Fancy compact player](docs/screenshots/fancy-compact.png)
 
-The three classic desktop appearances each have one resizable window and use the shared playback backend,
+The three classic desktop appearances each have one resizable window and use the shared playback engine,
 queue, file and folder drops, double-click/Enter playback and close-to-tray
-behavior. Appearance and audio backend are independent: choosing the VLC skin
-does not change the selected audio backend. Original network services and
+behavior. The VLC skin is an appearance only: playback is the player's own.
+Original network services and
 media-library databases are outside these local music views.
 
 The ten bitmap-based skins include separate 2× artwork for sharper control
@@ -189,11 +190,8 @@ framework is in goframework's one ledger, `app-requests.md` in the workspace
 
 ## Build and run
 
-The **Built-in** engine needs nothing installed and is the initial default
-(a saved choice of an installed program is kept). For other formats install
-**mpv**, **VLC**, **MPlayer** or **mpg123**; none is bundled. Detection checks
-`PATH`, then common macOS Homebrew/app locations and Windows installation
-directories. mpv uses Unix socket IPC on Linux/macOS or named pipes on Windows.
+Playback needs nothing installed: the player decodes in its own process
+(goframework's audio-playback) and plays through the system's sound.
 
 ```bash
 go build .
@@ -216,7 +214,6 @@ go build .
 ./media-player-music -skin amarok            # KDE 3 Amarok 1.4 appearance
 ./media-player-music -skin fancy             # blue shaped panels and compact player
 ./media-player-music -scale 1.75              # fractional display scale
-./media-player-music -audio-backend vlc       # choose an installed backend (or builtin)
 ./media-player-music -skin default -shot /tmp/player-shots -at 1m37s
 ```
 
@@ -225,9 +222,9 @@ With files it starts the first track; without files it restores the saved
 queue and position, stopped until Play. A first run opens an empty playlist.
 Use Ctrl+O, Eject, or Playlist → Add to choose music, or
 drag files and folders from a file manager onto the playlist.
-The public options are `-skin`, `-scale`, `-audio-backend`, `-shot`, and `-at`. A screenshot run
+The public options are `-skin`, `-scale`, `-shot`, and `-at`. A screenshot run
 uses headless rendering and synthetic fixtures, writes a posed PNG for each
-open window, and does not launch an audio backend. `-at` is a Go duration and defaults to
+open window, and plays nothing. `-at` is a Go duration and defaults to
 97 seconds.
 
 The app embeds [logo.png](logo.png) for its window, taskbar and system-tray
@@ -258,11 +255,9 @@ taskbar policy. These limits are documented in the
 uitoolkit gap report's item 12 (in this repository's history: `uitoolkit-gaps.md`,
 and `goframework-gaps.md` as of 1da0430).
 
-The app remembers the audio backend, queue, selected track, playback offset, skin, panel
+The app remembers the ReplayGain settings, queue, selected track, playback offset, skin, panel
 visibility and window placement in
-`$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json`; a file saved
-there under uitoolkit (`$XDG_CONFIG_HOME/uitoolkit/`) is read until the first
-save. Default keeps its own
+`$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json`. Default keeps its own
 size and position; Winamp skins share panel positions, playlist size and
 snap relationships. Headspace keeps its own position and fixed 760 × 394
 layout. Xbox keeps its own main and playlist positions and playlist size.
@@ -322,31 +317,23 @@ go generate ./internal/skins
 ## Controls
 
 Open **Settings** from Default's gear button, a player context menu,
-or **Ctrl+,**. Each backend has a green check when its
-executable is found and a red cross when missing. The selected radio is a
-separate indicator; missing programs are disabled. **Refresh** rescans
-after installation or a `PATH` change. Startup errors appear separately from
-installation status; choosing the selected backend again retries a failed
-start. The preference is saved as `audio_backend`, including when that
-program is unavailable on a later launch. Escape closes Settings.
-mpg123 is labelled **MP3/MPEG only**; MP4, AAC, FLAC and other unsupported
-formats produce an immediate explanation recommending mpv or VLC.
+or **Ctrl+,**. It says which formats play and sets ReplayGain:
 
-| Backend | Playback features |
-| --- | --- |
-| Built-in | goframework's audio-playback in the player's process: MP3 (and MP1/MP2), AAC (LC, HE-AAC, HE-AAC v2; .aac and M4A), FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF and AU, also in MP4 and Matroska. Transport, volume (mpv's curve), balance, ten-band/preamp EQ and the live visualizer on every system. |
-| mpv | Broad format support, transport, volume, balance and ten-band/preamp EQ. Live visualizer on Linux/macOS; Windows visualizer is unavailable. |
-| VLC | Broad format support, transport and volume. VLC 3 reports coarse duration/position and has coarse seeking. |
-| MPlayer | Formats supported by its installed build, transport and volume. |
-| mpg123 | MPEG audio only (MP1/MP2/MP3), transport and volume. |
+- **Off**, **Track gain** or **Album gain**. A track's gain is read from its
+  tags: ID3v2's TXXX `REPLAYGAIN_*` frames and RVA2, APEv2 tags (as
+  mp3gain writes them), Vorbis comments (FLAC, Ogg) and MP4's freeform
+  items. A track without the chosen gain takes the other one; a track
+  with neither plays as it is.
+- **Preamp**, from -15 to +15 dB, added to the tags' gain.
+- The tags' peak keeps the gain from clipping; past it, audio-playback's
+  limiter holds the samples at full scale.
 
-VLC, MPlayer and mpg123 currently have no app EQ, balance or live visualizer.
-Settings states those limits, unsupported controls are disabled, and saved
-EQ/balance adjustments remain available when returning to Built-in or mpv. Changing
-backend preserves the queue and restores track, position, playback state and
-volume after the replacement process starts successfully.
-The VLC adapter keeps the latest slider value during fast drags so obsolete
-volume commands do not delay the final setting or transport controls.
+A change is heard from the next track. Escape closes Settings.
+
+Files the player does not play (WMA, APE, Musepack, WavPack, AC-3, DTS,
+TTA, DSD...) are refused with a message naming their format; a dropped
+or opened folder leaves them out and says how many it left. A file whose
+format turns out not to play stops with the same kind of message.
 
 All appearances use the shared playback commands; their controls and placement
 vary with the original design. Default and the Winamp skins provide:
@@ -361,8 +348,8 @@ Eject and Open files choose a new playlist. Add appends chosen files; Remove
 removes the current track. Playlist drops append files, leaving the originals
 in place. Dropped folders add recognized audio files and media containers
 (including MP4, M4V, WebM and MKV) recursively in a
-deterministic sorted order; scanning runs in the background. Explicit files
-use the selected backend's format support; playback takes the audio without opening video.
+deterministic sorted order; scanning runs in the background. Playback takes
+the audio of a video file without opening its video.
 Adding to an empty queue starts its first track;
 adding to an existing queue preserves current playback.
 
@@ -370,11 +357,10 @@ Play starts or resumes playback, Pause toggles
 pause/resume, and Stop returns to the start of the track. Seeking and volume
 control real playback. A single playlist click selects a row; double-click
 or Enter plays it. Arrow-key navigation and selection leave current playback
-running. With mpv, balance and the ten-band/preamp equaliser use its
-FFmpeg audio filters. Auto chooses an equaliser preset for each track.
-With mpv on Linux/macOS, the visualizer in every interface shows 48 frequency bands measured from
-the playing audio after balance and equaliser processing. Analysis runs
-inside the existing mpv process and adds no executable dependency. Bars
+running. Balance and the ten-band/preamp equaliser are audio-playback's.
+Auto chooses an equaliser preset for each track.
+The visualizer in every interface shows 48 frequency bands measured from
+the playing audio after balance and equaliser processing. Bars
 decay when playback pauses or stops; screenshot mode retains its synthetic
 fixture.
 
@@ -399,7 +385,7 @@ V             stop             M              mute
 Left / Right  seek             Up / Down      volume
 S             shuffle          R              repeat: off → all → one
 Ctrl+O        open music files
-Ctrl+,        audio backend settings
+Ctrl+,        settings (ReplayGain)
 Ctrl+K        cycle Default and all optional skins
 Ctrl+Shift+K  toggle Default / last optional skin
 Ctrl+E        show/hide equaliser    Ctrl+L    show/hide playlist
@@ -431,19 +417,21 @@ artwork, playlist resizing, keyboard controls, accessibility, and state preserva
 skin changes. Headless URI-drop routing and session restoration tests cover empty
 playlists, file/folder loading, fractional-scale placement and dock state.
 Presentation tests use synthetic fixtures and playback hooks
-without launching an audio backend. Engine and controller integration tests launch the
-installed mpv with `--ao=null` for silent playback. Spectrum checks cover
-tones, silence, pause, seek, track replacement and skin changes; they also
-verify the analyzer preserves the output audio. These tests skip when mpv is
-missing. Protocol tests cover all four engines; installed VLC, MPlayer and
-mpg123 also have silent integration checks. Settings tests cover discovery,
-selection, retry, disabled controls, persistence and fractional-scale layout.
+and play nothing. The engine's tests play into goframework's audiotest
+sound system in memory (no device): MP3 and AAC to their end, seeks, loads
+at a position, ID3 metadata, ReplayGain from tags the tests write (ID3
+TXXX and RVA2, APEv2, FLAC's Vorbis comments) in every mode, with a
+preamp and with the peak holding the gain, and the message for a format
+that does not play. The shell's tests drive a fake engine, and one plays
+a queue through the shell with the real engine on audiotest. Settings
+tests cover the ReplayGain controls, persistence and fractional-scale
+layout.
 See [docs/faces.md](docs/faces.md) for verification details and
 known toolkit limitations.
 
 An optional external XDND test creates its own native X11 windows and
-checks folder drops through real selection messages with a recording
-playback backend. With an X11 display and `cc`/X11 development headers:
+checks folder drops through real selection messages with a fake playback
+engine. With an X11 display and `cc`/X11 development headers:
 
 ```bash
 tools/testenv.sh env DISPLAY=:0 MUSIC_PLAYER_NATIVE_XDND_TEST=1 go test ./internal/shell -run '^TestNativeXDNDPlaylistFolderDrop$' -count=1

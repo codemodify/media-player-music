@@ -7,8 +7,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
+	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/tags"
 	"goframework.io/desktop-ui-widgets"
@@ -18,9 +20,10 @@ import (
 )
 
 // LoadFiles validates and expands paths before replacing or extending the queue.
-// Explicit regular files retain mpv's format support; directories contribute
-// known audio files and media containers recursively. GUI loads use the
-// asynchronous worker below; mpv plays only their audio tracks.
+// An explicit file is queued unless its extension names a format the engine
+// does not play (WMA, APE...); directories contribute the files the engine
+// plays, recursively (audio files, and the audio of MP4, Matroska and WebM
+// videos). GUI loads use the asynchronous worker below.
 func (s *Shell) LoadFiles(paths []string, appendToList bool) error {
 	if s.closed {
 		return fmt.Errorf("the player is closed")
@@ -55,16 +58,39 @@ func (s *Shell) commitFiles(result fileLoadResult, appendToList bool) {
 	players.TraceFileDrop("loaded %d tracks; playlist now has %d; append=%t", len(result.tracks), t.List.Len(), appendToList)
 	s.refresh()
 	s.syncPlayback()
+	var skipped []string
 	if result.skipped > 0 {
-		s.fileError(fmt.Errorf("Added %d tracks; skipped %d unreadable entries: %v", len(result.tracks), result.skipped, result.firstError))
+		skipped = append(skipped, fmt.Sprintf("skipped %d unreadable entries: %v", result.skipped, result.firstError))
+	}
+	if len(result.unsupported) > 0 {
+		skipped = append(skipped, unsupportedText(result.unsupported))
+	}
+	if len(skipped) > 0 {
+		s.fileError(fmt.Errorf("Added %d tracks; %s", len(result.tracks), strings.Join(skipped, "; ")))
 	}
 	s.remember()
 }
 
 type fileLoadResult struct {
-	tracks     []players.Track
-	skipped    int
-	firstError error
+	tracks      []players.Track
+	skipped     int
+	firstError  error
+	unsupported map[string]int // files in a format the engine does not play, by format
+}
+
+// unsupportedText says how many files were left out for their format.
+func unsupportedText(unsupported map[string]int) string {
+	count, formats := 0, make([]string, 0, len(unsupported))
+	for format, n := range unsupported {
+		count += n
+		formats = append(formats, format)
+	}
+	slices.Sort(formats)
+	files := "files"
+	if count == 1 {
+		files = "file"
+	}
+	return fmt.Sprintf("left out %d %s in formats the player does not play (%s)", count, files, strings.Join(formats, ", "))
 }
 
 func (r *fileLoadResult) skip(err error) {
@@ -93,6 +119,9 @@ func expandMusicPaths(ctx context.Context, paths []string) (fileLoadResult, erro
 			return fileLoadResult{}, fmt.Errorf("open music path: %w", err)
 		}
 		if !info.IsDir() {
+			if _, unsupported := playback.UnsupportedFormat(absolute); unsupported {
+				return fileLoadResult{}, errors.New(playback.UnsupportedMessage(absolute))
+			}
 			track, err := musicTrack(absolute)
 			if err != nil {
 				return fileLoadResult{}, err
@@ -117,7 +146,17 @@ func expandMusicPaths(ctx context.Context, paths []string) (fileLoadResult, erro
 				}
 				return nil
 			}
-			if entry.IsDir() || !mediaExtension(filepath.Ext(entry.Name())) {
+			if entry.IsDir() {
+				return nil
+			}
+			if format, unsupported := playback.UnsupportedFormat(path); unsupported {
+				if result.unsupported == nil {
+					result.unsupported = map[string]int{}
+				}
+				result.unsupported[format]++
+				return nil
+			}
+			if !playback.Playable(path) {
 				return nil
 			}
 			// Stat follows file symlinks; a symlink to a directory is ignored.
@@ -142,6 +181,9 @@ func expandMusicPaths(ctx context.Context, paths []string) (fileLoadResult, erro
 		}
 	}
 	if len(result.tracks) == 0 && len(paths) > 0 {
+		if len(result.unsupported) > 0 {
+			return fileLoadResult{}, errors.New("no files the player plays: " + unsupportedText(result.unsupported) + "; it plays " + playback.Formats)
+		}
 		if result.firstError != nil {
 			return fileLoadResult{}, fmt.Errorf("no readable audio files found: %w", result.firstError)
 		}
@@ -175,19 +217,6 @@ func musicTrack(path string) (players.Track, error) {
 		track.Artist, track.Album = info.Artist, info.Album
 	}
 	return track, nil
-}
-
-func mediaExtension(ext string) bool {
-	switch strings.ToLower(ext) {
-	case ".mp3", ".flac", ".wav", ".wave", ".ogg", ".oga", ".opus", ".aac",
-		".m4a", ".m4b", ".aif", ".aiff", ".aifc", ".au", ".snd", ".wma",
-		".ape", ".wv", ".mpc", ".mka", ".ac3", ".dts", ".amr", ".caf",
-		".tta", ".alac", ".dsf", ".dff", ".mpga", ".m4p",
-		".mp4", ".m4v", ".webm", ".mkv", ".mov", ".avi", ".flv",
-		".mpeg", ".mpg", ".3gp", ".3g2", ".ts", ".m2ts", ".mts", ".vob", ".asf":
-		return true
-	}
-	return false
 }
 
 type fileLoadRequest struct {

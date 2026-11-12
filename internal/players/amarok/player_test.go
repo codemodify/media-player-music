@@ -185,16 +185,6 @@ func TestTransportSharedHooksCapabilitiesAndHiddenFocus(t *testing.T) {
 	if !p.body.eq.Visible() {
 		t.Fatal("Ctrl+E did not restore EQ")
 	}
-	p.Host.Model.BackendLimited = true
-	p.Host.Model.BackendEqualizer = false
-	p.Host.Model.BackendBalance = false
-	p.Host.Model.BackendSpectrum = false
-	p.Refresh()
-	a.PumpOnce()
-	gain, pan := p.Equaliser.Gains[3], p.Transport.Pan
-	if p.body.eq.bands[3].Enabled() || p.body.eq.balance.Enabled() || p.Main.AccessibleAction(p.body.eq.bands[3].ID(), a11y.ActionIncrement) || p.Equaliser.Gains[3] != gain || p.Transport.Pan != pan {
-		t.Fatal("unsupported backend controls changed saved values")
-	}
 }
 func TestFilteredSortedQueueBrowsesWithoutPlayingAndActivatesMappedIdentity(t *testing.T) {
 	a, p := open(t, 1)

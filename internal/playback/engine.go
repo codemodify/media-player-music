@@ -1,29 +1,23 @@
+// Package playback plays the queue's tracks in the player's own process, on
+// goframework's audio-playback (Builtin). The frontend owns the playlist and
+// the transport's intent; the engine owns decoding and the sound stream, and
+// reports what is heard as Updates.
 package playback
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
-// Engine controls a separately installed playback executable. Implementations
-// own process startup, protocol translation and decoding; the frontend owns the
-// playlist and transport intent. Apply queues work without blocking the UI.
+// ErrClosed is a command given to a closed engine.
+var ErrClosed = errors.New("playback: the engine is closed")
+
+// Engine is what the shell drives: Builtin, or a test's fake. Apply queues
+// work without blocking the UI.
 type Engine interface {
 	Apply(Command) error
 	Events() <-chan Update
-	Capabilities() Capabilities
 	Close() error
-}
-
-type EngineOptions struct {
-	Executable     string
-	ExtraArgs      []string
-	StartupTimeout time.Duration
-}
-
-type Capabilities struct {
-	Seek      bool
-	Equalizer bool // the player's ten frequency bands and preamp
-	Balance   bool
-	Spectrum  bool   // passive measurements for our own visualizer
-	Formats   string // human-readable supported format scope
 }
 
 type Operation uint8
@@ -35,6 +29,7 @@ const (
 	OpSeek
 	OpVolume
 	OpDSP
+	OpReplayGain // the ReplayGain settings, heard from the next load
 )
 
 // Generation identifies a load, including repeated loads of the same path.
@@ -49,6 +44,7 @@ type Command struct {
 	Paused     bool
 	Volume     float32 // 0..1
 	DSP        DSP
+	ReplayGain ReplayGain
 	Epoch      int64
 }
 
@@ -57,6 +53,23 @@ type DSP struct {
 	Enabled bool
 	Preamp  float32     // dB
 	Gains   [10]float32 // 31,62,125,250,500,1000,2000,4000,8000,16000 Hz
+}
+
+// ReplayGainMode chooses the tags' gain a track plays at.
+type ReplayGainMode uint8
+
+const (
+	ReplayGainOff ReplayGainMode = iota
+	ReplayGainTrack
+	ReplayGainAlbum
+)
+
+// ReplayGain is how tracks are levelled by their ReplayGain tags: the mode
+// (a track without the mode's gain takes the other one), and a preamp added
+// to the tags' gain. The tags' peak always keeps the gain from clipping.
+type ReplayGain struct {
+	Mode   ReplayGainMode
+	Preamp float64 // dB
 }
 
 type UpdateKind uint8

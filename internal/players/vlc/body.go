@@ -147,12 +147,12 @@ func (b *body) newMenu() *widgets.MenuBar {
 	return widgets.NewMenuBar(
 		widgets.NewMenu("File", widgets.ItemAccel("Open music files…", "Ctrl+O", func() { h.OpenFiles(b, false) }), widgets.Item("Add music files…", func() { h.OpenFiles(b, true) }), widgets.Sep(), widgets.Item("Close to tray", p.Main.RequestClose)),
 		widgets.NewMenu("View", widgets.ItemAccel("Playlist", "Ctrl+L", func() { p.ShowPlaylist(!h.Model.PlaylistVisible) }), widgets.ItemAccel("Equalizer", "Ctrl+E", func() { p.ShowEqualiser(!h.Model.EqualizerVisible) })),
-		widgets.NewMenu("Settings", widgets.ItemAccel("Audio backend…", "Ctrl+,", h.OpenSettings), widgets.Item("Appearance…", func() {
+		widgets.NewMenu("Settings", widgets.ItemAccel("Playback…", "Ctrl+,", h.OpenSettings), widgets.Item("Appearance…", func() {
 			h.ContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())))
 		})),
 		widgets.NewMenu("Audio", widgets.Item("Play / pause", func() { h.Command(players.CmdPlayPause) }), widgets.Item("Stop", func() { h.Command(players.CmdStop) }), widgets.Item("Mute / restore", func() { h.Command(players.CmdMute) })),
 		widgets.NewMenu("Help", widgets.Item("About this appearance", func() {
-			widgets.ShowContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())), infoItem("VLC 0.8.6 wxWidgets appearance"), infoItem("Original VideoLAN toolbar artwork"), infoItem("Playback backend: "+h.AudioBackend))
+			widgets.ShowContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())), infoItem("VLC 0.8.6 wxWidgets appearance"), infoItem("Original VideoLAN toolbar artwork"))
 		})),
 	)
 }
@@ -177,7 +177,7 @@ func (b *body) sync() {
 	b.queue.SetVisible(p.Host.Model.PlaylistVisible)
 	b.eq.sync()
 	b.queue.sync()
-	b.analyser.SetVisible(!p.Host.Model.PlaylistVisible && p.Host.SpectrumAvailable())
+	b.analyser.SetVisible(!p.Host.Model.PlaylistVisible)
 	b.analyser.Invalidate()
 	b.Invalidate()
 }

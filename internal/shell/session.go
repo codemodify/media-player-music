@@ -78,8 +78,8 @@ func (s *Shell) capturePlacement(p Presentation, skin string) {
 		s.settings.Windows[family] = make(map[string]players.WindowPlacement)
 	}
 	for name, placement := range placements {
-		// An unsupported backend must not erase a previously known desktop
-		// location. It may still report a useful window size.
+		// A desktop that cannot report window positions must not erase a
+		// previously known location. It may still report a useful size.
 		if !placement.Positioned {
 			if previous, ok := s.settings.Windows[family][name]; ok && previous.Positioned {
 				previous.Width, previous.Height = placement.Width, placement.Height

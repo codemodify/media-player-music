@@ -106,21 +106,11 @@ func (e *eqPane) presetMenu() {
 // sync puts the shared model's equaliser settings into the controls.
 func (e *eqPane) sync() {
 	eq := e.p.Equaliser
-	available := e.p.Host.EqualizerAvailable()
-	tip := e.p.Host.FeatureTip("EQ", available)
-	for _, c := range []widget.Component{e.on, e.auto, e.presets, e.preamp} {
-		c.SetEnabled(available)
-	}
-	e.on.Tip, e.auto.Tip, e.presets.Tip, e.preamp.Tip = tip, tip, tip, tip
-	if available {
-		e.on.Tip, e.auto.Tip, e.presets.Tip = e.on.Label, e.auto.Label, e.presets.Label
-	}
+	e.on.Tip, e.auto.Tip, e.presets.Tip, e.preamp.Tip = e.on.Label, e.auto.Label, e.presets.Label, ""
 	e.on.SetChecked(eq.On)
 	e.auto.SetChecked(eq.Auto)
 	e.preamp.Set(eq.Preamp)
 	for i, f := range e.bands {
-		f.SetEnabled(available)
-		f.Tip = tip
 		if i < len(eq.Gains) {
 			f.Set(eq.Gains[i])
 		}

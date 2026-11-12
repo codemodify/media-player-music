@@ -5,7 +5,6 @@ import (
 	"math"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -184,7 +183,7 @@ func TestReferenceTransportSettingsActionsAndShortcutBubbling(t *testing.T) {
 	}
 }
 
-func TestStraightSlidersEqualizerFocusAndBackendCapabilities(t *testing.T) {
+func TestStraightSlidersEqualizerFocus(t *testing.T) {
 	a, p := open(t, 1.75)
 	p.ShowEqualiser(true)
 	a.PumpOnce()
@@ -228,22 +227,8 @@ func TestStraightSlidersEqualizerFocusAndBackendCapabilities(t *testing.T) {
 		t.Fatal("hidden EQ inset retained focus or accessibility controls")
 	}
 	p.ShowEqualiser(true)
-	p.Host.Model.Live = true
-	p.Host.Model.BackendLimited = true
-	p.Host.AudioBackend = "VLC"
-	p.Refresh()
-	for _, s := range []*silverSlider{p.body.bands[0], p.body.preamp, p.body.balance} {
-		if s.Enabled() {
-			t.Fatal("limited backend retained enabled DSP control")
-		}
-	}
-	if !p.body.volume.Enabled() || !strings.Contains(p.Host.StatusText(), "unavailable") {
-		t.Fatal("backend limitation disabled basic volume or omitted explanation")
-	}
-	p.Host.Model.BackendEqualizer, p.Host.Model.BackendBalance, p.Host.Model.BackendSpectrum = true, true, true
-	p.Refresh()
-	if !p.body.bands[0].Enabled() || !p.body.preamp.Enabled() || !p.body.balance.Enabled() || gain != p.Equaliser.Gains[0] || preamp != p.Equaliser.Preamp {
-		t.Fatal("restoring backend capabilities lost audio settings")
+	if gain != p.Equaliser.Gains[0] || preamp != p.Equaliser.Preamp {
+		t.Fatal("hiding the EQ inset changed the audio settings")
 	}
 }
 

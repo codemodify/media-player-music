@@ -1,5 +1,5 @@
 // Package vlc presents the classic wxWidgets-era VLC interface. The
-// presentation uses the application's shared model and selected backend.
+// presentation uses the application's shared model and playback engine.
 package vlc
 
 import (

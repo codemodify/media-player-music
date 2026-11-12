@@ -176,7 +176,7 @@ func TestLiveEmptyPlaylistAndUnknownMetadataAreDescribedHonestly(t *testing.T) {
 			a, p := open(t, skin, 1)
 			p.Host.Model.Live = true
 			p.Transport.List = players.NewPlaylist()
-			p.Host.Model.Error = "mpv was not found on PATH"
+			p.Host.Model.Error = "song.wma: WMA files are not supported."
 			p.Refresh()
 			a.PumpOnce()
 			if p.listPane.list.Count != 0 || p.listPane.list.Selected != -1 {

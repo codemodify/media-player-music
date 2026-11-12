@@ -4,24 +4,26 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
 
-func TestPreferencesMigrateOnlySupportedSkinLooks(t *testing.T) {
+func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 	for _, test := range []struct {
 		json string
-		want string
+		want Settings
 	}{
-		{`{"skin":"winamp"}`, "winamp"},
-		{`{"skin":"winamp-silver"}`, "winamp-silver"},
-		{`{"skin":"winamp-classified"}`, WinampClassifiedSkin},
-		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, "winamp"},
-		{`{"face":"minim","skins":{"minim":"minim-silver"}}`, "winamp-silver"},
-		{`{"face":"minim","skins":{"minim":"minim"}}`, DefaultSkin},
-		{`{"face":"lantern","skins":{"minim":"minim-classic","lantern":"lantern"}}`, DefaultSkin},
-		{`{"skin":"unsupported"}`, DefaultSkin},
-		{`not json`, DefaultSkin},
+		{`{"skin":"winamp"}`, Settings{Skin: WinampSkin}},
+		{`{"skin":"winamp-classified"}`, Settings{Skin: WinampClassifiedSkin}},
+		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin}},
+		// What earlier test builds saved is not carried over: an old
+		// skin name or engine is simply not the player's.
+		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin}},
+		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin}},
+		{`{"skin":"winamp","replaygain":{"mode":"album","preamp_db":-3.5}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainAlbum, Preamp: -3.5}}},
+		{`{"skin":"winamp","replaygain":{"mode":"loudest","preamp_db":99}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Preamp: MaxPreamp}}},
+		{`not json`, Settings{Skin: DefaultSkin}},
 	} {
 		t.Run(test.json, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -32,44 +34,28 @@ func TestPreferencesMigrateOnlySupportedSkinLooks(t *testing.T) {
 			if err := os.WriteFile(path, []byte(test.json), 0o600); err != nil {
 				t.Fatal(err)
 			}
-			if got := LoadSettings().Skin; got != test.want {
-				t.Fatalf("loaded %q, want %q", got, test.want)
+			if got := LoadSettings(); !reflect.DeepEqual(got, test.want) {
+				t.Fatalf("loaded %+v, want %+v", got, test.want)
 			}
 		})
 	}
 }
 
-func TestSettingsSavedUnderUitoolkitCarryOverUntilTheFirstSave(t *testing.T) {
-	config := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", config)
-	old := filepath.Join(config, "uitoolkit", "media-player-music.json")
-	if err := os.MkdirAll(filepath.Dir(old), 0o700); err != nil {
+func TestSettingsOmitReplayGainWhenOff(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if err := (Settings{Skin: DefaultSkin}).Save(); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(old, []byte(`{"skin":"winamp"}`), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if got := LoadSettings().Skin; got != WinampSkin {
-		t.Fatalf("uitoolkit's settings loaded %q, want %q", got, WinampSkin)
-	}
-	if err := (Settings{Skin: WinampSilverSkin}).Save(); err != nil {
-		t.Fatal(err)
-	}
-	if SettingsPath() == old {
-		t.Fatal("saved over uitoolkit's settings")
-	}
-	if got := LoadSettings().Skin; got != WinampSilverSkin {
-		t.Fatalf("after saving loaded %q, want %q", got, WinampSilverSkin)
-	}
-	if data, err := os.ReadFile(old); err != nil || string(data) != `{"skin":"winamp"}` {
-		t.Fatalf("uitoolkit's settings changed: %q, %v", data, err)
+	data, err := os.ReadFile(SettingsPath())
+	if err != nil || strings.Contains(string(data), "replaygain") || strings.Contains(string(data), "audio_backend") {
+		t.Fatalf("saved %s, %v", data, err)
 	}
 }
 
 func TestSessionSettingsRoundTripAndPermissions(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	want := Settings{
-		Skin: WinampClassifiedSkin, Playlist: &SavedPlaylist{Tracks: []Track{{Path: "/music/song.flac", Title: "Song", Length: time.Minute}}, Index: 0, Position: 3 * time.Second},
+		Skin: WinampClassifiedSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack, Preamp: 2}, Playlist: &SavedPlaylist{Tracks: []Track{{Path: "/music/song.flac", Title: "Song", Length: time.Minute}}, Index: 0, Position: 3 * time.Second},
 		Panels: &SavedPanels{Equaliser: false, Playlist: true},
 		Windows: map[string]map[string]WindowPlacement{"winamp": {
 			"main":     {X: 0, Y: -20, Positioned: true},

@@ -1,7 +1,6 @@
 package shell
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -26,7 +25,7 @@ func TestHeadlessScreenshotShellDoesNotCreateTray(t *testing.T) {
 	}
 }
 
-func openFakeTray(t *testing.T, skin string) (*ui.Application, *Shell, *platform.FakeStatusItem, *recordingBackend) {
+func openFakeTray(t *testing.T, skin string) (*ui.Application, *Shell, *platform.FakeStatusItem, *fakeEngine) {
 	t.Helper()
 	t.Setenv(platform.EnvTray, "fake")
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -35,8 +34,8 @@ func openFakeTray(t *testing.T, skin string) (*ui.Application, *Shell, *platform
 	// and offscreen windows keep this test away from the real desktop/audio.
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	a.SetIcon(paint2d.NewImage(16, 16), paint2d.NewImage(128, 128), paint2d.NewImage(32, 32))
-	b := &recordingBackend{events: make(chan playback.Event, 100)}
-	s, err := New(a, Options{Skin: skin, Backend: b})
+	b := newFakeEngine()
+	s, err := New(a, Options{Skin: skin, Engine: b})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +136,7 @@ func TestMainCloseToTrayKeepsPlaybackAndRestoresVisiblePanels(t *testing.T) {
 			if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 				t.Fatal(err)
 			}
-			identify(s, 81)
+			loaded(s)
 			s.Pulse().Stop()
 			ticks := 0
 			s.Pulse().SetClock(func() time.Time { ticks++; return time.Now() })
@@ -147,7 +146,7 @@ func TestMainCloseToTrayKeepsPlaybackAndRestoresVisiblePanels(t *testing.T) {
 			for _, named := range windows {
 				visible[named.Name] = named.Window.Visible()
 			}
-			stops := countCommand(backend, "stop")
+			stops := countCommand(backend, playback.OpStop)
 			// Use the real desktop close-request path, including a repeat
 			// request while hidden, rather than calling the tray helper.
 			for i := 0; i < 2; i++ {
@@ -164,7 +163,7 @@ func TestMainCloseToTrayKeepsPlaybackAndRestoresVisiblePanels(t *testing.T) {
 			}
 			// A real scheduled UI pulse and a broker-delivered decoder event
 			// must keep running while every player window is hidden.
-			backend.events <- playback.Event{Event: "property-change", Name: "time-pos", Data: json.RawMessage(`7.5`)}
+			backend.events <- playback.Update{Kind: playback.UpdatePosition, Generation: s.playback.generation, Position: 7500 * time.Millisecond}
 			deadline := time.Now().Add(2 * time.Second)
 			for ticks < 2 || s.Host.Model.Transport.Pos != 7500*time.Millisecond {
 				a.DrainPosted()
@@ -173,7 +172,7 @@ func TestMainCloseToTrayKeepsPlaybackAndRestoresVisiblePanels(t *testing.T) {
 				}
 				time.Sleep(5 * time.Millisecond)
 			}
-			if s.Host.Model.Transport.State != players.Playing || countCommand(backend, "stop") != stops {
+			if s.Host.Model.Transport.State != players.Playing || countCommand(backend, playback.OpStop) != stops {
 				t.Fatal("closing to the tray interrupted playback")
 			}
 			a.PumpOnce()

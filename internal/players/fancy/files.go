@@ -126,9 +126,6 @@ func (p *Player) applyEqualizerFile(state equalizerFile) error {
 	if err := validEqualizerFile(state); err != nil {
 		return err
 	}
-	if !p.Host.EqualizerAvailable() {
-		return errors.New("equalizer unavailable with the selected backend")
-	}
 	eq := p.Equaliser
 	eq.On, eq.Auto, eq.Preamp = state.On, false, state.Preamp
 	eq.Gains = append(eq.Gains[:0], state.Bands...)

@@ -260,7 +260,7 @@ func abs(n int) int {
 	return n
 }
 
-func TestSeparateEqualizerHooksAndHonestBackendLimits(t *testing.T) {
+func TestSeparateEqualizerHooksAndHonestEffects(t *testing.T) {
 	a, p := open(t, 1.75)
 	changes, syncs := 0, 0
 	refresh := p.Equaliser.Changed
@@ -279,21 +279,9 @@ func TestSeparateEqualizerHooksAndHonestBackendLimits(t *testing.T) {
 		}
 	}
 	for _, slot := range []string{"crossfade", "srs", "speaker"} {
-		if p.eqPane.buttons[slot].Enabled() || !strings.Contains(p.eqPane.buttons[slot].Tip, "unavailable") {
+		if p.eqPane.buttons[slot].Enabled() || !strings.Contains(p.eqPane.buttons[slot].Tip, "not in this player") {
 			t.Fatal("unsupported original audio effect is exposed as working")
 		}
-	}
-	gain, pan := p.Equaliser.Gains[0], p.Transport.Pan
-	p.Host.Model.BackendLimited = true
-	p.Host.AudioBackend = "VLC"
-	p.Refresh()
-	if p.eqPane.bands[0].Enabled() || p.eqPane.balance.Enabled() || !strings.Contains(p.eqPane.bands[0].Tip, "VLC") {
-		t.Fatal("limited backend retained enabled EQ or balance")
-	}
-	p.Host.Model.BackendEqualizer, p.Host.Model.BackendBalance, p.Host.Model.BackendSpectrum = true, true, true
-	p.Refresh()
-	if !p.eqPane.bands[0].Enabled() || !p.eqPane.balance.Enabled() || gain != p.Equaliser.Gains[0] || pan != p.Transport.Pan {
-		t.Fatal("restoring a capable engine erased audio adjustments")
 	}
 	for _, window := range []*ui.Window{p.Eq(), p.List()} {
 		window.RequestClose()

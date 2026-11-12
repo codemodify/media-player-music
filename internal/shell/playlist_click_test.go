@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"github.com/codemodify/media-player-music/internal/playback"
 	"testing"
 	"time"
 
@@ -63,7 +64,7 @@ func TestPlaylistClickSelectsAndDoubleClickStartsBackend(t *testing.T) {
 				injectClick(row)
 				injectClick(row)
 				a.PumpOnce()
-				if countCommand(backend, "loadfile") != 1 || transport.List.Index() != 1 || transport.State != players.Playing || transport.Pos != 0 {
+				if countCommand(backend, playback.OpLoad) != 1 || transport.List.Index() != 1 || transport.State != players.Playing || transport.Pos != 0 {
 					t.Fatalf("double-click did not start exactly one track: track=%d state=%s pos=%s commands=%v", transport.List.Index(), transport.State, transport.Pos, backend.commands)
 				}
 			})

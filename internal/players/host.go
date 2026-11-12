@@ -1,7 +1,6 @@
 package players
 
 import (
-	"strings"
 	"time"
 
 	"goframework.io/desktop-ui"
@@ -25,10 +24,6 @@ type Model struct {
 	// Live distinguishes actual playback from deterministic screenshot fixtures.
 	Live  bool
 	Error string
-	// Screenshot fixtures keep every control available. Live playback sets
-	// these capabilities without changing the saved EQ or balance values.
-	BackendLimited                                    bool
-	BackendEqualizer, BackendBalance, BackendSpectrum bool
 	// Cover is the front cover of the file at CoverPath (its ID3 APIC
 	// picture), for the now-playing display; nil when it has none.
 	Cover     *paint2d.Image
@@ -70,9 +65,8 @@ func unskinnedTheme() string {
 // Host gives a presentation the model and the application's actions.
 // Hooks are optional, so a presentation can also run on its own in tests.
 type Host struct {
-	App          *ui.Application
-	Model        *Model
-	AudioBackend string
+	App   *ui.Application
+	Model *Model
 
 	Run    func(Command)
 	Shared func(w *ui.Window, e widget.KeyEvent) bool
@@ -164,47 +158,10 @@ func (h *Host) StatusText() string {
 	if !h.Model.Live {
 		return "Screenshot fixture · simulated playback"
 	}
-	backend := h.AudioBackend
-	if backend == "No backend" {
-		return "No audio backend available · choose one in Settings"
-	}
-	if backend == "" {
-		backend = "mpv"
-	}
 	if h.Model.Transport.List.Len() == 0 {
-		return "Open a music file to play · " + backend
+		return "Open a music file to play"
 	}
-	status := "Playback through " + backend
-	if h.Model.BackendLimited {
-		var unavailable []string
-		if !h.Model.BackendEqualizer {
-			unavailable = append(unavailable, "EQ")
-		}
-		if !h.Model.BackendBalance {
-			unavailable = append(unavailable, "balance")
-		}
-		if !h.Model.BackendSpectrum {
-			unavailable = append(unavailable, "visualizer")
-		}
-		if len(unavailable) > 0 {
-			status += " · " + strings.Join(unavailable, ", ") + " unavailable"
-		}
-	}
-	return status
-}
-
-func (h *Host) EqualizerAvailable() bool { return !h.Model.BackendLimited || h.Model.BackendEqualizer }
-func (h *Host) BalanceAvailable() bool   { return !h.Model.BackendLimited || h.Model.BackendBalance }
-func (h *Host) SpectrumAvailable() bool  { return !h.Model.BackendLimited || h.Model.BackendSpectrum }
-func (h *Host) FeatureTip(feature string, available bool) string {
-	if available {
-		return ""
-	}
-	backend := h.AudioBackend
-	if backend == "" {
-		backend = "the selected backend"
-	}
-	return feature + " unavailable with " + backend + " · change the backend in Settings"
+	return "Ready"
 }
 
 func (h *Host) Keys(w *ui.Window, e widget.KeyEvent) bool {

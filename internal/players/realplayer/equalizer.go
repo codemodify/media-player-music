@@ -62,29 +62,18 @@ func newEqPane(p *Player) *eqPane {
 	return b
 }
 func (b *eqPane) sync() {
-	e, h := b.p.Equaliser, b.p.Host
-	available := h.EqualizerAvailable()
-	for _, c := range b.buttons {
-		c.SetEnabled(available)
-		c.Tip = h.FeatureTip("EQ", available)
-	}
+	e := b.p.Equaliser
 	b.buttons["on"].SetChecked(e.On)
 	b.buttons["auto"].SetChecked(e.Auto)
 	b.buttons["preset"].Tip = e.Preset
-	b.preamp.SetEnabled(available)
-	b.preamp.Tip = h.FeatureTip("EQ", available)
 	if !b.preamp.Dragging() {
 		b.preamp.Set(e.Preamp)
 	}
 	for i, f := range b.bands {
-		f.SetEnabled(available)
-		f.Tip = h.FeatureTip("EQ", available)
 		if !f.Dragging() {
 			f.Set(e.Gains[i])
 		}
 	}
-	b.balance.SetEnabled(h.BalanceAvailable())
-	b.balance.Tip = h.FeatureTip("Balance", h.BalanceAvailable())
 	if !b.balance.Dragging() {
 		b.balance.Set(b.p.Transport.Pan)
 	}

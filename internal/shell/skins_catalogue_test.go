@@ -2,6 +2,7 @@ package shell
 
 import (
 	"fmt"
+	"github.com/codemodify/media-player-music/internal/playback"
 	"reflect"
 	"testing"
 	"time"
@@ -68,7 +69,7 @@ func TestWMPSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
 	model.Equaliser.Set(4, 6)
 	model.EqualizerVisible, model.PlaylistVisible = false, true
 	s.refresh()
-	loads := countCommand(backend, "loadfile")
+	loads := countCommand(backend, playback.OpLoad)
 	for _, id := range []string{players.HeadspaceSkin, players.XboxSkin, players.HalfLife2Skin, players.FandomSkin, players.ITunesSkin, players.Series9Skin, players.VLCSkin, players.RealPlayerSkin, players.AmarokSkin, players.WinampSilverSkin, players.DefaultSkin, players.Series9Skin, players.ITunesSkin, players.HeadspaceSkin, players.FandomSkin, players.HalfLife2Skin, players.XboxSkin} {
 		old := s.Windows()
 		before := s.presentation
@@ -88,7 +89,7 @@ func TestWMPSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
 		if s.Host.Model != model || model.Transport != transport || transport.List != queue || transport.State != players.Playing || transport.Pos != 17*time.Second || transport.Volume != .37 || transport.Pan != -.4 || model.Equaliser.Gains[4] != 6 || !model.Equaliser.Auto || model.EqualizerVisible || !model.PlaylistVisible {
 			t.Fatalf("%s changed shared playback or section preferences", id)
 		}
-		if countCommand(backend, "loadfile") != loads || backend.closed || a.Quitting() {
+		if countCommand(backend, playback.OpLoad) != loads || backend.closed || a.Quitting() {
 			t.Fatalf("%s interrupted the active backend/application", id)
 		}
 		count := 1

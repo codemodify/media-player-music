@@ -1,5 +1,5 @@
 // Command media-player-music presents one player in an ordinary default UI
-// or in its optional Winamp and Windows Media Player skins. Audio uses installed executables.
+// or in its optional skins. Audio plays in its own process, on goframework's audio-playback.
 package main
 
 import (
@@ -32,7 +32,6 @@ func run() error {
 	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $"+platform.EnvScale+")")
 	shot := flag.String("shot", "", "paint posed screenshots into this directory and exit")
 	at := flag.Duration("at", 97*time.Second, "playback position in screenshot mode")
-	audioBackend := flag.String("audio-backend", "", "playback engine: builtin (in the player, nothing to install), or an installed program: mpv, vlc, mplayer, mpg123 (default: last used, or builtin)")
 	flag.Parse()
 	log.SetFlags(0)
 	log.SetPrefix("media-player-music: ")
@@ -41,7 +40,7 @@ func run() error {
 		return err
 	}
 	headless := *shot != ""
-	opts := shell.Options{Skin: *skin, Scale: float32(*scale), Headless: headless, Remember: !headless, AudioBackend: *audioBackend}
+	opts := shell.Options{Skin: *skin, Scale: float32(*scale), Headless: headless, Remember: !headless}
 	selected, ok := players.NormalizeSkin(shell.SkinFor(opts))
 	if !ok {
 		return fmt.Errorf("unknown skin %q; choose %s", *skin, players.SkinChoices())

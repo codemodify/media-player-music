@@ -16,63 +16,39 @@ boundary, and the v0.23.21 audit.
 
 ## Playback and screenshot fixtures
 
-Interactive playback uses an external **mpv**, **VLC**, **MPlayer** or
-**mpg123** executable; none is bundled. Detection checks `PATH` first,
-then common Homebrew and app-bundle locations on macOS and application
-installation directories on Windows. mpv uses Unix socket IPC on Linux/macOS
-and a named pipe on Windows. VLC uses an authenticated local HTTP interface;
-MPlayer and mpg123 use their remote-control protocols.
-The app owns this playback integration; the UI toolkit does not decode
-music or drive a playback process.
+Playback is the player's own, in its process: `internal/playback`'s
+`Builtin` engine on goframework's audio-playback (every format
+`audio-playback/all` imports: MP3, AAC, FLAC, Ogg Vorbis and Opus, ALAC,
+WAV, AIFF and AU, in MP4 and Matroska too), through the system's sound
+(system-audio-all). Nothing is installed or started. Formats goframework
+has no decoder for (WMA, APE, Musepack, WavPack...) do not play: a file of
+one is refused with a message naming its format, and a folder leaves them
+out and says how many. Since 2026-11-12 the external engines (mpv, VLC,
+MPlayer, mpg123) are gone, with their discovery, settings and saved
+`audio_backend` field (an old saved value is ignored).
 
-Default's gear button, player context menus and Ctrl+comma
-open the ordinary themed Settings window. Installation is shown by vector
-green checks and red crosses; the selected radio is distinct. Missing
-executables cannot be chosen, and Refresh rescans discovery. Finding a
-program does not guarantee its control interface starts successfully:
-startup errors appear separately, and the selected backend can be chosen
-again to retry. Settings opens at 600 × 470 logical pixels, with a minimum of
-560 × 440; its four rows remain usable at 1× and 1.75×. Escape closes the dialog.
-The mpg123 row is explicitly labelled MP3/MPEG only. Unsupported containers
-are rejected with a short explanation, and track failures also appear in
-Settings and the application log.
-
-The `audio_backend` session field preserves the selected program, even if
-it is missing on a later launch. The initial default is mpv. A successful
-backend change keeps the queue, track, position, paused/playing state and
-volume; a failed replacement leaves the existing engine in place.
-
-mpv supports the player's balance and ten-band/preamp EQ, plus the live
-visualizer on Linux/macOS. Windows mpv playback and filters use the pipe
-adapter, but its metadata-FIFO visualizer is unavailable. VLC, MPlayer and
-mpg123 currently provide basic transport, seeking and volume only. Their
-unsupported EQ and balance controls are disabled, with explanations in
-Settings/tooltips; model values survive so returning to mpv restores them.
-VLC 3's reported duration and clock are coarse, and seeking is coarse too.
-mpg123 accepts MPEG audio (MP1/MP2/MP3), while the other programs' format
-support depends on their installed builds.
-VLC retains its native volume scale, which follows the same cubic curve as
-mpv. A separate latest-value lane prevents rapid slider motion from
-accumulating obsolete HTTP commands.
+Default's gear button, player context menus and Ctrl+comma open the
+ordinary themed Settings window (520 × 480 logical pixels, at least
+460 × 460): the formats that play, and ReplayGain: Off, Track gain or
+Album gain, and a preamp from -15 to +15 dB. A track's gain comes from its
+tags: ID3v2's TXXX `REPLAYGAIN_*` frames, RVA2 and APEv2 tags are read by
+`internal/tags` (goframework's tag readers do not give them yet: ledger
+R97, R98), Vorbis comments and MP4's freeform items by audio-playback
+itself. The tags' peak keeps the gain from clipping. audio-playback takes
+a player's ReplayGain as it is made, so a change is heard from the next
+track (R100). Escape closes the dialog.
 
 The first startup begins with an empty playlist. Later launches restore the
 saved queue, selected track and playback offset, stopped until Play.
 Positional music-file paths replace the queue and start the first file.
 Ctrl+O and Eject choose a replacement playlist; Playlist → Add appends files. The model
 tracks the real file, position, queue, volume, balance, shuffle/repeat and
-equaliser values. Seeking and volume affect real playback. With mpv,
-balance and the ten-band/preamp equaliser use its FFmpeg audio filters.
-On supported platforms, every presentation displays 48 frequency bands
-measured from that processed audio.
-
-The analyzer splits a passive branch inside the same mpv process and
-measures RMS levels through logarithmically spaced bandpass filters from
-32 Hz to 16 kHz. The original audio branch reaches the output unchanged.
-Frame times and playback generations reject stale samples after a seek or
-track change; a bounded 20 Hz stream keeps visual updates from delaying
-playback commands. Paused, stopped or stalled levels decay to zero. The
-analyzer uses mpv's existing FFmpeg filters and a private metadata FIFO,
-with no separate decoder process or FFmpeg executable.
+equaliser values. Seeking and volume affect real playback. Balance and
+the ten-band/preamp equaliser are audio-playback's. Every presentation
+displays 48 frequency bands measured from that processed audio
+(audio-playback's analyser, normalised from -60 dB). Playback generations
+and epochs reject stale bands after a seek or track change; paused,
+stopped or stalled levels decay to zero.
 
 The whole playlist accepts file-manager drops, including its empty list,
 heading and controls. For panel skins, an app-owned drop ancestor also
@@ -82,12 +58,12 @@ local files or folders using the Copy
 action, so the source files stay in place. Folder expansion runs off the UI
 thread and adds recognized audio files and media containers, including MP4,
 M4V, WebM and MKV, recursively in deterministic sorted
-order. Explicit files use the selected backend's format support. Requests commit in their
-arrival order. Backends play their audio with video disabled. An addition to an empty queue starts the first track; an
+order. Requests commit in their
+arrival order. A video file plays its audio only. An addition to an empty queue starts the first track; an
 addition to an existing queue leaves its current playback intact.
 
 Headless screenshots and presentation tests use invented tracks and a
-synthetic clock-driven analyser. They launch no audio backend and play no sound. The
+synthetic clock-driven analyser. They play no sound. The
 screenshots in the README show those deterministic fixtures.
 
 Winamp and Winamp Silver generate their artwork, bitmap alphabet and clock
@@ -108,7 +84,7 @@ The Apple appearance is listed as `Mac OS X - iTunes`, with the saved and
 command-line ID `itunes`; user labels retain the separate `Mac OS X -` prefix.
 The classic desktop choices are `VLC - Classic`, `RealPlayer - Classic` and
 `KDE - Amarok 1.4`, with IDs `vlc`, `realplayer` and `amarok`. These names
-identify appearances; the selected audio backend remains independent.
+identify appearances; playback is the player's own whatever the appearance.
 The reference-adapted `fancy` appearance is always displayed as **Fancy**, without
 a player-brand prefix, including when a user pack provides another label.
 
@@ -229,7 +205,7 @@ iTunes has Previous, combined Play/Pause and Next controls, seeking, volume,
 shuffle, repeat and a floating equaliser. The full player's Name, Time, Artist
 and Album columns can sort the displayed rows; Search Library filters title,
 artist and album without changing the playback queue. The sidebar opens the
-library, playing track, file picker, backend Settings and appearances. The
+library, playing track, file picker, Settings and appearances. The
 original Music Store entry remains disabled because this app does not provide
 that service. The MiniPlayer keeps the shared transport controls and can
 return to the full library without reopening the main window.
@@ -246,29 +222,27 @@ paused track.
 
 ## Changing skins preserves player state
 
-The shell owns a single `players.Model`, playback backend and `players.Pulse`.
+The shell owns a single `players.Model`, playback engine and `players.Pulse`.
 Presentation code receives that model through `players.Host`; it does not
 make its own transport, queue, analyser, equaliser or playback process. Controls
 call Host playback/file actions; the shell synchronizes the model with the
-backend and supplies status/error text.
+engine and supplies status/error text.
 
-The shell uses `playback.Engine` commands and events. Each executable adapter
-owns its native protocol, and discovery lives in `internal/playback`. Load
-generations and engine identities reject updates from replaced tracks or
-processes. Backend switching starts a candidate before closing the active
-engine, retains it on startup failure, and joins process cleanup on exit.
+The shell uses `playback.Engine` commands and events (the built-in
+engine; tests give a fake one). Load generations and epochs reject updates
+from replaced tracks and superseded seeks.
 
 Changing skin preserves track, position, queue order, volume, balance,
 shuffle, repeat and equaliser values. A change between presentation families replaces the window composition
 around that model.
 Switching between Winamp skins keeps their controls and updates their layout and paint.
 The active main window hosts the application's update timer. Changing skin
-does not restart the external audio process.
+does not restart playback.
 
 Closing the main window hides all player panels to the tray while music
 and UI timers continue. Tray activation restores the main window and the
 panels that were visible; temporary hiding does not change saved panel
-preferences. Tray Quit, Escape and Ctrl+Q exit and release the audio backend.
+preferences. Tray Quit, Escape and Ctrl+Q exit and close the sound stream.
 Close exits normally if there is no shown tray host. If the host disappears
 while the player is hidden, the windows return to the desktop.
 
@@ -283,9 +257,8 @@ keeping the focused choice visible.
 No separate layout-selection command is needed.
 
 The app saves its session in
-`$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json` (read from
-`$XDG_CONFIG_HOME/uitoolkit/` until the first save when only uitoolkit's exists): queue order, selected
-track and playback offset, audio backend, skin, equaliser/playlist visibility, and window
+`$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json`: queue order, selected
+track and playback offset, ReplayGain settings, skin, equaliser/playlist visibility, and window
 placement with snap relationships. Default stores its size and position
 independently; all Winamp skins share their panel arrangement. Headspace
 stores its own position. Xbox, Half Life 2, Fandom, iTunes, Series 9, VLC,
@@ -293,12 +266,12 @@ RealPlayer, Amarok and Fancy store their window arrangements
 separately from the other families. The saved
 queue resumes only after Play, and entries whose files no longer exist are
 skipped. Known positions restore where the desktop supports them; an
-unsupported backend preserves previously saved coordinates for a future
+desktop that cannot report positions preserves previously saved coordinates for a future
 session. Resizable window sizes are clamped to their layout's minimum;
 the Winamp main strip/equaliser, Headspace, Xbox main, Half Life 2 main and Fandom main
 retain their fixed dimensions.
 iTunes also remembers its full/MiniPlayer mode and each mode's size. Switching
-modes keeps the main window, playback backend and tray item alive; opening
+modes keeps the main window, playback and tray item alive; opening
 the library from the MiniPlayer returns to the full player.
 Series 9 also stores its full/compact mode and full base size in its own family;
 drawer visibility remains a shared model preference, including while compact or
@@ -323,7 +296,7 @@ machinery without knowing what a music player, playlist or equaliser is.
 
 | Application owns | Toolkit owns |
 | --- | --- |
-| Model, backend discovery and playback, Settings, file commands, folder scanning, session data, keyboard policy and window composition | Event dispatch, drag/drop negotiation, widgets, focus and accessibility infrastructure |
+| Model and playback, Settings, file commands, folder scanning, session data, keyboard policy and window composition | Event dispatch, drag/drop negotiation, widgets, focus and accessibility infrastructure |
 | Layout algorithms and control-to-slot bindings | Layout primitives and named slot placement |
 | Skin manifests, artwork, sprites and design generators | Skin parsing, state resolution, scaling and painting |
 | Custom readouts, transport glyphs and playlist row paint | Drawing APIs, clipping, hit shapes and platform windows |
@@ -541,7 +514,7 @@ The command accepts `./media-player-music [flags] file1.mp3 file2.flac` and
 auto-plays the first provided file. Without files, use Eject/Open/Add from
 the restored queue or drop music files/folders onto the playlist. A first
 launch has an empty queue. The public options are `-skin` with any ID in the table above,
-`-scale`, `-audio-backend`, `-shot` and `-at`. Run `./media-player-music -help` for all choices.
+`-scale`, `-shot` and `-at`. Run `./media-player-music -help` for all choices.
 desktop-ui chooses window systems and theme engines by import, not by build
 tag: [internal/players/toolkit.go](../internal/players/toolkit.go) imports
 desktop-ui-platform-all and the engines the player draws with (Breeze for
@@ -560,7 +533,7 @@ V             stop             M              mute
 Left / Right  seek             Up / Down      volume
 S             shuffle          R              repeat: off → all → one
 Ctrl+O        open music files
-Ctrl+,        audio backend settings
+Ctrl+,        settings (ReplayGain)
 Ctrl+K        next skin         Ctrl+Shift+K   Default / last optional skin
 Ctrl+E        show/hide equaliser    Ctrl+L    show/hide playlist
 Shift+F10     skin menu         Escape / Ctrl+Q  quit
@@ -571,7 +544,7 @@ transport shortcuts bubble from controls to the shared keyboard handler.
 
 Screenshot mode creates headless windows with synthetic tracks and poses
 the model at `-at`, which defaults to 97 seconds. It writes one PNG per open
-window and exits without starting an audio backend. The synthetic analyser is a pure
+window and exits without playing anything. The synthetic analyser is a pure
 function of the fixture's clock position, so the same skin, scale and
 position produce the same picture. Posing resets its peak markers
 consistently; it is not a visualisation of live audio.
@@ -592,28 +565,22 @@ tests. Presentation
 fixtures retain the invented library; playback/file hooks verify action routing
 without decoding audio or launching a playback process.
 
-Engine and controller integration tests start the installed mpv with
-`--ao=null`, so decoding, transport and filter checks are silent. Controller
-tests inject that real engine into a headless shell; this differs from the
-synthetic presentation fixtures. These integration tests skip when mpv is
-missing, and Unix IPC tests also skip on unsupported platforms. The shell
-integration checks accepted balance, preamp and band filters through mpv's
-audio-filter property, along with the running clock and playback state.
-Measured spectrum tests distinguish low and high tones, reject stale
-seek/track packets, check pause and silence, and preserve visualization
-across all appearances. Backend tests verify channel preservation and
-byte-identical decoded output with and without analysis. Protocol tests
-exercise all four backend adapters; installed VLC, MPlayer and mpg123 have
-silent playback checks too. Settings regressions use actual toolkit input
-and accessibility actions for selecting, refreshing and retrying programs,
-test availability marks, persistence and retained DSP values, and verify
-the preferred and minimum layout at 1× and 1.75×.
-
-Live backend checks were run on Linux. The Windows application and macOS
-audio package cross-compile; native playback still needs validation on those
-systems. MPV tests use v0.41.0. Older IPC versions that omit returned playlist
-entry IDs cannot always distinguish failed loads during rapid replacement;
-the adapter avoids attributing an old failure to the new track.
+The engine's tests (internal/playback) play into goframework's audiotest
+sound system in memory, in synctest bubbles: no device, nothing heard.
+They play MP3 and AAC to their end with positions, the format, metadata
+and 48 bands; load at a position paused, seek before a track opens,
+replace and stop loads; level tracks by ReplayGain from tags the tests
+write (ID3v2.3 and 2.4 TXXX, RVA2, APEv2 before an ID3v1 tag, FLAC's
+Vorbis comments) in each mode, with a preamp, and with the peak holding
+a +20 dB gain at full scale; and refuse a WMA file with a message saying
+what plays. internal/tags' tests read those tags directly, broken ones
+included. The shell's tests drive a fake engine through the same
+`playback.Engine` contract (loads, seeks waiting for a load, superseded
+generations, errors stopping audio, ReplayGain reaching the engine and
+saved, unsupported files refused), and one plays a two-track queue
+through the shell with the real engine on audiotest. Settings tests use
+actual toolkit input and accessibility actions on the ReplayGain controls
+at 1× and 1.75×, at the preferred and the minimum size.
 
 The skin tests parse and lint the bundled packs, decode their artwork, and
 regenerate manifests and PNGs for comparison with the embedded bundle.
@@ -627,7 +594,7 @@ Shared-model tests cover transport wrapping, seeking, shuffle and repeat.
 Presentation-switch tests check state preservation and window composition.
 Playlist tests exercise selection, scrolling, inset accessible rows,
 outer-component focus, single-click selection, double-click activation and
-repeated accessibility activation. A recording-backend regression proves
+repeated accessibility activation. A fake-engine regression proves
 selection sends no playback commands and double-click loads exactly one
 track in stopped, paused and playing states across all appearances.
 Headless URI-drop tests negotiate
@@ -646,7 +613,7 @@ to transfer an actual `text/uri-list` selection to Default, Winamp and
 Winamp Silver on X11 at 1.75x. It checks the native drop advertisement after
 frame recreation and finds a viewable target through the root window tree.
 It verifies Copy negotiation, including a source
-that prefers Move, and recursive queue additions with a recording backend
+that prefers Move, and recursive queue additions with a fake engine
 that plays no audio. Enable it with `MUSIC_PLAYER_NATIVE_XDND_TEST=1` and an
 X11 display; `MUSIC_PLAYER_NATIVE_DROP_FOLDER` chooses an existing folder.
 The README includes the command. A locked desktop can leave these windows

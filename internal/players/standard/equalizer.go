@@ -54,22 +54,12 @@ func (e *eqPane) presetMenu() {
 	widgets.ShowContextMenu(e.presets, paint2d.Pt(o.X, o.Y+e.presets.Bounds().Dy()), items...)
 }
 func (e *eqPane) sync() {
-	available := e.p.Host.EqualizerAvailable()
-	tip := e.p.Host.FeatureTip("EQ", available)
-	for _, c := range []widget.Component{e.on, e.auto, e.presets, e.preamp} {
-		c.SetEnabled(available)
-	}
-	e.on.SetAccessibleDescription(tip)
-	e.auto.SetAccessibleDescription(tip)
-	e.presets.Tip, e.preamp.Tip = tip, tip
 	e.on.Checked = e.p.Equaliser.On
 	e.auto.Checked = e.p.Equaliser.Auto
 	e.on.Invalidate()
 	e.auto.Invalidate()
 	e.preamp.Set(e.p.Equaliser.Preamp)
 	for i, f := range e.bands {
-		f.SetEnabled(available)
-		f.Tip = tip
 		f.Set(e.p.Equaliser.Gains[i])
 	}
 	e.Invalidate()
@@ -102,9 +92,6 @@ func (e *eqPane) Paint(ctx *paint2d.Context) {
 	pal := lk.Palette()
 	d := func(v float32) float32 { return style.Dip(lk, v) }
 	title := "Equaliser · " + e.p.Equaliser.Preset
-	if !e.p.Host.EqualizerAvailable() {
-		title = "Equaliser · unavailable with " + e.p.Host.AudioBackend
-	}
 	lk.DrawLabel(ctx, paint2d.XYWH(0, 0, b.Dx(), d(20)), title, pal.Text, style.AlignStart)
 	font := players.ScaledFace(lk.Font(), d(10))
 	for i, f := range append([]*players.Fader{e.preamp}, e.bands...) {

@@ -169,7 +169,7 @@ func maxInt(a, b int) int {
 
 // ---- the equaliser ----------------------------------------------------------
 
-// Equalizer holds the preamp and band gains applied by the shell's audio backend.
+// Equalizer holds the preamp and band gains applied by the playback engine.
 type Equalizer struct {
 	On     bool
 	Auto   bool

@@ -179,7 +179,6 @@ func (b *body) sync() {
 	b.buttons["shutter"].SetGlyph(players.GlyphNone, label)
 	b.visual.SetVisible(open && b.visualOn)
 	b.glass.SetVisible(open)
-	b.visual.SetAccessibleDescription(b.p.Host.FeatureTip("Visualizer", b.p.Host.SpectrumAvailable()))
 	b.visual.Invalidate()
 	if !b.seek.Dragging() {
 		b.seek.Set(t.Fraction())
