@@ -7,6 +7,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/service"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
@@ -35,7 +36,7 @@ func openFakeTray(t *testing.T, skin string) (*ui.Application, *Shell, *platform
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	a.SetIcon(paint2d.NewImage(16, 16), paint2d.NewImage(128, 128), paint2d.NewImage(32, 32))
 	b := newFakeEngine()
-	s, err := New(a, Options{Skin: skin, Engine: b})
+	s, _, err := startDaemon(t, a, b, service.Saved{}, func(o Options) (*Shell, error) { return New(a, o) }, Options{Skin: skin})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,8 +115,8 @@ func TestTrayQuitAndMainCloseWithoutHostExitAndReleaseTray(t *testing.T) {
 				}
 				s.Close()
 				s.Close()
-				if !tray.Closed() || !backend.closed || s.tray != nil {
-					t.Fatal("shutdown left the system tray or audio backend alive")
+				if !tray.Closed() || backend.closed || s.tray != nil {
+					t.Fatal("shutdown left the system tray alive, or stopped the daemon's engine")
 				}
 				for _, named := range windows {
 					if !named.Window.Closed() {
@@ -163,7 +164,7 @@ func TestMainCloseToTrayKeepsPlaybackAndRestoresVisiblePanels(t *testing.T) {
 			}
 			// A real scheduled UI pulse and a broker-delivered decoder event
 			// must keep running while every player window is hidden.
-			backend.events <- playback.Update{Kind: playback.UpdatePosition, Generation: s.playback.generation, Position: 7500 * time.Millisecond}
+			backend.events <- playback.Update{Kind: playback.UpdatePosition, Generation: generation(s), Position: 7500 * time.Millisecond}
 			deadline := time.Now().Add(2 * time.Second)
 			for ticks < 2 || s.Host.Model.Transport.Pos != 7500*time.Millisecond {
 				a.DrainPosted()
@@ -265,8 +266,8 @@ func TestExplicitKeyboardQuitWhileHiddenExits(t *testing.T) {
 		t.Fatal("explicit keyboard Quit hid the player instead of exiting")
 	}
 	s.Close()
-	if !tray.Closed() || !backend.closed {
-		t.Fatal("explicit Quit did not clean up the tray and backend")
+	if !tray.Closed() || backend.closed {
+		t.Fatal("explicit Quit did not clean up the tray, or stopped the daemon's engine")
 	}
 }
 

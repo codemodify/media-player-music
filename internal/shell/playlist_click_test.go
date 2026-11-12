@@ -19,8 +19,7 @@ func TestPlaylistClickSelectsAndDoubleClickStartsBackend(t *testing.T) {
 					t.Fatal(err)
 				}
 				transport := s.Host.Model.Transport
-				transport.State, transport.Pos = state, 13*time.Second
-				s.refresh()
+				placeAt(t, s, state, 13*time.Second)
 				a.PumpOnce()
 				window := nativePlaylistWindow(s)
 				var list *a11y.Node

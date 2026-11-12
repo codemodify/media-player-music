@@ -9,18 +9,27 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/standard"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/service"
+	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/style"
 )
 
 func rememberedShell(t *testing.T, skin string) (*ui.Application, *Shell, *fakeEngine) {
 	t.Helper()
+	return rememberedShellOn(t, skin, service.Saved{})
+}
+
+// rememberedShellOn opens a shell that remembers, on a daemon of its own
+// made as saved: a daemon started again between two runs of the shell, the
+// first daemon's Saved() given.
+func rememberedShellOn(t *testing.T, skin string, saved service.Saved) (*ui.Application, *Shell, *fakeEngine) {
+	t.Helper()
 	opts := Options{Skin: skin, Headless: true, Remember: true}
 	t.Setenv(style.ThemeEnv, LookFor(SkinFor(opts)))
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	b := newFakeEngine()
-	opts.Engine = b
-	s, err := New(a, opts)
+	s, _, err := startDaemon(t, a, b, saved, func(o Options) (*Shell, error) { return New(a, o) }, opts)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,11 +49,12 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 			if err := first.LoadFiles(paths, false); err != nil {
 				t.Fatal(err)
 			}
-			transport := first.Host.Model.Transport
-			transport.List.Tracks[1].Title = "Remembered title"
-			transport.List.Tracks[1].Length = time.Minute
-			transport.List.Select(1)
-			transport.Pos = 9250 * time.Millisecond
+			// the second track, as its decoder told it, paused in it
+			first.Host.SelectTrack(1)
+			loaded(first)
+			update(first, playback.Update{Kind: playback.UpdateMetadata, Info: playback.TrackInfo{Title: "Remembered title"}})
+			update(first, playback.Update{Kind: playback.UpdateDuration, Duration: time.Minute})
+			pauseAt(t, first, 9250*time.Millisecond)
 			desktopMove(t, firstApp, first, first.MainWindow(), 420, 210)
 			first.presentation.Advance(0)
 			first.presentation.ShowEqualiser(false)
@@ -52,9 +62,11 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 				first.MainWindow().SetSize(1000, 620)
 				firstApp.PumpOnce()
 			}
+			saved := serviceOf(first).service.Saved()
 			first.Close()
 
-			nextApp, next, backend := rememberedShell(t, "")
+			// the daemon started again too: the session is what it kept
+			nextApp, next, backend := rememberedShellOn(t, "", saved)
 			// The saved place holds through the settle, past the desktop's own.
 			awaitSettled(t, nextApp, next)
 			model := next.Host.Model
@@ -79,7 +91,7 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 				}
 			}
 			next.Command(players.CmdPlay)
-			if countCommand(backend, playback.OpLoad) != 1 || next.playback.seekOnLoad != 9250*time.Millisecond {
+			if load, ok := backend.last(playback.OpLoad); countCommand(backend, playback.OpLoad) != 1 || !ok || load.Position != 9250*time.Millisecond {
 				t.Fatal("Play did not load the restored selection at its saved offset")
 			}
 		})
@@ -213,16 +225,11 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 func TestMissingFilesDoNotBlockSessionRestoreOrReuseAnotherTracksOffset(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	paths := mediaPaths(t, 3)
-	saved := players.Settings{Skin: players.DefaultSkin, Playlist: &players.SavedPlaylist{
-		Tracks: []players.Track{{Path: paths[0]}, {Path: paths[1]}, {Path: paths[2]}}, Index: 1, Position: 9 * time.Second,
-	}}
-	if err := saved.Save(); err != nil {
-		t.Fatal(err)
-	}
+	saved := service.Saved{Queue: []musicapi.Track{{Path: paths[0]}, {Path: paths[1]}, {Path: paths[2]}}, Index: 1, PositionMS: 9000}
 	if err := os.Remove(paths[1]); err != nil {
 		t.Fatal(err)
 	}
-	_, s, _ := rememberedShell(t, "")
+	_, s, _ := rememberedShellOn(t, "", saved)
 	transport := s.Host.Model.Transport
 	if transport.List.Len() != 2 || transport.Track().Path != paths[0] || transport.Pos != 0 {
 		t.Fatalf("bad missing-file recovery: %#v at %s", transport.List.Tracks, transport.Pos)
@@ -236,9 +243,10 @@ func TestRemovingTheLastTrackPersistsAnEmptyQueue(t *testing.T) {
 		t.Fatal(err)
 	}
 	first.removeTrack()
+	saved := serviceOf(first).service.Saved()
 	first.Close()
-	_, next, _ := rememberedShell(t, "")
-	if next.Host.Model.Transport.List.Len() != 0 || players.LoadSettings().Playlist == nil {
+	_, next, _ := rememberedShellOn(t, "", saved)
+	if next.Host.Model.Transport.List.Len() != 0 || len(saved.Queue) != 0 {
 		t.Fatal("a deliberately cleared queue was resurrected")
 	}
 }

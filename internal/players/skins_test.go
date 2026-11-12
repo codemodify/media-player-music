@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"slices"
 	"testing"
-	"time"
 
 	"goframework.io/desktop-ui-skins"
 )
@@ -142,8 +141,7 @@ func TestEveryImportedAppearanceRetainsItsSavedSession(t *testing.T) {
 	for _, id := range want {
 		t.Run(id, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-			saved := Settings{Skin: id, ReplayGain: ReplayGain{Mode: ReplayGainAlbum, Preamp: -2},
-				Playlist:      &SavedPlaylist{Tracks: []Track{{Path: "/music/track.flac", Title: "Saved track", Length: time.Minute}}, Index: 0, Position: 9 * time.Second},
+			saved := Settings{Skin: id,
 				Panels:        &SavedPanels{Equaliser: false, Playlist: true},
 				Windows:       map[string]map[string]WindowPlacement{WinampSkin: {"playlist": {X: -120, Y: 230, Positioned: true, Dock: &WindowDock{Parent: "main", Side: "bottom", Along: 7}}}},
 				Presentations: map[string]PresentationState{ITunesSkin: {Mode: "mini", Sizes: map[string]PresentationSize{"full": {Width: 900, Height: 600}, "mini": {Width: 380, Height: 68}}}},
@@ -152,7 +150,7 @@ func TestEveryImportedAppearanceRetainsItsSavedSession(t *testing.T) {
 				t.Fatal(err)
 			}
 			if got := LoadSettings(); !reflect.DeepEqual(got, saved) {
-				t.Fatalf("%s lost saved queue or arrangement: %#v", id, got)
+				t.Fatalf("%s lost its saved arrangement: %#v", id, got)
 			}
 			if canonical, ok := NormalizeSkin(id); !ok || canonical != id || IsPanelSkin(id) != slices.Contains(PanelSkins(), id) || IsSkinned(id) != (id != DefaultSkin) {
 				t.Fatalf("%s was not recognized in its presentation family", id)

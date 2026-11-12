@@ -2,12 +2,12 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
-	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	amarokskin "github.com/codemodify/media-player-music/internal/skins/amarok"
 	fancyskin "github.com/codemodify/media-player-music/internal/skins/fancy"
@@ -20,6 +20,7 @@ import (
 	series9skin "github.com/codemodify/media-player-music/internal/skins/series9"
 	vlcskin "github.com/codemodify/media-player-music/internal/skins/vlc"
 	xboxskin "github.com/codemodify/media-player-music/internal/skins/xbox"
+	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -35,10 +36,11 @@ type Options struct {
 	Remember bool
 	Headless bool
 	Scale    float32
-	// Engine plays the queue: a built-in engine on the system's sound
-	// when nil. Tests give a fake one, or a built-in engine on
-	// audiotest's sound system. The shell owns and closes it.
-	Engine playback.Engine
+	// Player is media-player-musicd's player, which the shell shows and
+	// drives: the link's (internal/link) in the program, a service in the
+	// tests' own process. Nil, the shell is headless screenshots' fixture,
+	// on a simulated clock. Its states come through Show.
+	Player musicapi.Player
 }
 
 type Shell struct {
@@ -51,14 +53,13 @@ type Shell struct {
 	skin           string
 	pulse          *players.Pulse
 	switching      bool
-	engine         playback.Engine
-	workers        sync.WaitGroup // cover reads
+	player         musicapi.Player
+	daemon         synced
+	applying       bool           // the daemon's state going into the model
+	workers        sync.WaitGroup // cover reads, file loads
 	settingsWindow *ui.Window
 	settingsPanel  *players.SettingsPanel
-	playback       playbackState
 	closed         bool
-	eventStop      chan struct{}
-	eventDone      chan struct{}
 	fileWindow     *ui.Window
 	fileLoader     *fileLoader
 	rememberIn     time.Duration
@@ -105,29 +106,29 @@ func New(a *ui.Application, opts Options) (*Shell, error) {
 	s.Host.LoadFiles, s.Host.DeleteTrack, s.Host.SyncPlayback = s.openFiles, s.removeTrack, s.syncPlayback
 	s.Host.DropFiles = s.dropFiles
 	s.Host.ShowSettings = s.openSettings
-	if opts.Engine != nil || !opts.Headless {
+	if opts.Player != nil {
 		s.Host.Model.Live = true
 		s.Host.Model.Spectrum.Live = true
 		s.Host.Model.Transport.List = players.NewPlaylist()
-		s.engine = opts.Engine
-		if s.engine == nil {
-			s.engine = playback.NewBuiltin(playback.BuiltinOptions{})
-		}
+		s.Host.Model.Transport.State = players.Stopped
+		s.player = opts.Player
+		s.daemon.index = -1
 		if opts.Remember {
 			s.restoreSession()
 		}
 	}
 	s.pulse = players.NewPulse(70*time.Millisecond, s.tick)
 	if err := s.SetSkin(SkinFor(opts)); err != nil {
-		if s.engine != nil {
-			_ = s.engine.Close()
-		}
 		return nil, err
 	}
-	if s.engine != nil {
-		s.startPlaybackEvents()
-		s.applyReplayGain()
-		s.syncPlayback()
+	if s.player != nil {
+		// the daemon's state now, when it answers; else as it comes
+		ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
+		state, err := s.player.State(ctx)
+		cancel()
+		if err == nil {
+			s.ShowState(state)
+		}
 	}
 	s.openTray()
 	return s, nil
@@ -156,15 +157,6 @@ func (s *Shell) Close() {
 	s.pulse.Stop()
 	s.closeTray()
 	s.cancelFileLoads()
-	if s.eventStop != nil {
-		close(s.eventStop)
-	}
-	if s.engine != nil {
-		_ = s.engine.Close()
-	}
-	if s.eventDone != nil {
-		<-s.eventDone
-	}
 	s.workers.Wait()
 	if s.fileWindow != nil {
 		s.fileWindow.Close()
@@ -330,8 +322,12 @@ func (s *Shell) tick(dt time.Duration) {
 }
 
 func (s *Shell) Command(c players.Command) {
-	s.Host.Model.Transport.Do(c)
-	s.syncPlayback()
+	if s.player == nil {
+		s.Host.Model.Transport.Do(c)
+	} else if name := command(c); name != "" {
+		s.syncPlayback() // a track chosen, a seek, before the command
+		s.call(func(ctx context.Context) (musicapi.State, error) { return s.player.Command(ctx, name) })
+	}
 	s.remember()
 	if s.presentation != nil && s.Host.Model.Transport.State == players.Playing {
 		s.pulse.Start(s.MainWindow())

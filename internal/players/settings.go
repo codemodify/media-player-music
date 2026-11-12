@@ -4,27 +4,26 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"time"
 
 	"goframework.io/desktop-ui/style"
 	"goframework.io/vfs"
 	disk "goframework.io/vfs-source-disk"
 )
 
-// Settings remembers the appearance, the ReplayGain settings and the desktop
-// session. Window positions are logical desktop pixels and are grouped by
-// presentation family.
+// Settings remembers the desktop UI's own: the appearance and its windows.
+// Window positions are logical desktop pixels and are grouped by
+// presentation family. The queue, where it is and the sound's settings
+// (ReplayGain among them) are media-player-musicd's to keep.
 type Settings struct {
 	Skin          string                                `json:"skin"`
-	ReplayGain    ReplayGain                            `json:"replaygain,omitzero"`
-	Playlist      *SavedPlaylist                        `json:"playlist,omitempty"`
 	Panels        *SavedPanels                          `json:"panels,omitempty"`
 	Windows       map[string]map[string]WindowPlacement `json:"windows,omitempty"`
 	Presentations map[string]PresentationState          `json:"presentations,omitempty"`
 }
 
-// ReplayGain is how tracks are levelled by their ReplayGain tags. Its zero
-// value is the default: track gain, no preamp (the owner, 2026-11-12).
+// ReplayGain is how tracks are levelled by their ReplayGain tags, as the
+// settings window shows it (the daemon keeps it). Its zero value is the
+// default: track gain, no preamp (the owner, 2026-11-12).
 type ReplayGain struct {
 	// Mode is ReplayGainOff, ReplayGainTrack or ReplayGainAlbum; "" (none
 	// saved) is ReplayGainTrack, the default.
@@ -61,12 +60,6 @@ func (r ReplayGain) Normal() ReplayGain {
 	}
 	r.Preamp = min(r.Preamp, MaxPreamp)
 	return r
-}
-
-type SavedPlaylist struct {
-	Tracks   []Track       `json:"tracks"`
-	Index    int           `json:"index"`
-	Position time.Duration `json:"position_ns,omitempty"`
 }
 
 type SavedPanels struct {
@@ -130,9 +123,8 @@ func LoadSettings() Settings {
 	var saved Settings
 	data, err := os.ReadFile(SettingsPath())
 	if err != nil || json.Unmarshal(data, &saved) != nil {
-		return Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{}.Normal()}
+		return Settings{Skin: DefaultSkin}
 	}
-	saved.ReplayGain = saved.ReplayGain.Normal()
 	if skin, ok := NormalizeSkin(saved.Skin); ok {
 		saved.Skin = skin
 	} else {
@@ -143,26 +135,15 @@ func LoadSettings() Settings {
 
 // Save writes the settings whole or not at all (vfs-source-disk's
 // WriteFile: a temporary file beside them, synced, renamed over them, the
-// folder synced), private to the user. A default is not written, as
-// everywhere in the file: ReplayGain's track gain is saved as nothing, so
-// that a file holds only what the person chose.
+// folder synced), private to the user.
 func (s Settings) Save() error {
 	path := SettingsPath()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	s.ReplayGain = s.ReplayGain.saved()
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
 	return disk.WriteFile(path, append(data, '\n'), vfs.Mode(0o600))
-}
-
-// saved is r as the file keeps it: the default mode, track gain, as none.
-func (r ReplayGain) saved() ReplayGain {
-	if r.Mode == ReplayGainTrack {
-		r.Mode = ""
-	}
-	return r
 }

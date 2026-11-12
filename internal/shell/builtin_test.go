@@ -9,6 +9,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/service"
 	"github.com/codemodify/media-player-music/internal/tags/tagstest"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/style"
@@ -38,7 +39,8 @@ func TestBuiltinEnginePlaysTheQueueThroughTheShell(t *testing.T) {
 	}
 	system := audiotest.New()
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
-	s, err := New(a, Options{Headless: true, Engine: playback.NewBuiltin(playback.BuiltinOptions{System: all.Wrap(system)})})
+	engine := playback.NewBuiltin(playback.BuiltinOptions{System: all.Wrap(system)})
+	s, _, err := startDaemon(t, a, engine, service.Saved{}, func(o Options) (*Shell, error) { return New(a, o) }, Options{Headless: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -20,7 +20,7 @@ func TestMeasuredSpectrumRejectsOldLoadsSeeksAndPausedFrames(t *testing.T) {
 		t.Fatal(err)
 	}
 	loaded(s)
-	epoch := s.playback.spectrumEpoch
+	epoch := serviceOf(s).service.Epoch()
 	spectrum(s, epoch, 0, .8)
 	if s.Host.Model.Spectrum.Bars[0] != .8 {
 		t.Fatal("a current decoder measurement did not reach the visualizer")
@@ -31,7 +31,7 @@ func TestMeasuredSpectrumRejectsOldLoadsSeeksAndPausedFrames(t *testing.T) {
 		t.Fatal("old track measurements flashed in the new track")
 	}
 	loaded(s)
-	epoch = s.playback.spectrumEpoch
+	epoch = serviceOf(s).service.Epoch()
 	s.Host.Model.Transport.List.Tracks[1].Length = time.Minute
 	s.Host.Seek(.5)
 	spectrum(s, epoch, 0, 1)
@@ -39,12 +39,12 @@ func TestMeasuredSpectrumRejectsOldLoadsSeeksAndPausedFrames(t *testing.T) {
 		t.Fatal("pre-seek measurements flashed at the new position")
 	}
 	seeked(s)
-	spectrum(s, s.playback.spectrumEpoch, 30, .6)
+	spectrum(s, serviceOf(s).service.Epoch(), 30, .6)
 	if s.Host.Model.Spectrum.Bars[0] != .6 {
 		t.Fatal("new seek measurements were not accepted")
 	}
 	s.Host.Command(players.CmdPlayPause)
-	spectrum(s, s.playback.spectrumEpoch, 30, 1)
+	spectrum(s, serviceOf(s).service.Epoch(), 30, 1)
 	if s.Host.Model.Spectrum.Bars[0] != .6 {
 		t.Fatal("a paused decoder measurement changed the display")
 	}
@@ -53,7 +53,7 @@ func TestMeasuredSpectrumRejectsOldLoadsSeeksAndPausedFrames(t *testing.T) {
 		t.Fatal("the paused visualizer did not fall to silence")
 	}
 	s.Host.Play()
-	spectrum(s, s.playback.spectrumEpoch, 55, 1)
+	spectrum(s, serviceOf(s).service.Epoch(), 55, 1)
 	if s.Host.Model.Spectrum.Bars[0] != 0 {
 		t.Fatal("far-future decoder measurements were accepted")
 	}

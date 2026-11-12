@@ -9,19 +9,12 @@
 package tags
 
 import (
-	"bytes"
-	"image"
-	_ "image/jpeg" // covers are JPEG or PNG
-	_ "image/png"
 	"os"
 	"path/filepath"
 	"strings"
 
 	id3 "goframework.io/codecs-container-id3"
-	"goframework.io/graphics-paint2d"
 )
-
-const maxCoverPixels = 4096 * 4096
 
 // Info is a file's text for the library.
 type Info struct {
@@ -49,36 +42,18 @@ func Read(path string) (Info, bool) {
 	return info, info != Info{}
 }
 
-// Cover returns a file's front cover (else its first picture), decoded,
-// and the largest side it is kept at: a cover larger than that is scaled
-// down. nil when there is none or it cannot be decoded.
-func Cover(path string, largest int) *paint2d.Image {
+// Picture returns a file's front cover (else its first picture) as its
+// tag holds it, JPEG or PNG most often: false when there is none.
+func Picture(path string) ([]byte, bool) {
 	tag, ok := read(path)
 	if !ok {
-		return nil
+		return nil, false
 	}
 	picture, ok := tag.Cover()
 	if !ok || picture.MIME == "-->" || len(picture.Data) == 0 {
-		return nil
+		return nil, false
 	}
-	// A tag is the file's to say: a picture past 4096 × 4096 is not
-	// decoded, so a crafted one cannot take the memory of a huge image.
-	config, _, err := image.DecodeConfig(bytes.NewReader(picture.Data))
-	if err != nil || config.Width <= 0 || config.Height <= 0 || config.Width*config.Height > maxCoverPixels {
-		return nil
-	}
-	decoded, _, err := image.Decode(bytes.NewReader(picture.Data))
-	if err != nil {
-		return nil
-	}
-	cover := paint2d.NewImageFromNRGBA(decoded)
-	if largest > 0 && (cover.Width > largest || cover.Height > largest) {
-		scale := float64(largest) / float64(max(cover.Width, cover.Height))
-		scaled := paint2d.NewImage(max(1, int(float64(cover.Width)*scale+.5)), max(1, int(float64(cover.Height)*scale+.5)))
-		paint2d.Resample(scaled, cover, paint2d.ResampleCatmullRom)
-		cover = scaled
-	}
-	return cover
+	return picture.Data, true
 }
 
 func read(path string) (*id3.Tag, bool) {

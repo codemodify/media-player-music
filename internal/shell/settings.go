@@ -1,15 +1,18 @@
 package shell
 
 import (
-	"github.com/codemodify/media-player-music/internal/playback"
+	"context"
+
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/style"
 	"goframework.io/desktop-ui/widget"
 )
 
 func (s *Shell) settingsState() players.SettingsState {
-	return players.SettingsState{Formats: playback.Formats, ReplayGain: s.settings.ReplayGain, Error: s.Host.Model.Error}
+	gain := s.daemon.state.ReplayGain
+	return players.SettingsState{Formats: s.daemon.formats, ReplayGain: players.ReplayGain{Mode: gain.Mode, Preamp: gain.Preamp}.Normal(), Error: s.Host.Model.Error}
 }
 
 func (s *Shell) refreshSettings() {
@@ -18,29 +21,15 @@ func (s *Shell) refreshSettings() {
 	}
 }
 
-// SetReplayGain changes the ReplayGain settings, saved, and heard from the
-// next track.
+// SetReplayGain changes the ReplayGain settings, the daemon's: heard at
+// once, and kept.
 func (s *Shell) SetReplayGain(gain players.ReplayGain) {
 	gain = gain.Normal()
-	if s.closed || gain == s.settings.ReplayGain {
+	if s.closed || s.player == nil {
 		return
 	}
-	s.settings.ReplayGain = gain
-	s.applyReplayGain()
-	s.refreshSettings()
-	s.remember()
-}
-
-// applyReplayGain gives the engine the saved ReplayGain settings.
-func (s *Shell) applyReplayGain() {
-	command := playback.Command{Op: playback.OpReplayGain, ReplayGain: playback.ReplayGain{Preamp: s.settings.ReplayGain.Preamp}}
-	switch s.settings.ReplayGain.Mode {
-	case players.ReplayGainTrack:
-		command.ReplayGain.Mode = playback.ReplayGainTrack
-	case players.ReplayGainAlbum:
-		command.ReplayGain.Mode = playback.ReplayGainAlbum
-	}
-	s.apply(command)
+	given := musicapi.ReplayGain{Mode: gain.Mode, Preamp: gain.Preamp}
+	s.call(func(ctx context.Context) (musicapi.State, error) { return s.player.SetReplayGain(ctx, given) })
 }
 
 func (s *Shell) openSettings() {

@@ -1,4 +1,4 @@
-package shell
+package service
 
 import (
 	"bytes"
@@ -27,15 +27,15 @@ func TestLibraryTracksCarryTheirID3Tags(t *testing.T) {
 		tagstest.Frame{ID: "TPE1", Data: tagstest.Text(4, "The Tessellators")}), frames)
 	write("02 b.aac", tagstest.V2(2, tagstest.Frame{ID: "TT2", Data: tagstest.Text(2, "Marram")}), frames, tagstest.V1("", "Ostro", "Dune Slack"))
 	write("03 c.mp3", frames)
-	result, err := expandMusicPaths(context.Background(), []string{root})
+	result, err := Expand(context.Background(), []string{root})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(result.tracks) != 3 {
-		t.Fatalf("%d tracks", len(result.tracks))
+	if len(result.Tracks) != 3 {
+		t.Fatalf("%d tracks", len(result.Tracks))
 	}
 	for i, want := range [][3]string{{"Harbour Lights", "The Tessellators", ""}, {"Marram", "Ostro", "Dune Slack"}, {"03 c", "", ""}} {
-		if got := result.tracks[i]; got.Title != want[0] || got.Artist != want[1] || got.Album != want[2] {
+		if got := result.Tracks[i]; got.Title != want[0] || got.Artist != want[1] || got.Album != want[2] {
 			t.Fatalf("track %d: %q, %q, %q; want %q", i, got.Title, got.Artist, got.Album, want)
 		}
 	}

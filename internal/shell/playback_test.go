@@ -1,15 +1,19 @@
 package shell
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/service"
+	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-widgets"
 	"goframework.io/desktop-ui/a11y"
@@ -17,9 +21,11 @@ import (
 	"goframework.io/desktop-ui/widget"
 )
 
-// fakeEngine records the shell's commands; a test plays the engine's part
-// by handing the shell Updates. Every call comes on the UI thread.
+// fakeEngine records the daemon's commands; a test plays the engine's part
+// by handing the service Updates (update). Its commands come under the
+// service's lock, from the test's goroutine.
 type fakeEngine struct {
+	lock     sync.Mutex
 	commands []playback.Command
 	events   chan playback.Update
 	closed   bool
@@ -28,6 +34,8 @@ type fakeEngine struct {
 func newFakeEngine() *fakeEngine { return &fakeEngine{events: make(chan playback.Update, 100)} }
 
 func (e *fakeEngine) Apply(command playback.Command) error {
+	e.lock.Lock()
+	defer e.lock.Unlock()
 	if e.closed {
 		return playback.ErrClosed
 	}
@@ -36,6 +44,8 @@ func (e *fakeEngine) Apply(command playback.Command) error {
 }
 func (e *fakeEngine) Events() <-chan playback.Update { return e.events }
 func (e *fakeEngine) Close() error {
+	e.lock.Lock()
+	defer e.lock.Unlock()
 	if !e.closed {
 		e.closed = true
 		close(e.events)
@@ -45,6 +55,8 @@ func (e *fakeEngine) Close() error {
 
 // last returns the last command of an operation.
 func (e *fakeEngine) last(op playback.Operation) (playback.Command, bool) {
+	e.lock.Lock()
+	defer e.lock.Unlock()
 	for i := len(e.commands) - 1; i >= 0; i-- {
 		if e.commands[i].Op == op {
 			return e.commands[i], true
@@ -54,6 +66,8 @@ func (e *fakeEngine) last(op playback.Operation) (playback.Command, bool) {
 }
 
 func countCommand(e *fakeEngine, op playback.Operation) int {
+	e.lock.Lock()
+	defer e.lock.Unlock()
 	count := 0
 	for _, command := range e.commands {
 		if command.Op == op {
@@ -63,13 +77,60 @@ func countCommand(e *fakeEngine, op playback.Operation) int {
 	return count
 }
 
+// daemon is a shell's player in the test's own process: the service
+// media-player-musicd serves, on a fake engine (or audiotest's), its states
+// posted to the shell's UI thread as the daemon's link posts them.
+type daemon struct {
+	app     *ui.Application
+	service *service.Service
+	shell   *Shell
+}
+
+var (
+	daemonsLock sync.Mutex
+	daemons     = map[*Shell]*daemon{}
+)
+
+// startDaemon makes a service on engine as saved, its states for the shell
+// that newShell makes with it; the service is closed at the test's end.
+func startDaemon(t *testing.T, a *ui.Application, engine playback.Engine, saved service.Saved, newShell func(Options) (*Shell, error), options Options) (*Shell, *daemon, error) {
+	t.Helper()
+	d := &daemon{app: a}
+	d.service = service.New(service.Options{Engine: engine, Saved: saved, Publish: func(event string, value any) {
+		a.Post(func() {
+			if d.shell != nil {
+				d.shell.Show(event, value)
+			}
+		})
+	}})
+	t.Cleanup(func() { d.service.Close() })
+	options.Player = d.service
+	s, err := newShell(options)
+	if err != nil {
+		return nil, nil, err
+	}
+	d.shell = s
+	daemonsLock.Lock()
+	daemons[s] = d
+	daemonsLock.Unlock()
+	a.DrainPosted()
+	return s, d, nil
+}
+
+// serviceOf is the service a shell shows.
+func serviceOf(s *Shell) *daemon {
+	daemonsLock.Lock()
+	defer daemonsLock.Unlock()
+	return daemons[s]
+}
+
 func liveShell(t *testing.T, skin string) (*ui.Application, *Shell, *fakeEngine) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(skin))
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	e := newFakeEngine()
-	s, err := New(a, Options{Skin: skin, Headless: true, Engine: e})
+	s, _, err := startDaemon(t, a, e, service.Saved{}, func(o Options) (*Shell, error) { return New(a, o) }, Options{Skin: skin, Headless: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,18 +153,74 @@ func mediaPaths(t *testing.T, count int) []string {
 	return paths
 }
 
-// update hands the shell an update of the current load.
+// update hands the daemon an update of the current load, and the shell
+// what the daemon then told it.
 func update(s *Shell, u playback.Update) {
-	u.Generation = s.playback.generation
-	s.engineEvent(u)
+	d := serviceOf(s)
+	u.Generation = d.service.Generation()
+	d.service.Inject(u)
+	d.app.DrainPosted()
 }
+
+// updateOf hands the daemon an update as it is, of whichever load it
+// names.
+func updateOf(s *Shell, u playback.Update) {
+	d := serviceOf(s)
+	d.service.Inject(u)
+	d.app.DrainPosted()
+}
+
+// pauseAt pauses the daemon at a time of its track, and shows it.
+func pauseAt(t *testing.T, s *Shell, at time.Duration) {
+	t.Helper()
+	d, ctx := serviceOf(s), context.Background()
+	if state, _ := d.service.State(ctx); state.Status == musicapi.StatusPlaying {
+		if _, err := d.service.Command(ctx, musicapi.CommandPlayPause); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := d.service.Seek(ctx, at.Milliseconds()); err != nil {
+		t.Fatal(err)
+	}
+	d.app.DrainPosted()
+	if tr := s.Host.Model.Transport; tr.State != players.Paused || tr.Pos != at {
+		t.Fatalf("not paused at %v: %v at %v", at, tr.State, tr.Pos)
+	}
+}
+
+// placeAt puts the daemon's transport in a state at a time of its track,
+// and shows it.
+func placeAt(t *testing.T, s *Shell, state players.State, at time.Duration) {
+	t.Helper()
+	d, ctx := serviceOf(s), context.Background()
+	command := map[players.State]string{players.Stopped: musicapi.CommandStop, players.Playing: musicapi.CommandPlay}[state]
+	if state == players.Paused {
+		if _, err := d.service.Command(ctx, musicapi.CommandPlay); err != nil {
+			t.Fatal(err)
+		}
+		command = musicapi.CommandPlayPause
+	}
+	if _, err := d.service.Command(ctx, command); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.service.Seek(ctx, at.Milliseconds()); err != nil {
+		t.Fatal(err)
+	}
+	d.app.DrainPosted()
+	if tr := s.Host.Model.Transport; tr.State != state || tr.Pos != at {
+		t.Fatalf("not %v at %v: %v at %v", state, at, tr.State, tr.Pos)
+	}
+}
+
+// generation is the daemon's current load.
+func generation(s *Shell) uint64 { return serviceOf(s).service.Generation() }
 
 // loaded says the current load opened.
 func loaded(s *Shell) { update(s, playback.Update{Kind: playback.UpdateLoaded}) }
 
 // seeked says the last seek is heard.
 func seeked(s *Shell) {
-	update(s, playback.Update{Kind: playback.UpdateSeeked, Epoch: s.playback.spectrumEpoch})
+	update(s, playback.Update{Kind: playback.UpdateSeeked, Epoch: serviceOf(s).service.Epoch()})
 }
 
 func TestLiveClockAndEventsRejectSupersededTrack(t *testing.T) {
@@ -112,7 +229,7 @@ func TestLiveClockAndEventsRejectSupersededTrack(t *testing.T) {
 	if err := s.LoadFiles(paths, false); err != nil {
 		t.Fatal(err)
 	}
-	if load, ok := e.last(playback.OpLoad); !ok || load.Path != paths[0] || load.Generation != s.playback.generation {
+	if load, ok := e.last(playback.OpLoad); !ok || load.Path != paths[0] || load.Generation != generation(s) {
 		t.Fatalf("the first track was not loaded: %+v", e.commands)
 	}
 	loaded(s)
@@ -131,9 +248,9 @@ func TestLiveClockAndEventsRejectSupersededTrack(t *testing.T) {
 			t.Fatal("live playback fabricated spectrum data")
 		}
 	}
-	old := s.playback.generation
+	old := generation(s)
 	s.Host.Command(players.CmdNext)
-	if s.playback.generation == old || countCommand(e, playback.OpLoad) != 2 {
+	if generation(s) == old || countCommand(e, playback.OpLoad) != 2 {
 		t.Fatal("Next did not load the next track as a new generation")
 	}
 	for _, u := range []playback.Update{
@@ -142,7 +259,7 @@ func TestLiveClockAndEventsRejectSupersededTrack(t *testing.T) {
 		{Kind: playback.UpdateAudioFormat, Generation: old, Info: playback.TrackInfo{SampleRate: 96000, Channels: 6}},
 		{Kind: playback.UpdateEnded, Generation: old},
 	} {
-		s.engineEvent(u)
+		updateOf(s, u)
 	}
 	if track := s.Host.Model.Transport.Track(); s.Host.Model.Transport.List.Index() != 1 || s.Host.Model.Transport.Pos != 0 || track.Title == "old title" || track.Rate != 0 {
 		t.Fatal("an old load's update changed the newly selected track")
@@ -180,8 +297,8 @@ func TestEndWhilePausedStopsAndPlayReloads(t *testing.T) {
 		t.Fatal("pause did not reach the engine")
 	}
 	update(s, playback.Update{Kind: playback.UpdateEnded})
-	if s.Host.Model.Transport.State != players.Stopped || s.playback.path != "" {
-		t.Fatal("paused end left an unloaded file cached as active")
+	if s.Host.Model.Transport.State != players.Stopped {
+		t.Fatal("a paused end did not stop")
 	}
 	before := countCommand(e, playback.OpLoad)
 	s.Host.Play()
@@ -208,9 +325,6 @@ func TestSeekWaitsForLoadAndErrorsStopAudio(t *testing.T) {
 	update(s, playback.Update{Kind: playback.UpdateError, Error: "the file could not be played"})
 	if s.Host.Model.Transport.State != players.Stopped || !strings.Contains(s.Host.Model.Error, "could not be played") || countCommand(e, playback.OpStop) == 0 {
 		t.Fatal("an engine error did not stop actual audio and show its error")
-	}
-	if s.playback.initialized {
-		t.Fatal("rejected settings remained cached")
 	}
 	s.Host.Play()
 	if s.Host.Model.Error != "" {
@@ -246,13 +360,10 @@ func TestPlaylistValidationAppendRemoveAndShutdown(t *testing.T) {
 	if s.Host.Model.Transport.List.Len() != 0 || s.Host.Model.Transport.State != players.Stopped || countCommand(e, playback.OpStop) == 0 {
 		t.Fatal("removing last track did not stop audio")
 	}
-	for i := 0; i < 80; i++ {
-		e.events <- playback.Update{Kind: playback.UpdatePosition, Generation: s.playback.generation, Position: time.Second}
-	}
 	s.Close()
 	s.Close()
-	if !e.closed {
-		t.Fatal("shell shutdown left engine running")
+	if e.closed {
+		t.Fatal("the shell closed the daemon's engine")
 	}
 }
 
@@ -286,15 +397,12 @@ func TestUnsupportedFormatsAreRefusedWithAClearMessage(t *testing.T) {
 }
 
 func TestReplayGainSettingsReachTheEngineAndAreSaved(t *testing.T) {
-	config := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", config)
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, LookFor(players.DefaultSkin))
-	if err := (players.Settings{Skin: players.DefaultSkin, ReplayGain: players.ReplayGain{Mode: players.ReplayGainAlbum, Preamp: -2}}).Save(); err != nil {
-		t.Fatal(err)
-	}
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	e := newFakeEngine()
-	s, err := New(a, Options{Headless: true, Remember: true, Engine: e})
+	saved := service.Saved{ReplayGain: musicapi.ReplayGain{Mode: musicapi.ReplayGainAlbum, Preamp: -2}}
+	s, d, err := startDaemon(t, a, e, saved, func(o Options) (*Shell, error) { return New(a, o) }, Options{Headless: true, Remember: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,8 +414,8 @@ func TestReplayGainSettingsReachTheEngineAndAreSaved(t *testing.T) {
 	if gain, ok := e.last(playback.OpReplayGain); !ok || gain.ReplayGain != (playback.ReplayGain{Mode: playback.ReplayGainTrack, Preamp: 3.5}) {
 		t.Fatal("a ReplayGain change did not reach the engine")
 	}
-	if saved := players.LoadSettings().ReplayGain; saved != (players.ReplayGain{Mode: players.ReplayGainTrack, Preamp: 3.5}) {
-		t.Fatalf("the ReplayGain change was not saved: %+v", saved)
+	if kept := d.service.Saved().ReplayGain; kept != (musicapi.ReplayGain{Preamp: 3.5}) {
+		t.Fatalf("the ReplayGain change was not kept (track gain as none): %+v", kept)
 	}
 	s.SetReplayGain(players.ReplayGain{Mode: "loudest", Preamp: 40})
 	if gain, _ := e.last(playback.OpReplayGain); gain.ReplayGain != (playback.ReplayGain{Mode: playback.ReplayGainOff, Preamp: players.MaxPreamp}) {

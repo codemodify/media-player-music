@@ -123,8 +123,7 @@ func TestDroppedFolderAppendsAudioFromMediaContainers(t *testing.T) {
 	}
 	loaded(s)
 	tr := s.Host.Model.Transport
-	tr.State, tr.Pos = players.Paused, 12*time.Second
-	s.playback.state, s.playback.position = tr.State, tr.Pos
+	pauseAt(t, s, 12*time.Second)
 	loads := countCommand(b, playback.OpLoad)
 	root := t.TempDir()
 	want := []string{
@@ -194,8 +193,7 @@ func TestFileValidationIsAtomicAndExplicitFormatsAreNotFiltered(t *testing.T) {
 	}
 	loaded(s)
 	tr := s.Host.Model.Transport
-	tr.State, tr.Pos = players.Paused, 12*time.Second
-	s.playback.state, s.playback.position = tr.State, tr.Pos
+	pauseAt(t, s, 12*time.Second)
 	list, loads := tr.List, countCommand(b, playback.OpLoad)
 	for _, paths := range [][]string{{second, filepath.Join(root, "missing.wav")}, {t.TempDir()}} {
 		if err := s.LoadFiles(paths, false); err == nil {
@@ -208,7 +206,7 @@ func TestFileValidationIsAtomicAndExplicitFormatsAreNotFiltered(t *testing.T) {
 	if err := s.LoadFiles([]string{second}, true); err != nil {
 		t.Fatal(err)
 	}
-	if tr.List != list || list.Len() != 2 || list.At(1).Path != second || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, playback.OpLoad) != loads {
+	if list = tr.List; list.Len() != 2 || list.At(1).Path != second || tr.State != players.Paused || tr.Pos != 12*time.Second || countCommand(b, playback.OpLoad) != loads {
 		t.Fatal("append restarted or replaced the current transport")
 	}
 }
@@ -223,8 +221,7 @@ func TestFolderSkipsUnreadableEntriesWithoutInterruptingCurrentAudio(t *testing.
 	}
 	loaded(s)
 	tr := s.Host.Model.Transport
-	tr.State, tr.Pos = players.Paused, 9*time.Second
-	s.playback.state, s.playback.position = tr.State, tr.Pos
+	pauseAt(t, s, 9*time.Second)
 	loads, stops := countCommand(b, playback.OpLoad), countCommand(b, playback.OpStop)
 	root := t.TempDir()
 	good := writeMusicEntry(t, root, "good.mp3")

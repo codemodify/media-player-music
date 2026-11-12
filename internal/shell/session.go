@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/codemodify/media-player-music/internal/players"
 )
@@ -23,39 +20,6 @@ func (s *Shell) restoreSession() {
 	m := s.Host.Model
 	if panels := s.settings.Panels; panels != nil {
 		m.EqualizerVisible, m.PlaylistVisible = panels.Equaliser, panels.Playlist
-	}
-	saved := s.settings.Playlist
-	if saved == nil {
-		return
-	}
-	tracks := make([]players.Track, 0, len(saved.Tracks))
-	selected := -1
-	for i, track := range saved.Tracks {
-		// Files may have been moved or removed since the previous session.
-		// Keep readable entries in their original order without preventing launch.
-		info, err := os.Stat(track.Path)
-		if err != nil || !info.Mode().IsRegular() {
-			continue
-		}
-		if track.Title == "" {
-			track.Title = strings.TrimSuffix(filepath.Base(track.Path), filepath.Ext(track.Path))
-		}
-		if i == saved.Index {
-			selected = len(tracks)
-		}
-		tracks = append(tracks, track)
-	}
-	t := m.Transport
-	t.List = players.NewPlaylist(tracks...)
-	t.State, t.Pos = players.Stopped, 0
-	if selected >= 0 {
-		t.List.Select(selected)
-		if saved.Position > 0 {
-			t.Pos = saved.Position
-			if length := t.Length(); length > 0 && t.Pos > length {
-				t.Pos = length
-			}
-		}
 	}
 }
 
@@ -108,16 +72,7 @@ func (s *Shell) remember() {
 	s.rememberIn = 0
 	s.settings.Skin = s.skin
 	if s.Host.Model.Live {
-		t := s.Host.Model.Transport
-		// Copy the queue so subsequent decoder metadata and playlist edits
-		// cannot change the snapshot that is about to be written.
-		tracks := make([]players.Track, t.List.Len())
-		if t.List != nil {
-			copy(tracks, t.List.Tracks)
-		}
-		s.settings.Playlist = &players.SavedPlaylist{
-			Tracks: tracks, Index: t.List.Index(), Position: max(t.Pos, 0),
-		}
+		// the queue and where it is are the daemon's to keep
 		s.settings.Panels = &players.SavedPanels{
 			Equaliser: s.Host.Model.EqualizerVisible, Playlist: s.Host.Model.PlaylistVisible,
 		}

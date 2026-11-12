@@ -4,9 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
-	"time"
 )
 
 func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
@@ -14,20 +12,16 @@ func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 		json string
 		want Settings
 	}{
-		// ReplayGain's default, when none is saved, is track gain (the
-		// owner, 2026-11-12).
-		{`{"skin":"winamp"}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
-		{`{"skin":"winamp-classified"}`, Settings{Skin: WinampClassifiedSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
-		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
-		// What earlier test builds saved is not carried over: an old
-		// skin name or engine is simply not the player's.
-		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
-		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
-		{`{"skin":"winamp","replaygain":{"mode":"album","preamp_db":-3.5}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainAlbum, Preamp: -3.5}}},
-		{`{"skin":"winamp","replaygain":{"mode":"off"}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff}}},
-		{`{"skin":"winamp","replaygain":{"preamp_db":2}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack, Preamp: 2}}},
-		{`{"skin":"winamp","replaygain":{"mode":"loudest","preamp_db":99}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff, Preamp: MaxPreamp}}},
-		{`not json`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
+		{`{"skin":"winamp"}`, Settings{Skin: WinampSkin}},
+		{`{"skin":"winamp-classified"}`, Settings{Skin: WinampClassifiedSkin}},
+		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin}},
+		// What earlier builds saved is not carried over: an old skin name,
+		// an engine, the queue and ReplayGain (the daemon's now) are simply
+		// not the desktop UI's.
+		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin}},
+		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin}},
+		{`{"skin":"winamp","replaygain":{"mode":"album"},"playlist":{"tracks":[{"Path":"/a.mp3"}]}}`, Settings{Skin: WinampSkin}},
+		{`not json`, Settings{Skin: DefaultSkin}},
 	} {
 		t.Run(test.json, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -45,42 +39,27 @@ func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 	}
 }
 
-// TestSettingsReplayGainDefaultsToTrack: nothing saved is track gain, and
-// off, once chosen, is saved and kept (the owner, 2026-11-12).
-func TestSettingsReplayGainDefaultsToTrack(t *testing.T) {
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainTrack}) {
-		t.Fatalf("with no settings file: %+v, want track gain", got)
-	}
-	if err := (Settings{Skin: DefaultSkin}).Save(); err != nil {
-		t.Fatal(err)
-	}
-	data, err := os.ReadFile(SettingsPath())
-	if err != nil || strings.Contains(string(data), "replaygain") || strings.Contains(string(data), "audio_backend") {
-		t.Fatalf("saved %s, %v", data, err)
-	}
-	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainTrack}) {
-		t.Fatalf("with none saved: %+v, want track gain", got)
-	}
-	// what was loaded, saved again (the shell does), still holds no default
-	if err := LoadSettings().Save(); err != nil {
-		t.Fatal(err)
-	}
-	if data, err := os.ReadFile(SettingsPath()); err != nil || strings.Contains(string(data), "replaygain") {
-		t.Fatalf("the loaded default was written back: %s, %v", data, err)
-	}
-	if err := (Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff}}).Save(); err != nil {
-		t.Fatal(err)
-	}
-	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainOff}) {
-		t.Fatalf("off saved: %+v", got)
+// TestReplayGainNormal: the settings window's ReplayGain, as it is shown:
+// none is track gain (the owner, 2026-11-12), an unknown mode off, the
+// preamp held in its range.
+func TestReplayGainNormal(t *testing.T) {
+	for given, want := range map[ReplayGain]ReplayGain{
+		{}:                            {Mode: ReplayGainTrack},
+		{Mode: ReplayGainOff}:         {Mode: ReplayGainOff},
+		{Mode: "album", Preamp: -3}:   {Mode: ReplayGainAlbum, Preamp: -3},
+		{Mode: "loudest", Preamp: 99}: {Mode: ReplayGainOff, Preamp: MaxPreamp},
+		{Preamp: -99}:                 {Mode: ReplayGainTrack, Preamp: MinPreamp},
+	} {
+		if got := given.Normal(); got != want {
+			t.Errorf("%+v: %+v, want %+v", given, got, want)
+		}
 	}
 }
 
 func TestSessionSettingsRoundTripAndPermissions(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	want := Settings{
-		Skin: WinampClassifiedSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack, Preamp: 2}, Playlist: &SavedPlaylist{Tracks: []Track{{Path: "/music/song.flac", Title: "Song", Length: time.Minute}}, Index: 0, Position: 3 * time.Second},
+		Skin:   WinampClassifiedSkin,
 		Panels: &SavedPanels{Equaliser: false, Playlist: true},
 		Windows: map[string]map[string]WindowPlacement{"winamp": {
 			"main":     {X: 0, Y: -20, Positioned: true},

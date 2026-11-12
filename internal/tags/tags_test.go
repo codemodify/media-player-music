@@ -2,9 +2,7 @@ package tags
 
 import (
 	"bytes"
-	"image"
 	"image/color"
-	"image/jpeg"
 	"os"
 	"path/filepath"
 	"testing"
@@ -41,12 +39,8 @@ func TestReadsEveryID3Version(t *testing.T) {
 		if !ok || info != (Info{Title: "Harbour Lights", Artist: "Tessellators", Album: "Low Tide"}) {
 			t.Fatalf("ID3v2.%d: %+v, %v", major, info, ok)
 		}
-		cover := Cover(path, 0)
-		if cover == nil || cover.Width != 4 || cover.Height != 2 {
-			t.Fatalf("ID3v2.%d: the cover was not read: %+v", major, cover)
-		}
-		if c := cover.NRGBAAt(1, 1); c.R != 200 || c.G != 0 || c.A != 255 {
-			t.Fatalf("ID3v2.%d: the cover's colour: %v", major, c)
+		if data, ok := Picture(path); !ok || !bytes.Equal(data, tagstest.PNG(4, 2, red)) {
+			t.Fatalf("ID3v2.%d: the cover was not read: %d bytes, %v", major, len(data), ok)
 		}
 	}
 }
@@ -61,38 +55,8 @@ func TestReadsID3v1AndJoinsItBehindID3v2(t *testing.T) {
 	if info, ok := Read(path); !ok || info != (Info{Title: "Beacon — live", Artist: "Ruth Alder", Album: "Field Notes"}) {
 		t.Fatalf("ID3v2 and v1: %+v, %v", info, ok)
 	}
-	if Cover(path, 0) != nil {
+	if _, ok := Picture(path); ok {
 		t.Fatal("a cover from a tag without one")
-	}
-}
-
-func TestCoverIsJPEGOrPNGAndKeptSmall(t *testing.T) {
-	picture := image.NewNRGBA(image.Rect(0, 0, 600, 300))
-	for i := 0; i < len(picture.Pix); i += 4 {
-		picture.Pix[i+1], picture.Pix[i+3] = 180, 255
-	}
-	var data bytes.Buffer
-	if err := jpeg.Encode(&data, picture, nil); err != nil {
-		t.Fatal(err)
-	}
-	// ID3v2.4 with a frame past 127 bytes, and one after it (goframework R94, read by codecs-container-id3 itself).
-	path := write(t, "big.mp3", tagstest.V2(4,
-		tagstest.Frame{ID: "APIC", Data: tagstest.Picture(4, "image/jpeg", data.Bytes())},
-		tagstest.Frame{ID: "TALB", Data: tagstest.Text(4, "Field Notes")}), frames, tagstest.V1("", "Ruth Alder", ""))
-	if info, ok := Read(path); !ok || info != (Info{Artist: "Ruth Alder", Album: "Field Notes"}) {
-		t.Fatalf("the frame after the cover: %+v, %v", info, ok)
-	}
-	cover := Cover(path, 256)
-	if cover == nil || cover.Width != 256 || cover.Height != 128 {
-		t.Fatalf("a 600 × 300 cover kept at 256: %+v", cover)
-	}
-	if c := cover.NRGBAAt(100, 60); c.G < 160 || c.R > 30 {
-		t.Fatalf("the JPEG cover's colour: %v", c)
-	}
-	// A picture that is no image is no cover.
-	path = write(t, "junk.mp3", tagstest.V2(4, tagstest.Frame{ID: "APIC", Data: tagstest.Picture(4, "image/png", []byte("not a picture"))}), frames)
-	if Cover(path, 0) != nil {
-		t.Fatal("junk decoded as a cover")
 	}
 }
 

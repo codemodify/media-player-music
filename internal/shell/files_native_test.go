@@ -15,6 +15,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/service"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/a11y"
 	"goframework.io/desktop-ui/platform"
@@ -51,11 +52,11 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 	if requested := os.Getenv("MUSIC_PLAYER_NATIVE_DROP_FOLDER"); requested != "" {
 		folder = requested
 	}
-	want, err := expandMusicPaths(context.Background(), []string{folder})
+	want, err := service.Expand(context.Background(), []string{folder})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(want.tracks) == 0 {
+	if len(want.Tracks) == 0 {
 		t.Fatal("native test folder has no playable entries")
 	}
 	t.Setenv(platform.EnvBackend, "x11")
@@ -65,7 +66,7 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 			t.Setenv(style.ThemeEnv, LookFor(skin))
 			a := ui.New(ui.Options{Scale: 1.75, DisableLookWatch: true})
 			backend := newFakeEngine()
-			s, err := New(a, Options{Skin: skin, Scale: 1.75, Engine: backend})
+			s, _, err := startDaemon(t, a, backend, service.Saved{}, func(o Options) (*Shell, error) { return New(a, o) }, Options{Skin: skin, Scale: 1.75})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -107,9 +108,9 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 				}
 				nativeXDND(t, a, sender, strings.TrimPrefix(parent, "x11:"), int(point.X), int(point.Y), payload, preferred)
 				waitFileLoad(t, a, "native folder drop", func() bool {
-					return s.Host.Model.Transport.List.Len() == before+len(want.tracks)
+					return s.Host.Model.Transport.List.Len() == before+len(want.Tracks)
 				})
-				for i, track := range want.tracks {
+				for i, track := range want.Tracks {
 					if got := s.Host.Model.Transport.List.At(before + i); got.Path != track.Path {
 						t.Fatalf("native folder entry %d differs from recursive expansion", i)
 					}
@@ -117,7 +118,7 @@ func TestNativeXDNDPlaylistFolderDrop(t *testing.T) {
 				if s.Host.Model.Error != "" {
 					t.Fatalf("native folder loading failed: %s", s.Host.Model.Error)
 				}
-				t.Logf("native %s-preferred folder drop negotiated Copy and added %d entries (fake engine; no audio)", preferred, len(want.tracks))
+				t.Logf("native %s-preferred folder drop negotiated Copy and added %d entries (fake engine; no audio)", preferred, len(want.Tracks))
 			}
 		})
 	}
