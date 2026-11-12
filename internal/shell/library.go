@@ -70,19 +70,33 @@ type libraryView struct {
 	version   uint64 // the library listed
 }
 
-// ShowLibrary keeps the daemon's library state: the window's status line,
-// and the lists again when the library changed.
+// ShowLibrary keeps the daemon's library state: the window's status line
+// when what it says changed, and the lists again when the library changed.
+// The daemon tells the same state more than once (a scan's last progress,
+// a renderer's first state): rewriting the status at each would replace
+// what the window just said ("3 tracks added to the queue") for nothing.
 func (s *Shell) ShowLibrary(library musicapi.Library) {
 	if s.closed {
 		return
 	}
+	was := s.library
 	s.library = library
 	if v := s.libraryView; v != nil && v.window != nil && !v.window.Closed() {
-		v.showStatus()
+		if libraryStatusChanged(was, library) {
+			v.showStatus()
+		}
 		if library.Version != v.version {
 			v.reload()
 		}
 	}
+}
+
+// libraryStatusChanged says whether the library's status line would say
+// something else: another version (its counts), a scan started, going on
+// or ended, an error, other folders.
+func libraryStatusChanged(was, now musicapi.Library) bool {
+	return was.Version != now.Version || was.Scanning != now.Scanning || was.Scanned != now.Scanned ||
+		was.Error != now.Error || !slices.Equal(was.Folders, now.Folders)
 }
 
 // LibraryWindow is the library window, nil when it is not open: for the

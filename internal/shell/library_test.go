@@ -254,6 +254,12 @@ func TestTheLibraryWindowsButtonsAndChanges(t *testing.T) {
 	if state, _ := s.player.State(context.Background()); state.Queue.Length != 3 || !strings.Contains(v.status.Text, "3 tracks added to the queue") {
 		t.Fatalf("%+v, %q", state.Queue, v.status.Text)
 	}
+	// the same library told again (the daemon does) leaves what the window
+	// said
+	s.ShowLibrary(s.library)
+	if !strings.Contains(v.status.Text, "3 tracks added to the queue") {
+		t.Fatalf("the same library told again: %q", v.status.Text)
+	}
 	v.window.FocusOn(v.groups)
 	v.window.Press(platform.KeyDown) // Radiohead
 	if !v.window.ClickComponent(v.playButton) {
@@ -270,6 +276,9 @@ func TestTheLibraryWindowsButtonsAndChanges(t *testing.T) {
 	s.ShowLibrary(library)
 	if v.groups.Selected != 1 || v.version != library.Version {
 		t.Fatalf("chosen %d, version %d", v.groups.Selected, v.version)
+	}
+	if !strings.Contains(v.status.Text, "6 tracks") {
+		t.Fatalf("another version: %q", v.status.Text)
 	}
 }
 
