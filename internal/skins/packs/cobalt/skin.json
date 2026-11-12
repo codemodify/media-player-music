@@ -1,0 +1,1353 @@
+{
+  "base": "win95",
+  "colors": {
+    "focus": "#7CF09A"
+  },
+  "family": "cobalt",
+  "label": "Cobalt",
+  "layouts": {
+    "cobalt.compact": {
+      "art": "face.compact",
+      "size": [346, 103],
+      "slots": {
+        "close": {
+          "art": {
+            "checked": "key.close",
+            "checkedHover": "key.close.hover",
+            "checkedPressed": "key.close.down",
+            "disabled": "key.close.disabled",
+            "hover": "key.close.hover",
+            "normal": "key.close",
+            "pressed": "key.close.down"
+          },
+          "at": [323, 3, 16, 19]
+        },
+        "compact": {
+          "art": {
+            "checked": "key.compact",
+            "checkedHover": "key.compact.hover",
+            "checkedPressed": "key.compact.down",
+            "disabled": "key.compact.disabled",
+            "hover": "key.compact.hover",
+            "normal": "key.compact",
+            "pressed": "key.compact.down"
+          },
+          "at": [290, 63, 20, 19]
+        },
+        "ffwd": {
+          "art": {
+            "checked": "key.ffwd",
+            "checkedHover": "key.ffwd.hover",
+            "checkedPressed": "key.ffwd.down",
+            "disabled": "key.ffwd.disabled",
+            "hover": "key.ffwd.hover",
+            "normal": "key.ffwd",
+            "pressed": "key.ffwd.down"
+          },
+          "at": [303, 44, 36, 13]
+        },
+        "logo": {
+          "art": {
+            "checked": "app.icon",
+            "normal": "app.icon",
+            "pressed": "app.icon"
+          },
+          "at": [269, 63, 14, 14]
+        },
+        "metadata": {
+          "at": [63, 27, 223, 16]
+        },
+        "minimize": {
+          "art": {
+            "checked": "key.minimize",
+            "checkedHover": "key.minimize.hover",
+            "checkedPressed": "key.minimize.down",
+            "disabled": "key.minimize.disabled",
+            "hover": "key.minimize.hover",
+            "normal": "key.minimize",
+            "pressed": "key.minimize.down"
+          },
+          "at": [307, 3, 15, 19]
+        },
+        "mute": {
+          "art": {
+            "checked": "key.mute.on",
+            "checkedPressed": "key.mute.down",
+            "disabled": "key.mute.disabled",
+            "hover": "key.mute.hover",
+            "normal": "key.mute",
+            "pressed": "key.mute.down"
+          },
+          "at": [133, 68, 22, 21]
+        },
+        "next": {
+          "art": {
+            "checked": "key.next",
+            "checkedHover": "key.next.hover",
+            "checkedPressed": "key.next.down",
+            "disabled": "key.next.disabled",
+            "hover": "key.next.hover",
+            "normal": "key.next",
+            "pressed": "key.next.down"
+          },
+          "at": [106, 68, 22, 21]
+        },
+        "open": {
+          "art": {
+            "checked": "key.compact.open",
+            "checkedHover": "key.compact.open.hover",
+            "checkedPressed": "key.compact.open.down",
+            "disabled": "key.compact.open.disabled",
+            "hover": "key.compact.open.hover",
+            "normal": "key.compact.open",
+            "pressed": "key.compact.open.down"
+          },
+          "at": [277, 3, 19, 19]
+        },
+        "pause": {
+          "art": {
+            "checked": "key.pause",
+            "checkedHover": "key.pause.hover",
+            "checkedPressed": "key.pause.down",
+            "disabled": "key.pause.disabled",
+            "hover": "key.pause.hover",
+            "normal": "key.pause",
+            "pressed": "key.pause.down"
+          },
+          "at": [20, 63, 30, 30]
+        },
+        "play": {
+          "art": {
+            "checked": "key.play",
+            "checkedHover": "key.play.hover",
+            "checkedPressed": "key.play.down",
+            "disabled": "key.play.disabled",
+            "hover": "key.play.hover",
+            "normal": "key.play",
+            "pressed": "key.play.down"
+          },
+          "at": [20, 63, 31, 30]
+        },
+        "prev": {
+          "art": {
+            "checked": "key.prev",
+            "checkedHover": "key.prev.hover",
+            "checkedPressed": "key.prev.down",
+            "disabled": "key.prev.disabled",
+            "hover": "key.prev.hover",
+            "normal": "key.prev",
+            "pressed": "key.prev.down"
+          },
+          "at": [81, 68, 22, 21]
+        },
+        "rew": {
+          "art": {
+            "checked": "key.rew",
+            "checkedHover": "key.rew.hover",
+            "checkedPressed": "key.rew.down",
+            "disabled": "key.rew.disabled",
+            "hover": "key.rew.hover",
+            "normal": "key.rew",
+            "pressed": "key.rew.down"
+          },
+          "at": [18, 44, 36, 13]
+        },
+        "seek": {
+          "art": {
+            "checked": "seek.track",
+            "normal": "seek.track",
+            "pressed": "seek.track"
+          },
+          "at": [52, 44, 255, 13]
+        },
+        "settings": {
+          "art": {
+            "checked": "key.skin",
+            "checkedHover": "key.skin.hover",
+            "checkedPressed": "key.skin.down",
+            "disabled": "key.skin.disabled",
+            "hover": "key.skin.hover",
+            "normal": "key.skin",
+            "pressed": "key.skin.down"
+          },
+          "at": [311, 63, 20, 19]
+        },
+        "shape.background": {
+          "art": {
+            "checked": "face.compact",
+            "normal": "face.compact",
+            "pressed": "face.compact"
+          },
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "skin": {
+          "art": {
+            "checked": "key.skin",
+            "checkedHover": "key.skin.hover",
+            "checkedPressed": "key.skin.down",
+            "disabled": "key.skin.disabled",
+            "hover": "key.skin.hover",
+            "normal": "key.skin",
+            "pressed": "key.skin.down"
+          },
+          "at": [311, 63, 20, 19]
+        },
+        "stop": {
+          "art": {
+            "checked": "key.stop",
+            "checkedHover": "key.stop.hover",
+            "checkedPressed": "key.stop.down",
+            "disabled": "key.stop.disabled",
+            "hover": "key.stop.hover",
+            "normal": "key.stop",
+            "pressed": "key.stop.down"
+          },
+          "at": [54, 68, 22, 21]
+        },
+        "time": {
+          "at": [287, 27, 49, 16]
+        },
+        "title": {
+          "at": [21, 4, 200, 17]
+        },
+        "volume": {
+          "art": {
+            "checked": "volume.track",
+            "normal": "volume.track",
+            "pressed": "volume.track"
+          },
+          "at": [162, 68, 68, 18]
+        }
+      }
+    },
+    "cobalt.equalizer": {
+      "art": "face.equalizer",
+      "size": [334, 123],
+      "slots": {
+        "balance": {
+          "art": {
+            "checked": "balance.track",
+            "normal": "balance.track",
+            "pressed": "balance.track"
+          },
+          "at": [44, 8, 67, 18],
+          "fromRight": true
+        },
+        "balance.label": {
+          "at": [111, 11, 37, 15],
+          "fromRight": true
+        },
+        "close": {
+          "art": {
+            "checked": "key.eq.close",
+            "checkedHover": "key.eq.close.hover",
+            "checkedPressed": "key.eq.close.down",
+            "disabled": "key.eq.close.disabled",
+            "hover": "key.eq.close.hover",
+            "normal": "key.eq.close",
+            "pressed": "key.eq.close.down"
+          },
+          "at": [9, 5, 15, 15],
+          "fromRight": true
+        },
+        "eq.0": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [15, 33, 18, 67]
+        },
+        "eq.1": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [46, 33, 18, 67]
+        },
+        "eq.2": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [78, 33, 18, 67]
+        },
+        "eq.3": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [109, 33, 18, 67]
+        },
+        "eq.4": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [141, 33, 18, 67]
+        },
+        "eq.5": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [172, 33, 18, 67]
+        },
+        "eq.6": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [204, 33, 18, 67]
+        },
+        "eq.7": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [235, 33, 18, 67]
+        },
+        "eq.8": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [267, 33, 18, 67]
+        },
+        "eq.9": {
+          "art": {
+            "checked": "eq.track",
+            "disabled": "eq.track.disabled",
+            "normal": "eq.track",
+            "pressed": "eq.track"
+          },
+          "at": [298, 33, 18, 67]
+        },
+        "eq.area": {
+          "at": [2, 33, 4, 67],
+          "stretchX": true
+        },
+        "eq.label.0": {
+          "at": [9, 104, 30, 15]
+        },
+        "eq.label.1": {
+          "at": [40, 104, 30, 15]
+        },
+        "eq.label.2": {
+          "at": [72, 104, 30, 15]
+        },
+        "eq.label.3": {
+          "at": [103, 104, 30, 15]
+        },
+        "eq.label.4": {
+          "at": [135, 104, 30, 15]
+        },
+        "eq.label.5": {
+          "at": [166, 104, 30, 15]
+        },
+        "eq.label.6": {
+          "at": [198, 104, 30, 15]
+        },
+        "eq.label.7": {
+          "at": [229, 104, 30, 15]
+        },
+        "eq.label.8": {
+          "at": [261, 104, 30, 15]
+        },
+        "eq.label.9": {
+          "at": [292, 104, 30, 15]
+        },
+        "on": {
+          "art": {
+            "checked": "key.eq.on.on",
+            "checkedPressed": "key.eq.on.down",
+            "disabled": "key.eq.on.disabled",
+            "hover": "key.eq.on.hover",
+            "normal": "key.eq.on",
+            "pressed": "key.eq.on.down"
+          },
+          "at": [11, 8, 19, 19]
+        },
+        "preset": {
+          "art": {
+            "checked": "key.eq.preset",
+            "checkedHover": "key.eq.preset.hover",
+            "checkedPressed": "key.eq.preset.down",
+            "disabled": "key.eq.preset.disabled",
+            "hover": "key.eq.preset.hover",
+            "normal": "key.eq.preset",
+            "pressed": "key.eq.preset.down"
+          },
+          "at": [55, 8, 19, 19]
+        },
+        "preset.label": {
+          "at": [80, 10, 100, 17]
+        },
+        "reset": {
+          "art": {
+            "checked": "key.eq.reset",
+            "checkedHover": "key.eq.reset.hover",
+            "checkedPressed": "key.eq.reset.down",
+            "disabled": "key.eq.reset.disabled",
+            "hover": "key.eq.reset.hover",
+            "normal": "key.eq.reset",
+            "pressed": "key.eq.reset.down"
+          },
+          "at": [33, 8, 19, 19]
+        },
+        "shape.background": {
+          "art": {
+            "checked": "face.equalizer",
+            "normal": "face.equalizer",
+            "pressed": "face.equalizer"
+          },
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        }
+      }
+    },
+    "cobalt.main": {
+      "art": "face.main",
+      "size": [346, 289],
+      "slots": {
+        "analyser": {
+          "at": [19, 26, 7, 23],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "close": {
+          "art": {
+            "checked": "key.close",
+            "checkedHover": "key.close.hover",
+            "checkedPressed": "key.close.down",
+            "disabled": "key.close.disabled",
+            "hover": "key.close.hover",
+            "normal": "key.close",
+            "pressed": "key.close.down"
+          },
+          "at": [7, 3, 16, 19],
+          "fromRight": true
+        },
+        "eq": {
+          "art": {
+            "checked": "key.eq.on",
+            "checkedHover": "key.eq.on.hover",
+            "checkedPressed": "key.eq.on.down",
+            "disabled": "key.eq.disabled",
+            "hover": "key.eq.hover",
+            "normal": "key.eq",
+            "pressed": "key.eq.down"
+          },
+          "at": [188, 3, 19, 19]
+        },
+        "metadata": {
+          "at": [63, 5, 60, 16],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "minimize": {
+          "art": {
+            "checked": "key.minimize",
+            "checkedHover": "key.minimize.hover",
+            "checkedPressed": "key.minimize.down",
+            "disabled": "key.minimize.disabled",
+            "hover": "key.minimize.hover",
+            "normal": "key.minimize",
+            "pressed": "key.minimize.down"
+          },
+          "at": [24, 3, 15, 19],
+          "fromRight": true
+        },
+        "open": {
+          "art": {
+            "checked": "key.open",
+            "checkedHover": "key.open.hover",
+            "checkedPressed": "key.open.down",
+            "disabled": "key.open.disabled",
+            "hover": "key.open.hover",
+            "normal": "key.open",
+            "pressed": "key.open.down"
+          },
+          "at": [116, 3, 19, 19]
+        },
+        "pl": {
+          "art": {
+            "checked": "key.pl.on",
+            "checkedPressed": "key.pl.down",
+            "disabled": "key.pl.disabled",
+            "hover": "key.pl.hover",
+            "normal": "key.pl",
+            "pressed": "key.pl.down"
+          },
+          "at": [144, 3, 19, 19]
+        },
+        "shape.background": {
+          "art": {
+            "checked": "face.main",
+            "normal": "face.main",
+            "pressed": "face.main"
+          },
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "time": {
+          "at": [10, 5, 49, 16],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "title": {
+          "at": [21, 4, 82, 17]
+        },
+        "video": {
+          "at": [19, 26, 7, 23],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "vis": {
+          "art": {
+            "checked": "key.vis",
+            "checkedHover": "key.vis.hover",
+            "checkedPressed": "key.vis.down",
+            "disabled": "key.vis.disabled",
+            "hover": "key.vis.hover",
+            "normal": "key.vis",
+            "pressed": "key.vis.down"
+          },
+          "at": [166, 3, 19, 19]
+        }
+      }
+    },
+    "cobalt.playlist": {
+      "art": "face.playlist",
+      "size": [263, 237],
+      "slots": {
+        "close": {
+          "art": {
+            "checked": "key.pl.close",
+            "checkedHover": "key.pl.close.hover",
+            "checkedPressed": "key.pl.close.down",
+            "disabled": "key.pl.close.disabled",
+            "hover": "key.pl.close.hover",
+            "normal": "key.pl.close",
+            "pressed": "key.pl.close.down"
+          },
+          "at": [5, 10, 15, 15],
+          "fromRight": true
+        },
+        "grip": {
+          "art": {
+            "checked": "playlist.grip",
+            "normal": "playlist.grip",
+            "pressed": "playlist.grip"
+          },
+          "at": [0, 81, 12, 27]
+        },
+        "header": {
+          "at": [60, 7, 33, 20],
+          "stretchX": true
+        },
+        "list": {
+          "at": [26, 34, 11, 29],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "rows": {
+          "at": [26, 34, 25, 29],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "scroll": {
+          "at": [11, 34, 14, 29],
+          "fromRight": true,
+          "stretchY": true
+        },
+        "shape.background": {
+          "art": {
+            "checked": "face.playlist",
+            "normal": "face.playlist",
+            "pressed": "face.playlist"
+          },
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "shuffle": {
+          "art": {
+            "checked": "key.shuffle.on",
+            "checkedPressed": "key.shuffle.down",
+            "disabled": "key.shuffle.disabled",
+            "hover": "key.shuffle.hover",
+            "normal": "key.shuffle",
+            "pressed": "key.shuffle.down"
+          },
+          "at": [26, 9, 19, 19]
+        }
+      }
+    },
+    "cobalt.transport": {
+      "art": "face.transport",
+      "size": [334, 60],
+      "slots": {
+        "compact": {
+          "art": {
+            "checked": "key.compact",
+            "checkedHover": "key.compact.hover",
+            "checkedPressed": "key.compact.down",
+            "disabled": "key.compact.disabled",
+            "hover": "key.compact.hover",
+            "normal": "key.compact",
+            "pressed": "key.compact.down"
+          },
+          "at": [36, 20, 20, 19],
+          "fromRight": true
+        },
+        "ffwd": {
+          "art": {
+            "checked": "key.ffwd",
+            "checkedHover": "key.ffwd.hover",
+            "checkedPressed": "key.ffwd.down",
+            "disabled": "key.ffwd.disabled",
+            "hover": "key.ffwd.hover",
+            "normal": "key.ffwd",
+            "pressed": "key.ffwd.down"
+          },
+          "at": [8, 1, 35, 13],
+          "fromRight": true
+        },
+        "logo": {
+          "art": {
+            "checked": "app.icon",
+            "normal": "app.icon",
+            "pressed": "app.icon"
+          },
+          "at": [259, 20, 14, 14]
+        },
+        "mute": {
+          "art": {
+            "checked": "key.mute.on",
+            "checkedPressed": "key.mute.down",
+            "disabled": "key.mute.disabled",
+            "hover": "key.mute.hover",
+            "normal": "key.mute",
+            "pressed": "key.mute.down"
+          },
+          "at": [121, 25, 22, 21]
+        },
+        "next": {
+          "art": {
+            "checked": "key.next",
+            "checkedHover": "key.next.hover",
+            "checkedPressed": "key.next.down",
+            "disabled": "key.next.disabled",
+            "hover": "key.next.hover",
+            "normal": "key.next",
+            "pressed": "key.next.down"
+          },
+          "at": [94, 25, 22, 21]
+        },
+        "pause": {
+          "art": {
+            "checked": "key.pause",
+            "checkedHover": "key.pause.hover",
+            "checkedPressed": "key.pause.down",
+            "disabled": "key.pause.disabled",
+            "hover": "key.pause.hover",
+            "normal": "key.pause",
+            "pressed": "key.pause.down"
+          },
+          "at": [8, 20, 30, 30]
+        },
+        "play": {
+          "art": {
+            "checked": "key.play",
+            "checkedHover": "key.play.hover",
+            "checkedPressed": "key.play.down",
+            "disabled": "key.play.disabled",
+            "hover": "key.play.hover",
+            "normal": "key.play",
+            "pressed": "key.play.down"
+          },
+          "at": [8, 20, 31, 30]
+        },
+        "prev": {
+          "art": {
+            "checked": "key.prev",
+            "checkedHover": "key.prev.hover",
+            "checkedPressed": "key.prev.down",
+            "disabled": "key.prev.disabled",
+            "hover": "key.prev.hover",
+            "normal": "key.prev",
+            "pressed": "key.prev.down"
+          },
+          "at": [69, 25, 22, 21]
+        },
+        "resize": {
+          "art": {
+            "checked": "resize",
+            "normal": "resize",
+            "pressed": "resize"
+          },
+          "at": [0, 20, 17, 22],
+          "fromRight": true
+        },
+        "rew": {
+          "art": {
+            "checked": "key.rew",
+            "checkedHover": "key.rew.hover",
+            "checkedPressed": "key.rew.down",
+            "disabled": "key.rew.disabled",
+            "hover": "key.rew.hover",
+            "normal": "key.rew",
+            "pressed": "key.rew.down"
+          },
+          "at": [6, 1, 35, 13]
+        },
+        "seek": {
+          "art": {
+            "checked": "seek.track",
+            "normal": "seek.track",
+            "pressed": "seek.track"
+          },
+          "at": [40, 1, 39, 13],
+          "stretchX": true
+        },
+        "settings": {
+          "art": {
+            "checked": "key.skin",
+            "checkedHover": "key.skin.hover",
+            "checkedPressed": "key.skin.down",
+            "disabled": "key.skin.disabled",
+            "hover": "key.skin.hover",
+            "normal": "key.skin",
+            "pressed": "key.skin.down"
+          },
+          "at": [15, 20, 20, 19],
+          "fromRight": true
+        },
+        "shape.background": {
+          "art": {
+            "checked": "face.transport",
+            "normal": "face.transport",
+            "pressed": "face.transport"
+          },
+          "at": [0, 0, 0, 0],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "skin": {
+          "art": {
+            "checked": "key.skin",
+            "checkedHover": "key.skin.hover",
+            "checkedPressed": "key.skin.down",
+            "disabled": "key.skin.disabled",
+            "hover": "key.skin.hover",
+            "normal": "key.skin",
+            "pressed": "key.skin.down"
+          },
+          "at": [15, 20, 20, 19],
+          "fromRight": true
+        },
+        "stop": {
+          "art": {
+            "checked": "key.stop",
+            "checkedHover": "key.stop.hover",
+            "checkedPressed": "key.stop.down",
+            "disabled": "key.stop.disabled",
+            "hover": "key.stop.hover",
+            "normal": "key.stop",
+            "pressed": "key.stop.down"
+          },
+          "at": [42, 25, 22, 21]
+        },
+        "volume": {
+          "art": {
+            "checked": "volume.track",
+            "normal": "volume.track",
+            "pressed": "volume.track"
+          },
+          "at": [150, 25, 68, 18]
+        }
+      }
+    }
+  },
+  "lineage": "media-player-music",
+  "metrics": {
+    "menuItemH": 20
+  },
+  "parts": {},
+  "sheets": {
+    "art": {
+      "1x": "art/art.png",
+      "2x": "art/art@2x.png"
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "app.icon": {
+      "at": [216, 919, 14, 14],
+      "sheet": "art"
+    },
+    "app.logo": {
+      "at": [336, 760, 48, 48],
+      "sheet": "art"
+    },
+    "balance.thumb": {
+      "at": [193, 898, 17, 18],
+      "sheet": "art"
+    },
+    "balance.thumb.down": {
+      "at": [212, 898, 17, 18],
+      "sheet": "art"
+    },
+    "balance.thumb.hover": {
+      "at": [231, 898, 17, 18],
+      "sheet": "art"
+    },
+    "balance.track": {
+      "at": [250, 898, 67, 18],
+      "sheet": "art",
+      "slice": [0, 8, 0, 8]
+    },
+    "eq.thumb": {
+      "at": [0, 919, 18, 17],
+      "sheet": "art"
+    },
+    "eq.thumb.disabled": {
+      "at": [20, 919, 18, 17],
+      "sheet": "art"
+    },
+    "eq.thumb.down": {
+      "at": [40, 919, 18, 17],
+      "sheet": "art"
+    },
+    "eq.thumb.hover": {
+      "at": [60, 919, 18, 17],
+      "sheet": "art"
+    },
+    "eq.track": {
+      "at": [348, 655, 18, 67],
+      "sheet": "art",
+      "slice": [8, 0, 8, 0]
+    },
+    "eq.track.disabled": {
+      "at": [368, 655, 18, 67],
+      "sheet": "art",
+      "slice": [8, 0, 8, 0]
+    },
+    "face.compact": {
+      "at": [0, 655, 346, 103],
+      "sheet": "art"
+    },
+    "face.equalizer": {
+      "at": [0, 530, 334, 123],
+      "middle": "tile",
+      "sheet": "art",
+      "slice": [0, 4, 0, 3]
+    },
+    "face.main": {
+      "at": [0, 0, 346, 289],
+      "middle": "tile",
+      "sheet": "art",
+      "slice": [33, 59, 23, 286]
+    },
+    "face.playlist": {
+      "at": [0, 291, 263, 237],
+      "middle": "tile",
+      "sheet": "art",
+      "slice": [107, 11, 129, 26]
+    },
+    "face.transport": {
+      "at": [0, 760, 334, 60],
+      "middle": "tile",
+      "sheet": "art",
+      "slice": [0, 59, 0, 274]
+    },
+    "key.close": {
+      "at": [72, 854, 16, 19],
+      "sheet": "art"
+    },
+    "key.close.disabled": {
+      "at": [90, 854, 16, 19],
+      "sheet": "art"
+    },
+    "key.close.down": {
+      "at": [108, 854, 16, 19],
+      "sheet": "art"
+    },
+    "key.close.hover": {
+      "at": [126, 854, 16, 19],
+      "sheet": "art"
+    },
+    "key.compact": {
+      "at": [144, 854, 20, 19],
+      "sheet": "art"
+    },
+    "key.compact.disabled": {
+      "at": [166, 854, 20, 19],
+      "sheet": "art"
+    },
+    "key.compact.down": {
+      "at": [188, 854, 20, 19],
+      "sheet": "art"
+    },
+    "key.compact.hover": {
+      "at": [210, 854, 20, 19],
+      "sheet": "art"
+    },
+    "key.compact.open": {
+      "at": [232, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.compact.open.disabled": {
+      "at": [253, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.compact.open.down": {
+      "at": [274, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.compact.open.hover": {
+      "at": [295, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq": {
+      "at": [316, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.close": {
+      "at": [80, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.eq.close.disabled": {
+      "at": [97, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.eq.close.down": {
+      "at": [114, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.eq.close.hover": {
+      "at": [131, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.eq.disabled": {
+      "at": [337, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.down": {
+      "at": [358, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.hover": {
+      "at": [379, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.on": {
+      "at": [400, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.on.disabled": {
+      "at": [421, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.on.down": {
+      "at": [442, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.on.hover": {
+      "at": [463, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.on.on": {
+      "at": [484, 854, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.preset": {
+      "at": [0, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.preset.disabled": {
+      "at": [21, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.preset.down": {
+      "at": [42, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.preset.hover": {
+      "at": [63, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.reset": {
+      "at": [84, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.reset.disabled": {
+      "at": [105, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.reset.down": {
+      "at": [126, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.eq.reset.hover": {
+      "at": [147, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.ffwd": {
+      "at": [232, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.ffwd.disabled": {
+      "at": [269, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.ffwd.down": {
+      "at": [306, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.ffwd.hover": {
+      "at": [343, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.minimize": {
+      "at": [168, 877, 15, 19],
+      "sheet": "art"
+    },
+    "key.minimize.disabled": {
+      "at": [185, 877, 15, 19],
+      "sheet": "art"
+    },
+    "key.minimize.down": {
+      "at": [202, 877, 15, 19],
+      "sheet": "art"
+    },
+    "key.minimize.hover": {
+      "at": [219, 877, 15, 19],
+      "sheet": "art"
+    },
+    "key.mute": {
+      "at": [165, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.mute.disabled": {
+      "at": [189, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.mute.down": {
+      "at": [213, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.mute.hover": {
+      "at": [237, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.mute.on": {
+      "at": [261, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.next": {
+      "at": [285, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.next.disabled": {
+      "at": [309, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.next.down": {
+      "at": [333, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.next.hover": {
+      "at": [357, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.open": {
+      "at": [236, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.open.disabled": {
+      "at": [257, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.open.down": {
+      "at": [278, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.open.hover": {
+      "at": [299, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.pause": {
+      "at": [386, 760, 30, 30],
+      "sheet": "art"
+    },
+    "key.pause.disabled": {
+      "at": [418, 760, 30, 30],
+      "sheet": "art"
+    },
+    "key.pause.down": {
+      "at": [450, 760, 30, 30],
+      "sheet": "art"
+    },
+    "key.pause.hover": {
+      "at": [482, 760, 30, 30],
+      "sheet": "art"
+    },
+    "key.pl": {
+      "at": [320, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.pl.close": {
+      "at": [148, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.pl.close.disabled": {
+      "at": [165, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.pl.close.down": {
+      "at": [182, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.pl.close.hover": {
+      "at": [199, 919, 15, 15],
+      "sheet": "art"
+    },
+    "key.pl.disabled": {
+      "at": [341, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.pl.down": {
+      "at": [362, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.pl.hover": {
+      "at": [383, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.pl.on": {
+      "at": [404, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.play": {
+      "at": [0, 822, 31, 30],
+      "sheet": "art"
+    },
+    "key.play.disabled": {
+      "at": [33, 822, 31, 30],
+      "sheet": "art"
+    },
+    "key.play.down": {
+      "at": [66, 822, 31, 30],
+      "sheet": "art"
+    },
+    "key.play.hover": {
+      "at": [99, 822, 31, 30],
+      "sheet": "art"
+    },
+    "key.prev": {
+      "at": [381, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.prev.disabled": {
+      "at": [405, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.prev.down": {
+      "at": [429, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.prev.hover": {
+      "at": [453, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.rew": {
+      "at": [380, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.rew.disabled": {
+      "at": [417, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.rew.down": {
+      "at": [454, 919, 35, 13],
+      "sheet": "art"
+    },
+    "key.rew.hover": {
+      "at": [0, 938, 35, 13],
+      "sheet": "art"
+    },
+    "key.shuffle": {
+      "at": [425, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.shuffle.disabled": {
+      "at": [446, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.shuffle.down": {
+      "at": [467, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.shuffle.hover": {
+      "at": [488, 877, 19, 19],
+      "sheet": "art"
+    },
+    "key.shuffle.on": {
+      "at": [0, 898, 19, 19],
+      "sheet": "art"
+    },
+    "key.skin": {
+      "at": [21, 898, 20, 19],
+      "sheet": "art"
+    },
+    "key.skin.disabled": {
+      "at": [43, 898, 20, 19],
+      "sheet": "art"
+    },
+    "key.skin.down": {
+      "at": [65, 898, 20, 19],
+      "sheet": "art"
+    },
+    "key.skin.hover": {
+      "at": [87, 898, 20, 19],
+      "sheet": "art"
+    },
+    "key.stop": {
+      "at": [477, 822, 22, 21],
+      "sheet": "art"
+    },
+    "key.stop.disabled": {
+      "at": [0, 854, 22, 21],
+      "sheet": "art"
+    },
+    "key.stop.down": {
+      "at": [24, 854, 22, 21],
+      "sheet": "art"
+    },
+    "key.stop.hover": {
+      "at": [48, 854, 22, 21],
+      "sheet": "art"
+    },
+    "key.vis": {
+      "at": [109, 898, 19, 19],
+      "sheet": "art"
+    },
+    "key.vis.disabled": {
+      "at": [130, 898, 19, 19],
+      "sheet": "art"
+    },
+    "key.vis.down": {
+      "at": [151, 898, 19, 19],
+      "sheet": "art"
+    },
+    "key.vis.hover": {
+      "at": [172, 898, 19, 19],
+      "sheet": "art"
+    },
+    "playlist.grip": {
+      "at": [132, 822, 12, 27],
+      "sheet": "art"
+    },
+    "resize": {
+      "at": [146, 822, 17, 22],
+      "sheet": "art"
+    },
+    "seek.foreground": {
+      "at": [37, 938, 255, 13],
+      "sheet": "art",
+      "slice": [0, 12, 0, 12]
+    },
+    "seek.thumb": {
+      "at": [294, 938, 23, 13],
+      "sheet": "art"
+    },
+    "seek.thumb.down": {
+      "at": [319, 938, 23, 13],
+      "sheet": "art"
+    },
+    "seek.thumb.hover": {
+      "at": [344, 938, 23, 13],
+      "sheet": "art"
+    },
+    "seek.track": {
+      "at": [0, 953, 255, 13],
+      "sheet": "art",
+      "slice": [0, 12, 0, 12]
+    },
+    "volume.foreground": {
+      "at": [319, 898, 68, 18],
+      "sheet": "art",
+      "slice": [0, 5, 0, 5]
+    },
+    "volume.thumb": {
+      "at": [389, 898, 10, 18],
+      "sheet": "art"
+    },
+    "volume.thumb.down": {
+      "at": [401, 898, 10, 18],
+      "sheet": "art"
+    },
+    "volume.thumb.hover": {
+      "at": [413, 898, 10, 18],
+      "sheet": "art"
+    },
+    "volume.track": {
+      "at": [425, 898, 68, 18],
+      "sheet": "art",
+      "slice": [0, 5, 0, 5]
+    }
+  },
+  "summary": "Deep cobalt and pale steel: a wide display under a bar of glossy keys, a steel transport shelf, drawers for the playlist and equaliser, and a compact mode.",
+  "text": {
+    "player.current": {
+      "color": "#FFFFFF"
+    },
+    "player.info": {
+      "bold": true,
+      "color": "#7CF09A",
+      "size": 8
+    },
+    "player.row": {
+      "color": "#FFFFFF",
+      "size": 10
+    },
+    "player.selected": {
+      "color": "#2B4F9E"
+    },
+    "player.selectedText": {
+      "color": "#FFFFFF"
+    },
+    "player.text": {
+      "bold": true,
+      "color": "#7CF09A",
+      "size": 8
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

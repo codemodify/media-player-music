@@ -214,7 +214,7 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 			x, y, ok := named.Window.Position()
 			width, height := named.Window.Size()
 			if !ok || x != 900 || y != 670 || width != 610 || height != 430 || named.Window.Visible() || reopened.Host.Model.PlaylistVisible {
-				t.Fatalf("Xbox playlist lost saved placement, size or visibility: %d,%d,%t %dx%d shown=%t", x, y, ok, width, height, named.Window.Visible())
+				t.Fatalf("Pod playlist lost saved placement, size or visibility: %d,%d,%t %dx%d shown=%t", x, y, ok, width, height, named.Window.Visible())
 			}
 			return
 		}

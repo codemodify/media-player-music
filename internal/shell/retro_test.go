@@ -19,9 +19,9 @@ func TestClassicDesktopSkinsValidateLayoutsBeforeReplacingCurrentPlayer(t *testi
 		id    string
 		roles []string
 	}{
-		{players.VLCSkin, []string{"vlc.main"}},
-		{players.RealPlayerSkin, []string{"realplayer.main", "realplayer.playlist", "realplayer.equalizer"}},
-		{players.AmarokSkin, []string{"amarok.main"}},
+		{players.VLCSkin, []string{"utility.main"}},
+		{players.RealPlayerSkin, []string{"console.main", "console.playlist", "console.equalizer"}},
+		{players.AmarokSkin, []string{"sidebar.main"}},
 	} {
 		for _, missing := range skin.roles {
 			t.Run(skin.id+"/"+missing, func(t *testing.T) {

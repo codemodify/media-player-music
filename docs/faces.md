@@ -107,30 +107,42 @@ Silver keeps its existing independently rendered artwork.
 
 ## One default layout, twenty-one skins
 
+Every skin's art is the app's own, drawn in Go (internal/skins/plans). On
+2026-11-13 the skins cut from vendor and fan originals were redrawn and,
+with the two own panel skins, renamed (no backward compatibility: a saved
+old ID falls back to Default): winamp → slate, winamp-silver → silver,
+winamp-classified → dossier, dosamp → textmode, windows-98 → bevel,
+winamp-amber → amber, calculator → tally, sony-cdx-mp3 → headunit,
+ti-82 → graphing, radar-amp → radar, quake-3-arena → forge, headspace →
+wingspan, xbox → pod, half-life-2 → gauge, itunes → aluminium, series-9 →
+cobalt, vlc → utility, realplayer → console, amarok → sidebar. The faces'
+packages (internal/players/winamp, xbox, ...) keep their Go names; the
+prose below, older than the rename, may use the old names.
+
 | Choice | Layout | Windows |
 | --- | --- | --- |
 | `default` — Default | Ordinary themed controls, playback and equaliser on the left, playlist on the right | One resizable 920 × 560 window |
-| `winamp` — WinAmp - classic | Slate-blue chrome, gold title grooves, a black display with green segments, orange volume and green balance bars | Fixed strip and equaliser 275 × 116; resizable playlist starts at 275 × 232 |
-| `winamp-silver` — WinAmp - Silver | Silver chrome, navy title bands, blue dot-matrix display, round keys and capsule toggles | The same dimensions and playlist resizing, with rounded corners and a tab caption on the equaliser |
-| `winamp-classified` — WinAmp - Classified | Artwork adapted from Winamp3 Classified v5.5 | The same three panel windows and resizable playlist |
-| `dosamp` — WinAmp - DOSamp | Original DOSamp artwork | The same three panel windows and resizable playlist |
-| `windows-98` — WinAmp - Windows 98 | Original Windows 98 artwork | The same three panel windows and resizable playlist |
-| `winamp-amber` — WinAmp - Classic Amber | Original Classic [CM] Amber artwork | The same three panel windows and resizable playlist |
-| `calculator` — WinAmp - Calculator | Original Calculator artwork | The same three panel windows and resizable playlist |
-| `sony-cdx-mp3` — WinAmp - Sony CDX-MP3 | Original Sony CDX-MP3 artwork | The same three panel windows and resizable playlist |
-| `ti-82` — WinAmp - TI-82 | Original TI-82 v1.1 artwork | The same three panel windows and resizable playlist |
-| `radar-amp` — WinAmp - Radar Amp | Original Radar Amp artwork | The same three panel windows and resizable playlist |
-| `quake-3-arena` — WinAmp - Quake 3 Arena | Original Quake 3 Arena v2 artwork | The same three panel windows and resizable playlist |
-| `headspace` — Win Media Player - Headspace | Original Windows Media Player Headspace artwork, with equaliser and playlist wings around the central player | One shaped 760 × 394 window |
-| `xbox` — Win Media Player - Xbox | Original Windows Media Player Xbox artwork, with an equaliser inside the main display | Fixed 350 × 216 main window; resizable playlist starts at 448 × 316, minimum 438 × 316 |
-| `half-life-2` — Win Media Player - Half Life 2 | Original Windows Media Player Half Life 2 artwork, with an orange round player and separate equaliser and playlist | Fixed 339 × 300 main window; 430 × 239 equaliser; resizable 393 × 226 playlist |
-| `fandom` — Win Media Player - Fandom | Reference-adapted silver oval player, attached Settings wing and separate playlist; original skin identity and archive unverified | Fixed 490 × 330 combined main window; resizable 190 × 246 playlist |
-| `itunes` — Mac OS X - iTunes | Original iTunes 4-era brushed-metal appearance, library table and MiniPlayer | Full player starts at 800 × 560, minimum 640 × 400; MiniPlayer starts at 380 × 62, horizontally resizable from 150 to 1000 pixels; fixed 430 × 230 equaliser |
-| `series-9` — Win Media Player - Series 9 | Original Microsoft 9 Series Default (Corona) artwork, with a sliding playlist and equaliser, plus a compact mode | One resizable main window with a 346 × 344 minimum base; playlist adds 250 pixels of width and equaliser adds 124 pixels of height; fixed 346 × 103 compact player |
-| `vlc` — VLC - Classic | Original VLC 0.8.6 wxWidgets transport icons and classic gray beveled desktop chrome | One resizable 500 × 430 window, minimum 440 × 300, with embedded playlist and equalizer |
-| `realplayer` — RealPlayer - Classic | RealPlayer 8 gray-and-blue desktop arrangement with original Windows transport sprites | One resizable 720 × 520 window, minimum 606 × 500, with embedded playlist and equalizer |
-| `amarok` — KDE - Amarok 1.4 | Original KDE 3-era blue transport icons, silver chrome, track context and searchable playlist table | One resizable 920 × 620 window, minimum 740 × 480, with embedded equalizer |
-| `fancy` — Fancy | Blue shaped player adapted from the supplied reference, with separate equalizer and playlist panels; no imported original archive | Fixed 420 × 220 main player or 420 × 40 compact view; fixed 420 × 124 equalizer; resizable playlist starts at 420 × 144, minimum 420 × 124 |
+| `slate` — Slate | Slate-blue chrome, gold title grooves, a black display with green segments, orange volume and green balance bars | Fixed strip and equaliser 275 × 116; resizable playlist starts at 275 × 232 |
+| `silver` — Silver | Silver chrome, navy title bands, blue dot-matrix display, round keys and capsule toggles | The same dimensions and playlist resizing, with rounded corners and a tab caption on the equaliser |
+| `dossier` — Dossier | Olive field-case chrome with rivets, khaki keys, a black display in pale green | The same three panel windows and resizable playlist |
+| `textmode` — Text Mode | A blue character-cell screen: flat grey keys, yellow labels, cyan highlights | The same three panel windows and resizable playlist |
+| `bevel` — Bevel | Light grey bevels, a teal caption, square raised keys, a black display | The same three panel windows and resizable playlist |
+| `amber` — Amber | A near-black terminal in amber phosphor, scanlines, outlined keys | The same three panel windows and resizable playlist |
+| `tally` — Tally | A beige desk adding machine: cream rounded keys, a grey-green LCD window | The same three panel windows and resizable playlist |
+| `headunit` — Head Unit | A black brushed dashboard stereo: rubber keys, an orange segment display | The same three panel windows and resizable playlist |
+| `graphing` — Graphing | A slate school calculator: dark rounded keys, a gridded olive screen | The same three panel windows and resizable playlist |
+| `radar` — Radar | A green phosphor scope: black glass, grid, wire-outlined keys | The same three panel windows and resizable playlist |
+| `forge` — Forge | Dark iron with rivets and rust, red-lit keys, an ember display | The same three panel windows and resizable playlist |
+| `wingspan` — Wingspan | A jade console with a display, a brow of transport keys and speaker wings holding the equaliser and playlist | One shaped 760 × 394 window |
+| `pod` — Pod | A gunmetal capsule with a gridded screen, curved seek and volume tracks and an equaliser inside the screen | Fixed 350 × 216 main window; resizable playlist starts at 448 × 316, minimum 438 × 316 |
+| `gauge` — Gauge | A round gunmetal dial with copper trim and curved arcs, an iris shutter, separate equaliser and playlist | Fixed 339 × 300 main window; 430 × 239 equaliser; resizable 393 × 226 playlist |
+| `fandom` — Fandom | Silver oval player, attached Settings wing and separate playlist, in the project's generated artwork | Fixed 490 × 330 combined main window; resizable 190 × 246 playlist |
+| `aluminium` — Aluminium | Brushed aluminium with a lozenge display, a library table and a mini player | Full player starts at 800 × 560, minimum 640 × 400; mini player starts at 380 × 62, horizontally resizable from 150 to 1000 pixels; fixed 430 × 230 equaliser |
+| `cobalt` — Cobalt | Deep cobalt and pale steel, a sliding playlist and equaliser, plus a compact mode | One resizable main window with a 346 × 344 minimum base; playlist adds 250 pixels of width and equaliser adds 124 pixels of height; fixed 346 × 103 compact player |
+| `utility` — Utility | A plain grey window with flat pixel toolbar icons | One resizable 500 × 430 window, minimum 440 × 300, with embedded playlist and equalizer |
+| `console` — Console | A warm grey console with a slate caption and a status strip | One resizable 720 × 520 window, minimum 606 × 500, with embedded playlist and equalizer |
+| `sidebar` — Sidebar | A light window with a tabbed sidebar, line icons and a searchable playlist table | One resizable 920 × 620 window, minimum 740 × 480, with embedded equalizer |
+| `fancy` — Fancy | Blue shaped player with separate equalizer and playlist panels, in the app's own drawing | Fixed 420 × 220 main player or 420 × 40 compact view; fixed 420 × 124 equalizer; resizable playlist starts at 420 × 144, minimum 420 × 124 |
 
 Dimensions are logical design pixels. Display scale changes their physical
 size; artwork, window outlines and hit testing follow that scale. The

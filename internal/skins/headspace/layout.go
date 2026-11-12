@@ -1,4 +1,4 @@
-// Package headspace names the application-owned Headspace skin layout.
+// Package headspace names the layouts of the wingspan skin (internal/skins/plans).
 package headspace
 
-const LayoutMain = "headspace.main"
+const LayoutMain = "wingspan.main"

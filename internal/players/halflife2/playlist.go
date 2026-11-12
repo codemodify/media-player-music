@@ -27,7 +27,7 @@ func newPlaylistPane(p *Player) *playlistPane {
 	b := &playlistPane{p: p, slots: skins.NewSlots(LayoutPlaylist), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Half Life 2 playlist")
+	b.SetAccessibleName("Gauge playlist")
 	b.list = newPlaylistList(p)
 	b.slots.Bind("list", b.list)
 	b.Add(b.list)
@@ -155,7 +155,7 @@ func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 }
 func (b *playlistPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.List(), e) }
 func (b *playlistPane) Describe(n *a11y.Node) {
-	n.Role, n.Name = a11y.RoleGroup, "Half Life 2 playlist"
+	n.Role, n.Name = a11y.RoleGroup, "Gauge playlist"
 }
 func (b *playlistPane) DropTypes() []string { return []string{"text/uri-list"} }
 func (b *playlistPane) DropActionFor(offered platform.DragAction) platform.DragAction {

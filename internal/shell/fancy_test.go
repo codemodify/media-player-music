@@ -44,7 +44,7 @@ func TestFancyRequiresEveryLayoutBeforeReplacingPresentation(t *testing.T) {
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				t.Fatal(err)
 			}
-			data, err := json.Marshal(map[string]any{"skin": 1, "label": "WinAmp - Wrong", "base": "dark", "layouts": layouts})
+			data, err := json.Marshal(map[string]any{"skin": 1, "label": "Wrong", "base": "dark", "layouts": layouts})
 			if err != nil {
 				t.Fatal(err)
 			}

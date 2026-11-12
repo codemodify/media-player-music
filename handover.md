@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; see the last two sections)
+# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; see the last three sections)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -117,7 +117,7 @@ process on a fake engine.
 | `internal/shell` | the desktop UI: face switcher, the model kept in step with the daemon (playback.go: ShowState/ShowQueue/ShowNow, syncPlayback), files and drops, Ctrl+S save playlist, settings window, tray |
 | `internal/tui`, `cmd/media-player-music-tui` | the terminal UI |
 | `cmd/media-player-music-wui` | the web UI: main, internal/server, internal/frontend (the built page), web/ (TypeScript sources, build.sh) |
-| `internal/skins` | skin registration, plans, packs, sources (the art: not to be touched; the owner will have it redrawn and renamed) |
+| `internal/skins` | skin registration (embeds only the redrawn packs), plans (every skin drawn in Go; geometry_*.go tables), packs, fandomart (Fandom's own raster), sources (the originals and, in sources/oldplans, the old plans that cut them; built into nothing; await the owner's history rewrite) |
 | `e2e` | the daemon as a program (apptest), two renderers |
 | `internal/testenv` | tests kept off the owner's environment (R102) |
 
@@ -590,3 +590,105 @@ The skin art is not part of it (the owner: redrawn and renamed later).
   library window also add and remove the library's folders (a folder
   chooser), as the TUI and WUI settings do? Recommended: yes, a "Folders…"
   button opening the file chooser in folder mode.
+
+## The skins redrawn and renamed, 2026-11-13 (overnight)
+release-plan.md "Skins (music and video players): redrawn and renamed".
+Every skin's art is now the app's own, drawn in Go; the names are neutral.
+The owner: no backward compatibility, so there is no rename map (a saved
+old ID falls back to Default; old per-skin window placements are ignored).
+
+| old | new | label | how |
+|---|---|---|---|
+| winamp | slate | Slate | ours (winamp.go), renamed |
+| winamp-silver | silver | Silver | ours (winamp_silver.go), renamed |
+| winamp-classified | dossier | Dossier | redrawn (panelart.go) |
+| dosamp | textmode | Text Mode | redrawn (panelart.go) |
+| windows-98 | bevel | Bevel | redrawn (panelart.go) |
+| winamp-amber | amber | Amber | redrawn (panelart.go) |
+| calculator | tally | Tally | redrawn (panelart.go) |
+| sony-cdx-mp3 | headunit | Head Unit | redrawn (panelart.go) |
+| ti-82 | graphing | Graphing | redrawn (panelart.go) |
+| radar-amp | radar | Radar | redrawn (panelart.go) |
+| quake-3-arena | forge | Forge | redrawn (panelart.go) |
+| headspace | wingspan | Wingspan | redrawn (wingspan.go) |
+| xbox | pod | Pod | redrawn (pod.go) |
+| half-life-2 | gauge | Gauge | redrawn (gauge.go) |
+| fandom | fandom | Fandom (was "Win Media Player - Fandom") | ours, relabelled; its raster copied to internal/skins/fandomart |
+| itunes | aluminium | Aluminium | redrawn (aluminium.go) |
+| series-9 | cobalt | Cobalt | redrawn (cobalt.go) |
+| vlc | utility | Utility | redrawn (utility.go) |
+| realplayer | console | Console | redrawn (console.go) |
+| amarok | sidebar | Sidebar | redrawn (sidebar.go) |
+| fancy | fancy | Fancy | ours, unchanged |
+
+- **How**: each redrawn skin is a geometry table, plans/geometry_<new>.go,
+  generated once from the old pack's skin.json by a scratchpad script
+  (sprite names, sizes, slices, sampling, tint; layouts and slots; window
+  frames and variants; parts; text-role names; numbers and names only, no
+  pixels) and kept by hand from now on, plus a painter: redraw.go
+  (build(), the slot helpers, the shared symbols), generic.go (a painter
+  by sprite name), panelart.go (the nine compact-panel themes on one
+  painter), and one file per other skin. Window silhouettes, curved
+  sliders' `.map`/`.shape` sprites and keys' hit alpha are drawn from our
+  own vector shapes. The old and new manifests were compared: every
+  redrawn pack keeps its old one's sprites (sizes, slices, sampling),
+  layouts, window, parts, text roles, metrics (scratchpad compare.py, all
+  "same geometry"). Text colours, fonts (now Liberation/DejaVu/Nimbus
+  names) and focus colours are the new art's.
+- **Renames in code**: the skin IDs and labels (internal/players/skins.go;
+  labels are now the packs' names, no "WinAmp -"/"Win Media Player -"
+  prefixes; FormatSkinLabel only tidies white space), the layout names
+  (winamp.* -> panel.*, xbox.* -> pod.*, ... in internal/skins/*/layout.go,
+  panel.go and the faces' player.go), the faces' accessible names and
+  messages that named a product ("Xbox music player" -> "Pod music player",
+  "SRS WOW Effects" -> "Surround Effects", "TruBass" -> "Bass Boost", ...).
+  The faces' Go packages and constants keep their old Go names
+  (players.XboxSkin = "pod").
+- **Moved, not deleted** (DELETE NOTHING): the plans that cut the old art
+  (headspace, xbox, halflife2, itunes, series9, vlc, realplayer, amarok,
+  winamp_classified, winamp_imported, import_bmp, their tests, and the
+  skins package's tests of the old art) are in
+  internal/skins/sources/oldplans/ with `//go:build ignore`. The old-named
+  pack folders stay in internal/skins/packs/ but are not embedded (skins.go
+  embeds the 21 new packs by name). The old screenshots stay in
+  docs/screenshots; the new ones are beside them under the new names.
+  All of that, and internal/skins/sources, goes with the owner's history
+  rewrite.
+- **Tests** (new): plans TestGeneratorReadsNoOriginals (the generator and
+  every app package it imports: none is or names internal/skins/sources,
+  none imports os/io/fs/path/filepath but cmd/generate), 
+  TestNoProductNamesInAnySkin (every manifest, name and label, and the
+  geometry tables), TestEveryRedrawnSpriteIsDrawn, utility_test.go (the
+  pixel icons); skins TestEveryPackDrawsItsLayouts (every pack registers,
+  every layout's face and every slot's art draws), and the updated
+  TestBundledPacksLoadAndLint / TestGeneratedPacksMatchBundle (packs equal
+  the generator's output, byte for byte). Face tests that read the
+  originals were rewritten on the new art (players/xbox and
+  players/halflife2: the curved sliders' maps; players/vlc: crisp icons at
+  1x, 1.75x, 2x).
+- `go run ./internal/skins/cmd/generate -out internal/skins/packs [-only a,b]`
+  (-only is new) regenerates the packs.
+- Rewritten panel tests (internal/players/winamp): TestDossierUsesItsPlaylistAndVisualizerColors,
+  TestBevelPlaylistReadoutsUseThePacksInk, TestGraphingPlaylistReadoutsUseThePacksInk
+  (the painted selection, analyser ramp and footer readouts follow the
+  pack's text roles, read from the pack instead of the old fan skins' hex).
+- **Checked**: gofmt; vet on linux, windows, darwin, freebsd; `go test
+  -race` of every package one at a time (internal/shell 1765 s with
+  -timeout 60m, internal/players/winamp 606 s, internal/skins 193 s): all
+  pass (the three winamp tests above and shell's
+  TestSinglePreferenceAndScreenshotIsolation, which named "winamp-silver",
+  were fixed after the full run and rerun on their own); goframework's
+  footprint.py --check passes. The old/new manifests compared (same
+  geometry, all 21). Headless `-shot` screenshots of every skin, old and
+  new, side by side, in the session's scratchpad (music-skins/side-by-side);
+  the new ones are also in docs/screenshots. The GUI binary went from 44.8
+  to 38.0 MB (unstripped, linux/amd64). Not run: any program on a display,
+  the VMs.
+- **For the owner**: the art review (side-by-side screenshots); then the
+  history rewrite takes internal/skins/sources (with oldplans), the
+  old-named folders in internal/skins/packs and the old screenshots in
+  docs/screenshots (the 21 old names: winamp-strip.png, xbox-main.png, ...;
+  fandom-*.png and fancy-*.png are the current art). The faces' Go
+  package names (internal/players/xbox, ...) and constants (XboxSkin) still
+  carry the old names: renaming them is a mechanical follow-up, left so
+  this change stays reviewable.

@@ -4,7 +4,7 @@
     "focus": "#75C847"
   },
   "family": "fandom",
-  "label": "Win Media Player - Fandom",
+  "label": "Fandom",
   "layouts": {
     "fandom.main": {
       "size": [490, 330],
@@ -218,7 +218,7 @@
       }
     }
   },
-  "lineage": "Project reference adaptation · original skin identity unverified",
+  "lineage": "media-player-music",
   "metrics": {
     "menuItemH": 20
   },
@@ -249,7 +249,7 @@
       "sheet": "fandom"
     }
   },
-  "summary": "Silver tablet, Settings wing and separate playlist adapted from the supplied reference, with project-generated artwork.",
+  "summary": "Silver tablet, Settings wing and separate playlist, in the project's generated artwork.",
   "text": {
     "player.current": {
       "color": "#ACF175"

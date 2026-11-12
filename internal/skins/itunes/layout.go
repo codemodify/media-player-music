@@ -1,8 +1,8 @@
-// Package itunes names the app's presentation layouts adapted from iTunes 4.0.
+// Package itunes names the layouts of the aluminium skin (internal/skins/plans).
 package itunes
 
 const (
-	LayoutMain      = "itunes.main"
-	LayoutMini      = "itunes.mini"
-	LayoutEqualizer = "itunes.equalizer"
+	LayoutMain      = "aluminium.main"
+	LayoutMini      = "aluminium.mini"
+	LayoutEqualizer = "aluminium.equalizer"
 )

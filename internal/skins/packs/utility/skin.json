@@ -1,0 +1,357 @@
+{
+  "base": "win95",
+  "colors": {
+    "control": "#D5D8DB",
+    "focus": "#2F5D8A",
+    "panel": "#D5D8DB",
+    "selection": "#2F5D8A",
+    "selectionText": "#FFFFFF",
+    "text": "#1C252E",
+    "textMuted": "#59626B",
+    "window": "#D5D8DB"
+  },
+  "family": "utility",
+  "label": "Utility",
+  "layouts": {
+    "utility.main": {
+      "art": "face.main",
+      "size": [500, 430],
+      "slots": {
+        "analyser": {
+          "at": [12, 150, 12, 40],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "caption": {
+          "at": [3, 3, 3, 20],
+          "stretchX": true
+        },
+        "close": {
+          "at": [5, 5, 16, 16],
+          "fromRight": true
+        },
+        "display": {
+          "at": [8, 112, 8, 30],
+          "stretchX": true
+        },
+        "eq": {
+          "at": [198, 48, 28, 28]
+        },
+        "equalizer": {
+          "at": [6, 112, 6, 116],
+          "stretchX": true
+        },
+        "logo": {
+          "at": [6, 5, 16, 16]
+        },
+        "maximize": {
+          "at": [24, 5, 16, 16],
+          "fromRight": true
+        },
+        "menu": {
+          "at": [3, 24, 3, 22],
+          "stretchX": true
+        },
+        "minimize": {
+          "at": [43, 5, 16, 16],
+          "fromRight": true
+        },
+        "mute": {
+          "at": [294, 48, 28, 28]
+        },
+        "next": {
+          "at": [134, 48, 28, 28]
+        },
+        "open": {
+          "at": [6, 48, 28, 28]
+        },
+        "pl": {
+          "at": [166, 48, 28, 28]
+        },
+        "play": {
+          "at": [38, 48, 28, 28]
+        },
+        "playlist": {
+          "at": [6, 236, 6, 28],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "prev": {
+          "at": [102, 48, 28, 28]
+        },
+        "repeat": {
+          "at": [262, 48, 28, 28]
+        },
+        "resize": {
+          "at": [3, 3, 14, 14],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "seek": {
+          "at": [12, 83, 12, 22],
+          "stretchX": true
+        },
+        "shuffle": {
+          "at": [230, 48, 28, 28]
+        },
+        "status": {
+          "at": [4, 3, 4, 20],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "stop": {
+          "at": [70, 48, 28, 28]
+        },
+        "title": {
+          "at": [25, 3, 66, 20],
+          "stretchX": true
+        },
+        "volume": {
+          "at": [332, 52, 14, 20],
+          "stretchX": true
+        }
+      }
+    }
+  },
+  "lineage": "media-player-music",
+  "metrics": {
+    "checkbox": 13,
+    "controlH": 24,
+    "menuItemH": 22,
+    "sliderH": 4,
+    "thumb": 12
+  },
+  "parts": {
+    "bar": {
+      "states": {
+        "normal": "control.bar"
+      }
+    },
+    "button": {
+      "states": {
+        "checked": "control.down",
+        "disabled": "control.disabled",
+        "hover": "control.up",
+        "normal": "control.up",
+        "pressed": "control.down"
+      },
+      "text": "control"
+    },
+    "check": {
+      "states": {
+        "checked": "control.check.on",
+        "disabled": "control.check.disabled",
+        "normal": "control.check"
+      },
+      "text": "control"
+    },
+    "menu": {
+      "states": {
+        "checked": "control.menu.hot",
+        "hover": "control.menu.hot",
+        "normal": "control.menu",
+        "pressed": "control.menu.hot"
+      },
+      "text": "menu"
+    },
+    "slider.thumb": {
+      "states": {
+        "checked": "control.down",
+        "disabled": "control.disabled",
+        "hover": "control.up",
+        "normal": "control.up",
+        "pressed": "control.down"
+      },
+      "text": "control"
+    },
+    "slider.track": {
+      "states": {
+        "normal": "control.groove"
+      }
+    },
+    "thumb": {
+      "states": {
+        "checked": "control.down",
+        "disabled": "control.disabled",
+        "hover": "control.up",
+        "normal": "control.up",
+        "pressed": "control.down"
+      },
+      "text": "control"
+    },
+    "track": {
+      "states": {
+        "normal": "control.scroll"
+      }
+    }
+  },
+  "sheets": {
+    "chrome": {
+      "1x": "art/chrome.png",
+      "2x": "art/chrome@2x.png",
+      "pixelated": false
+    },
+    "icons": {
+      "1x": "art/icons.png",
+      "2x": "art/icons@2x.png",
+      "pixelated": true
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "app.icon": {
+      "at": [0, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "control.bar": {
+      "at": [117, 432, 8, 8],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [1, 1, 1, 1]
+    },
+    "control.check": {
+      "at": [72, 432, 13, 13],
+      "sheet": "chrome"
+    },
+    "control.check.disabled": {
+      "at": [87, 432, 13, 13],
+      "sheet": "chrome"
+    },
+    "control.check.on": {
+      "at": [102, 432, 13, 13],
+      "sheet": "chrome"
+    },
+    "control.disabled": {
+      "at": [0, 432, 16, 16],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "control.down": {
+      "at": [18, 432, 16, 16],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "control.groove": {
+      "at": [127, 432, 16, 8],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "control.menu": {
+      "at": [145, 432, 8, 8],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [1, 1, 1, 1]
+    },
+    "control.menu.hot": {
+      "at": [155, 432, 8, 8],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [1, 1, 1, 1]
+    },
+    "control.scroll": {
+      "at": [36, 432, 16, 16],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "control.up": {
+      "at": [54, 432, 16, 16],
+      "middle": "stretch",
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "face.main": {
+      "at": [0, 0, 500, 430],
+      "middle": "tile",
+      "sheet": "chrome",
+      "slice": [24, 3, 24, 3]
+    },
+    "icon.eject": {
+      "at": [18, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.next": {
+      "at": [36, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.pause": {
+      "at": [54, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.play": {
+      "at": [72, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.playlist": {
+      "at": [90, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.playlist_small": {
+      "at": [108, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.prev": {
+      "at": [126, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.shuffle": {
+      "at": [144, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.speaker": {
+      "at": [162, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.speaker_mute": {
+      "at": [180, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.stop": {
+      "at": [198, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.trash": {
+      "at": [216, 0, 16, 16],
+      "sheet": "icons"
+    },
+    "icon.type_unknown": {
+      "at": [234, 0, 16, 16],
+      "sheet": "icons"
+    }
+  },
+  "summary": "A plain cool-grey utility window: a slate caption, flat square controls and a toolbar of small two-tone icons, with the equaliser and the playlist below.",
+  "text": {
+    "control": {
+      "color": "#1C252E",
+      "disabled": "#8A9199"
+    },
+    "menu": {
+      "checked": "#FFFFFF",
+      "color": "#1C252E",
+      "disabled": "#8A9199",
+      "hover": "#FFFFFF",
+      "pressed": "#FFFFFF"
+    },
+    "player.row": {
+      "color": "#1C252E",
+      "size": 11
+    },
+    "player.selected": {
+      "color": "#2F5D8A"
+    },
+    "player.selectedText": {
+      "color": "#FFFFFF"
+    },
+    "player.text": {
+      "color": "#1C252E",
+      "size": 11
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

@@ -11,18 +11,18 @@ import (
 	"goframework.io/graphics-paint2d"
 )
 
-// Windows98 has white source glyphs for its main display and cyan playlist
-// readouts on grey. The optional footer masks must use its pledit MBFG ink,
-// while preserving the source-colored main font.
-func TestWindows98PlaylistReadoutsUseTheirOriginalInk(t *testing.T) {
-	testPlaylistReadoutInk(t, players.Windows98Skin, [3]uint8{0x00, 0xa4, 0xe5})
+// Bevel and Graphing draw their main display font in its own ink and their
+// playlist readouts from tinted masks: the footer readouts must take the
+// pack's player.info ink, while the main font keeps its drawn colour.
+func TestBevelPlaylistReadoutsUseThePacksInk(t *testing.T) {
+	testPlaylistReadoutInk(t, players.Windows98Skin)
 }
 
-func TestTI82PlaylistReadoutsUseTheirOriginalInk(t *testing.T) {
-	testPlaylistReadoutInk(t, players.TI82Skin, [3]uint8{0x40, 0x37, 0x38})
+func TestGraphingPlaylistReadoutsUseThePacksInk(t *testing.T) {
+	testPlaylistReadoutInk(t, players.TI82Skin)
 }
 
-func testPlaylistReadoutInk(t *testing.T, skin string, want [3]uint8) {
+func testPlaylistReadoutInk(t *testing.T, skin string) {
 	t.Helper()
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
@@ -31,8 +31,14 @@ func testPlaylistReadoutInk(t *testing.T, skin string, want [3]uint8) {
 			a.PumpOnce()
 			sk, ok := skins.LoadSkin(skin)
 			if !ok || sk.Sprites["font.31"] == nil || sk.Sprites["font.31"].Tint || sk.Sprites["info.font.31"] == nil || !sk.Sprites["info.font.31"].Tint {
-				t.Fatal("main source font or optional readout alpha masks are missing")
+				t.Fatal("main font or optional readout alpha masks are missing")
 			}
+			role := sk.Text["player.info"]
+			if role == nil {
+				t.Fatal("the pack has no player.info ink")
+			}
+			ink := role.Color.Clamp().NRGBA()
+			want := [3]uint8{ink.R, ink.G, ink.B}
 			image := p.List().Capture()
 			origin := widget.DeviceOrigin(p.listPane).Sub(p.List().WindowRect().Min)
 			for _, slot := range []string{"info", "clock"} {
@@ -47,7 +53,7 @@ func testPlaylistReadoutInk(t *testing.T, skin string, want [3]uint8) {
 					}
 				}
 				if count < 8 {
-					t.Fatalf("%s %s readout did not use source MBFG #%02X%02X%02X: %d pixels", skin, slot, want[0], want[1], want[2], count)
+					t.Fatalf("%s %s readout did not use the pack's ink #%02X%02X%02X: %d pixels", skin, slot, want[0], want[1], want[2], count)
 				}
 			}
 		})

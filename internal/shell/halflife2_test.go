@@ -15,7 +15,7 @@ import (
 )
 
 func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *testing.T) {
-	for _, missing := range []string{"halflife2.equalizer", "halflife2.playlist"} {
+	for _, missing := range []string{"gauge.equalizer", "gauge.playlist"} {
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.XboxSkin)
 			w, model := s.MainWindow(), s.Host.Model
@@ -23,9 +23,9 @@ func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *tes
 			if err := os.MkdirAll(dir, 0700); err != nil {
 				t.Fatal(err)
 			}
-			layouts := `"halflife2.main":{"size":[339,300]}`
-			if missing == "halflife2.playlist" {
-				layouts += `,"halflife2.equalizer":{"size":[430,239]}`
+			layouts := `"gauge.main":{"size":[339,300]}`
+			if missing == "gauge.playlist" {
+				layouts += `,"gauge.equalizer":{"size":[430,239]}`
 			}
 			manifest := `{"skin":1,"label":"Incomplete Half Life 2","base":"dark","layouts":{` + layouts + `}}`
 			if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), []byte(manifest), 0600); err != nil {
@@ -159,7 +159,7 @@ func TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies(t *testing.T) 
 			}
 		case "playlist":
 			if !known || x != 1080 || y != 290 || width != 610 || height != 430 || named.Window.Visible() || reopened.Host.Model.PlaylistVisible {
-				t.Fatalf("Half Life 2 playlist lost placement, size or visibility: %d,%d,%t %dx%d", x, y, known, width, height)
+				t.Fatalf("Gauge playlist lost placement, size or visibility: %d,%d,%t %dx%d", x, y, known, width, height)
 			}
 		default:
 			t.Fatalf("unexpected Half Life 2 window %q", named.Name)

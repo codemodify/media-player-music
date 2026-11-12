@@ -21,7 +21,7 @@ type eqPane struct {
 
 func newEqPane(p *Player) *eqPane {
 	b := &eqPane{}
-	b.pane = newPane(p, LayoutEqualizer, "Series 9 equalizer", b)
+	b.pane = newPane(p, LayoutEqualizer, "Cobalt equalizer", b)
 	b.button("on", "Equalizer on", players.GlyphNone, func() { p.Equaliser.SetOn(!p.Equaliser.On) }).Toggle = true
 	b.button("reset", "Reset equalizer", players.GlyphNone, p.Equaliser.Flat)
 	b.button("preset", "Equalizer presets and preamp", players.GlyphNone, b.presetMenu)

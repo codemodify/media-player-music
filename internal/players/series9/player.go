@@ -15,11 +15,11 @@ import (
 )
 
 const (
-	LayoutMain      = "series9.main"
-	LayoutTransport = "series9.transport"
-	LayoutEqualizer = "series9.equalizer"
-	LayoutPlaylist  = "series9.playlist"
-	LayoutCompact   = "series9.compact"
+	LayoutMain      = "cobalt.main"
+	LayoutTransport = "cobalt.transport"
+	LayoutEqualizer = "cobalt.equalizer"
+	LayoutPlaylist  = "cobalt.playlist"
+	LayoutCompact   = "cobalt.compact"
 	MainW           = 346
 	MainH           = 344
 	MinW            = MainW

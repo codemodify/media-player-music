@@ -26,7 +26,7 @@ func newBody(p *Player) *body {
 	b := &body{p: p}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Series 9 Music Player")
+	b.SetAccessibleName("Cobalt Music Player")
 	b.main = newMainPane(p)
 	b.eq = newEqPane(p)
 	b.playlist = newPlaylistPane(p)
@@ -86,7 +86,7 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 	return false
 }
 func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
-func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Series 9 Music Player" }
+func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Cobalt Music Player" }
 func (b *body) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy
@@ -117,7 +117,7 @@ type mainPane struct {
 
 func newMainPane(p *Player) *mainPane {
 	b := &mainPane{visualOn: true}
-	b.pane = newPane(p, LayoutMain, "Series 9 display", b)
+	b.pane = newPane(p, LayoutMain, "Cobalt display", b)
 	b.button("open", "Open music files", players.GlyphEject, func() { p.Host.OpenFiles(b.buttons["open"], false) })
 	b.button("pl", "Playlist", players.GlyphList, func() { p.ShowPlaylist(!p.Host.Model.PlaylistVisible) }).Toggle = true
 	b.button("eq", "Equalizer", players.GlyphSliders, func() { p.ShowEqualiser(!p.Host.Model.EqualizerVisible) }).Toggle = true

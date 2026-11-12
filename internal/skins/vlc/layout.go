@@ -1,4 +1,4 @@
-// Package vlc names the application's classic wxWidgets-era VLC layout.
+// Package vlc names the layouts of the utility skin (internal/skins/plans).
 package vlc
 
-const LayoutMain = "vlc.main"
+const LayoutMain = "utility.main"

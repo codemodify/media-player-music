@@ -42,7 +42,7 @@ type Player struct {
 
 func New(h *players.Host, opts Options) (*Player, error) {
 	if _, ok := skins.SkinLayoutOf(h.App.Look(), LayoutMain); !ok {
-		return nil, fmt.Errorf("Headspace requires a skin with layout %q", LayoutMain)
+		return nil, fmt.Errorf("Wingspan requires a skin with layout %q", LayoutMain)
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}
 	w, err := players.OpenSized(h.App, platform.WindowOptions{

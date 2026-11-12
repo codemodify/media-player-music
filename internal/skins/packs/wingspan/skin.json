@@ -1,0 +1,799 @@
+{
+  "base": "win95",
+  "colors": {
+    "focus": "#77CE07"
+  },
+  "family": "wingspan",
+  "label": "Wingspan",
+  "layouts": {
+    "wingspan.main": {
+      "art": "face.both",
+      "size": [760, 394],
+      "slots": {
+        "analyser": {
+          "at": [282, 85, 193, 110]
+        },
+        "balance": {
+          "art": {
+            "checked": "horizontal.track",
+            "normal": "horizontal.track",
+            "pressed": "horizontal.track"
+          },
+          "at": [92, 107, 71, 11]
+        },
+        "balance.label": {
+          "at": [109, 118, 52, 13]
+        },
+        "close": {
+          "art": {
+            "checked": "key.close",
+            "checkedHover": "key.close.hover",
+            "checkedPressed": "key.close.down",
+            "hover": "key.close.hover",
+            "normal": "key.close",
+            "pressed": "key.close.down"
+          },
+          "at": [377, 4, 14, 16]
+        },
+        "eq": {
+          "art": {
+            "checked": "key.eq",
+            "checkedHover": "key.eq.hover",
+            "checkedPressed": "key.eq.down",
+            "hover": "key.eq.hover",
+            "normal": "key.eq",
+            "pressed": "key.eq.down"
+          },
+          "at": [276, 214, 20, 19]
+        },
+        "eq.0": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [95, 140, 11, 76]
+        },
+        "eq.1": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [110, 140, 11, 76]
+        },
+        "eq.2": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [125, 140, 11, 76]
+        },
+        "eq.3": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [140, 140, 11, 76]
+        },
+        "eq.4": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [155, 140, 11, 76]
+        },
+        "eq.5": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [170, 140, 11, 76]
+        },
+        "eq.6": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [185, 140, 11, 76]
+        },
+        "eq.7": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [200, 140, 11, 76]
+        },
+        "eq.8": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [215, 140, 11, 76]
+        },
+        "eq.9": {
+          "art": {
+            "checked": "vertical.track",
+            "normal": "vertical.track",
+            "pressed": "vertical.track"
+          },
+          "at": [230, 140, 11, 76]
+        },
+        "eq.close": {
+          "art": {
+            "checked": "key.eq.close",
+            "checkedHover": "key.eq.close.hover",
+            "hover": "key.eq.close.hover",
+            "normal": "key.eq.close",
+            "pressed": "key.eq.close.hover"
+          },
+          "at": [72, 93, 11, 11]
+        },
+        "eq.drawer": {
+          "art": {
+            "checked": "eq.drawer",
+            "normal": "eq.drawer",
+            "pressed": "eq.drawer"
+          },
+          "at": [0, 86, 269, 170]
+        },
+        "eq.handle": {
+          "art": {
+            "checked": "key.eq.handle.close",
+            "checkedHover": "key.eq.handle.close.hover",
+            "checkedPressed": "key.eq.handle.close.down",
+            "hover": "key.eq.handle.close.hover",
+            "normal": "key.eq.handle.close",
+            "pressed": "key.eq.handle.close.down"
+          },
+          "at": [8, 152, 18, 66]
+        },
+        "eq.handle.closed": {
+          "art": {
+            "checked": "key.eq.handle.open",
+            "checkedHover": "key.eq.handle.open.hover",
+            "checkedPressed": "key.eq.handle.open.down",
+            "hover": "key.eq.handle.open.hover",
+            "normal": "key.eq.handle.open",
+            "pressed": "key.eq.handle.open.down"
+          },
+          "at": [215, 152, 18, 66]
+        },
+        "eq.label.0": {
+          "at": [93, 132, 15, 8]
+        },
+        "eq.label.1": {
+          "at": [108, 132, 15, 8]
+        },
+        "eq.label.2": {
+          "at": [123, 132, 15, 8]
+        },
+        "eq.label.3": {
+          "at": [138, 132, 15, 8]
+        },
+        "eq.label.4": {
+          "at": [153, 132, 15, 8]
+        },
+        "eq.label.5": {
+          "at": [168, 132, 15, 8]
+        },
+        "eq.label.6": {
+          "at": [183, 132, 15, 8]
+        },
+        "eq.label.7": {
+          "at": [198, 132, 15, 8]
+        },
+        "eq.label.8": {
+          "at": [213, 132, 15, 8]
+        },
+        "eq.label.9": {
+          "at": [228, 132, 15, 8]
+        },
+        "eq.reset": {
+          "art": {
+            "checked": "key.eq.reset",
+            "checkedHover": "key.eq.reset.hover",
+            "hover": "key.eq.reset.hover",
+            "normal": "key.eq.reset",
+            "pressed": "key.eq.reset.hover"
+          },
+          "at": [218, 223, 32, 13]
+        },
+        "head.foreground": {
+          "art": {
+            "checked": "head.foreground",
+            "normal": "head.foreground",
+            "pressed": "head.foreground"
+          },
+          "at": [261, 0, 234, 394]
+        },
+        "list": {
+          "at": [507, 121, 164, 109]
+        },
+        "list.header": {
+          "art": {
+            "checked": "key.list.header",
+            "normal": "key.list.header",
+            "pressed": "key.list.header"
+          },
+          "at": [507, 99, 162, 20]
+        },
+        "minimize": {
+          "art": {
+            "checked": "key.minimize",
+            "checkedHover": "key.minimize.hover",
+            "checkedPressed": "key.minimize.down",
+            "hover": "key.minimize.hover",
+            "normal": "key.minimize",
+            "pressed": "key.minimize.down"
+          },
+          "at": [362, 4, 14, 16]
+        },
+        "next": {
+          "art": {
+            "checked": "key.next",
+            "checkedHover": "key.next.hover",
+            "checkedPressed": "key.next.down",
+            "hover": "key.next.hover",
+            "normal": "key.next",
+            "pressed": "key.next.down"
+          },
+          "at": [386, 32, 23, 23]
+        },
+        "pause": {
+          "art": {
+            "checked": "key.pause",
+            "checkedHover": "key.pause.hover",
+            "checkedPressed": "key.pause.down",
+            "hover": "key.pause.hover",
+            "normal": "key.pause",
+            "pressed": "key.pause.down"
+          },
+          "at": [335, 32, 23, 23]
+        },
+        "pl": {
+          "art": {
+            "checked": "key.pl",
+            "checkedHover": "key.pl.hover",
+            "checkedPressed": "key.pl.down",
+            "hover": "key.pl.hover",
+            "normal": "key.pl",
+            "pressed": "key.pl.down"
+          },
+          "at": [465, 214, 19, 20]
+        },
+        "pl.close": {
+          "art": {
+            "checked": "key.pl.close",
+            "checkedHover": "key.pl.close.hover",
+            "hover": "key.pl.close.hover",
+            "normal": "key.pl.close",
+            "pressed": "key.pl.close.hover"
+          },
+          "at": [677, 93, 11, 11]
+        },
+        "pl.drawer": {
+          "art": {
+            "checked": "pl.drawer",
+            "normal": "pl.drawer",
+            "pressed": "pl.drawer"
+          },
+          "at": [488, 86, 272, 170]
+        },
+        "pl.handle": {
+          "art": {
+            "checked": "key.pl.handle.close",
+            "checkedHover": "key.pl.handle.close.hover",
+            "checkedPressed": "key.pl.handle.close.down",
+            "hover": "key.pl.handle.close.hover",
+            "normal": "key.pl.handle.close",
+            "pressed": "key.pl.handle.close.down"
+          },
+          "at": [734, 151, 18, 67]
+        },
+        "pl.handle.closed": {
+          "art": {
+            "checked": "key.pl.handle.open",
+            "checkedHover": "key.pl.handle.open.hover",
+            "checkedPressed": "key.pl.handle.open.down",
+            "hover": "key.pl.handle.open.hover",
+            "normal": "key.pl.handle.open",
+            "pressed": "key.pl.handle.open.down"
+          },
+          "at": [523, 151, 18, 67]
+        },
+        "play": {
+          "art": {
+            "checked": "key.play",
+            "checkedHover": "key.play.hover",
+            "checkedPressed": "key.play.down",
+            "hover": "key.play.hover",
+            "normal": "key.play",
+            "pressed": "key.play.down"
+          },
+          "at": [335, 32, 23, 23]
+        },
+        "prev": {
+          "art": {
+            "checked": "key.prev",
+            "checkedHover": "key.prev.hover",
+            "checkedPressed": "key.prev.down",
+            "hover": "key.prev.hover",
+            "normal": "key.prev",
+            "pressed": "key.prev.down"
+          },
+          "at": [310, 32, 23, 23]
+        },
+        "rows": {
+          "at": [507, 121, 150, 109]
+        },
+        "scroll": {
+          "at": [661, 121, 10, 109]
+        },
+        "seek": {
+          "art": {
+            "checked": "seek.track",
+            "normal": "seek.track",
+            "pressed": "seek.track"
+          },
+          "at": [300, 223, 163, 9]
+        },
+        "shape.both": {
+          "art": {
+            "checked": "face.both",
+            "normal": "face.both",
+            "pressed": "face.both"
+          },
+          "at": [0, 0, 760, 394]
+        },
+        "shape.closed": {
+          "art": {
+            "checked": "face.closed",
+            "normal": "face.closed",
+            "pressed": "face.closed"
+          },
+          "at": [0, 0, 760, 394]
+        },
+        "shape.eq": {
+          "art": {
+            "checked": "face.eq",
+            "normal": "face.eq",
+            "pressed": "face.eq"
+          },
+          "at": [0, 0, 760, 394]
+        },
+        "shape.pl": {
+          "art": {
+            "checked": "face.pl",
+            "normal": "face.pl",
+            "pressed": "face.pl"
+          },
+          "at": [0, 0, 760, 394]
+        },
+        "skin": {
+          "art": {
+            "checked": "key.skin",
+            "checkedHover": "key.skin.hover",
+            "checkedPressed": "key.skin.down",
+            "hover": "key.skin.hover",
+            "normal": "key.skin",
+            "pressed": "key.skin.down"
+          },
+          "at": [362, 232, 35, 31]
+        },
+        "status": {
+          "at": [285, 199, 115, 15]
+        },
+        "stop": {
+          "art": {
+            "checked": "key.stop",
+            "checkedHover": "key.stop.hover",
+            "checkedPressed": "key.stop.down",
+            "hover": "key.stop.hover",
+            "normal": "key.stop",
+            "pressed": "key.stop.down"
+          },
+          "at": [361, 32, 23, 23]
+        },
+        "time": {
+          "at": [407, 199, 63, 15]
+        },
+        "title": {
+          "at": [290, 65, 178, 15]
+        },
+        "vis": {
+          "art": {
+            "checked": "key.vis",
+            "checkedHover": "key.vis.hover",
+            "checkedPressed": "key.vis.down",
+            "hover": "key.vis.hover",
+            "normal": "key.vis",
+            "pressed": "key.vis.down"
+          },
+          "at": [428, 32, 23, 23]
+        },
+        "volume": {
+          "art": {
+            "checked": "horizontal.track",
+            "normal": "horizontal.track",
+            "pressed": "horizontal.track"
+          },
+          "at": [173, 107, 71, 11]
+        },
+        "volume.label": {
+          "at": [192, 118, 52, 13]
+        }
+      }
+    }
+  },
+  "lineage": "media-player-music",
+  "metrics": {
+    "menuItemH": 20
+  },
+  "parts": {},
+  "sheets": {
+    "art": {
+      "1x": "art/art.png",
+      "2x": "art/art@2x.png"
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "eq.drawer": {
+      "at": [236, 1584, 269, 170],
+      "sheet": "art"
+    },
+    "face.both": {
+      "at": [0, 0, 760, 394],
+      "sheet": "art"
+    },
+    "face.closed": {
+      "at": [0, 396, 760, 394],
+      "sheet": "art"
+    },
+    "face.eq": {
+      "at": [0, 792, 760, 394],
+      "sheet": "art"
+    },
+    "face.pl": {
+      "at": [0, 1188, 760, 394],
+      "sheet": "art"
+    },
+    "head.foreground": {
+      "at": [0, 1584, 234, 394],
+      "sheet": "art"
+    },
+    "horizontal.thumb": {
+      "at": [253, 2177, 9, 11],
+      "sheet": "art"
+    },
+    "horizontal.track": {
+      "at": [264, 2177, 15, 11],
+      "middle": "tile",
+      "sheet": "art",
+      "slice": [0, 7, 0, 7]
+    },
+    "key.close": {
+      "at": [44, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.close.disabled": {
+      "at": [60, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.close.down": {
+      "at": [76, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.close.hover": {
+      "at": [92, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.eq": {
+      "at": [698, 2152, 20, 19],
+      "sheet": "art"
+    },
+    "key.eq.close": {
+      "at": [281, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "key.eq.close.disabled": {
+      "at": [294, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "key.eq.close.hover": {
+      "at": [307, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "key.eq.disabled": {
+      "at": [720, 2152, 20, 19],
+      "sheet": "art"
+    },
+    "key.eq.down": {
+      "at": [0, 2177, 20, 19],
+      "sheet": "art"
+    },
+    "key.eq.handle.close": {
+      "at": [394, 1980, 18, 66],
+      "sheet": "art"
+    },
+    "key.eq.handle.close.down": {
+      "at": [414, 1980, 18, 66],
+      "sheet": "art"
+    },
+    "key.eq.handle.close.hover": {
+      "at": [434, 1980, 18, 66],
+      "sheet": "art"
+    },
+    "key.eq.handle.open": {
+      "at": [454, 1980, 18, 66],
+      "sheet": "art"
+    },
+    "key.eq.handle.open.down": {
+      "at": [474, 1980, 18, 66],
+      "sheet": "art"
+    },
+    "key.eq.handle.open.hover": {
+      "at": [494, 1980, 18, 66],
+      "sheet": "art"
+    },
+    "key.eq.hover": {
+      "at": [22, 2177, 20, 19],
+      "sheet": "art"
+    },
+    "key.eq.reset": {
+      "at": [185, 2177, 32, 13],
+      "sheet": "art"
+    },
+    "key.eq.reset.hover": {
+      "at": [219, 2177, 32, 13],
+      "sheet": "art"
+    },
+    "key.list.header": {
+      "at": [450, 2152, 162, 20],
+      "sheet": "art"
+    },
+    "key.minimize": {
+      "at": [108, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.minimize.disabled": {
+      "at": [124, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.minimize.down": {
+      "at": [140, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.minimize.hover": {
+      "at": [156, 2177, 14, 16],
+      "sheet": "art"
+    },
+    "key.next": {
+      "at": [625, 1980, 23, 23],
+      "sheet": "art"
+    },
+    "key.next.disabled": {
+      "at": [650, 1980, 23, 23],
+      "sheet": "art"
+    },
+    "key.next.down": {
+      "at": [675, 1980, 23, 23],
+      "sheet": "art"
+    },
+    "key.next.hover": {
+      "at": [700, 1980, 23, 23],
+      "sheet": "art"
+    },
+    "key.pause": {
+      "at": [725, 1980, 23, 23],
+      "sheet": "art"
+    },
+    "key.pause.down": {
+      "at": [0, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.pause.hover": {
+      "at": [25, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.pl": {
+      "at": [614, 2152, 19, 20],
+      "sheet": "art"
+    },
+    "key.pl.close": {
+      "at": [320, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "key.pl.close.disabled": {
+      "at": [333, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "key.pl.close.hover": {
+      "at": [346, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "key.pl.disabled": {
+      "at": [635, 2152, 19, 20],
+      "sheet": "art"
+    },
+    "key.pl.down": {
+      "at": [656, 2152, 19, 20],
+      "sheet": "art"
+    },
+    "key.pl.handle.close": {
+      "at": [274, 1980, 18, 67],
+      "sheet": "art"
+    },
+    "key.pl.handle.close.down": {
+      "at": [294, 1980, 18, 67],
+      "sheet": "art"
+    },
+    "key.pl.handle.close.hover": {
+      "at": [314, 1980, 18, 67],
+      "sheet": "art"
+    },
+    "key.pl.handle.open": {
+      "at": [334, 1980, 18, 67],
+      "sheet": "art"
+    },
+    "key.pl.handle.open.down": {
+      "at": [354, 1980, 18, 67],
+      "sheet": "art"
+    },
+    "key.pl.handle.open.hover": {
+      "at": [374, 1980, 18, 67],
+      "sheet": "art"
+    },
+    "key.pl.hover": {
+      "at": [677, 2152, 19, 20],
+      "sheet": "art"
+    },
+    "key.play": {
+      "at": [50, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.play.disabled": {
+      "at": [75, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.play.down": {
+      "at": [100, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.play.hover": {
+      "at": [125, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.prev": {
+      "at": [150, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.prev.disabled": {
+      "at": [175, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.prev.down": {
+      "at": [200, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.prev.hover": {
+      "at": [225, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.skin": {
+      "at": [514, 1980, 35, 31],
+      "sheet": "art"
+    },
+    "key.skin.down": {
+      "at": [551, 1980, 35, 31],
+      "sheet": "art"
+    },
+    "key.skin.hover": {
+      "at": [588, 1980, 35, 31],
+      "sheet": "art"
+    },
+    "key.stop": {
+      "at": [250, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.stop.disabled": {
+      "at": [275, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.stop.down": {
+      "at": [300, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.stop.hover": {
+      "at": [325, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.vis": {
+      "at": [350, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.vis.disabled": {
+      "at": [375, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.vis.down": {
+      "at": [400, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "key.vis.hover": {
+      "at": [425, 2152, 23, 23],
+      "sheet": "art"
+    },
+    "pl.drawer": {
+      "at": [0, 1980, 272, 170],
+      "sheet": "art"
+    },
+    "seek.progress": {
+      "at": [372, 2177, 163, 9],
+      "sheet": "art"
+    },
+    "seek.thumb": {
+      "at": [537, 2177, 18, 9],
+      "sheet": "art"
+    },
+    "seek.thumb.down": {
+      "at": [557, 2177, 18, 9],
+      "sheet": "art"
+    },
+    "seek.thumb.hover": {
+      "at": [577, 2177, 18, 9],
+      "sheet": "art"
+    },
+    "seek.track": {
+      "at": [597, 2177, 163, 9],
+      "sheet": "art"
+    },
+    "vertical.thumb": {
+      "at": [359, 2177, 11, 11],
+      "sheet": "art"
+    },
+    "vertical.track": {
+      "at": [172, 2177, 11, 15],
+      "middle": "tile",
+      "sheet": "art",
+      "slice": [7, 0, 7, 0]
+    }
+  },
+  "summary": "A jade console with a dark glass display and speaker wings that fold out for the equaliser and the playlist.",
+  "text": {
+    "player.current": {
+      "color": "#B1FF55",
+      "size": 9
+    },
+    "player.info": {
+      "color": "#77CE07",
+      "size": 9
+    },
+    "player.row": {
+      "color": "#FFFFFF",
+      "size": 9
+    },
+    "player.selected": {
+      "color": "#387706"
+    },
+    "player.selectedText": {
+      "color": "#FFFFFF"
+    },
+    "player.text": {
+      "color": "#77CE07",
+      "size": 10
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

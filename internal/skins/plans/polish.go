@@ -16,7 +16,7 @@ import (
 // gets a separate edge-aware 2x drawing, selected through the public cell
 // context's scale. Silver already has its own high-resolution paths.
 func polish(p *Plan) {
-	if p.Name == "winamp-silver" {
+	if p.Name == "silver" {
 		return
 	}
 	pixels := &Sheet{Name: "pixels", Pixelated: true}
@@ -76,7 +76,7 @@ func polish(p *Plan) {
 		backdrops = append(backdrops, SlotSpec{Name: "backdrop.labels", At: [4]int{104, 24, 164, 18}})
 		for _, slot := range backdrops {
 			r := slot.At
-			im := classifiedCrop(main, r[0], r[1], r[2], r[3])
+			im := cropImage(main, r[0], r[1], r[2], r[3])
 			bitmap := paint2d.NewImageFromNRGBA(im)
 			pixels.Cells = append(pixels.Cells, Cell{Name: slot.Name, X: mainCell.X + r[0], Y: mainCell.Y + r[1], W: r[2], H: r[3], Draw: func(ctx *paint2d.Context, w, h float32) {
 				ctx.DrawImageRectPaint(bitmap, paint2d.XYWH(0, 0, float32(im.Bounds().Dx()), float32(im.Bounds().Dy())), paint2d.XYWH(0, 0, w, h), paint2d.Paint{Color: paint2d.White, Filter: paint2d.FilterNearest})
@@ -100,10 +100,7 @@ func nearestArtwork(id, name string) bool {
 			return true // Secondary keys often include tiny printed labels.
 		}
 	}
-	if name == "main.face" && (id == "dosamp" || id == "radar-amp" || id == "ti-82") {
-		return true // ASCII frame, wireframe marks or the textured LCD.
-	}
-	return id == "dosamp" && (strings.HasPrefix(name, "caption.") || strings.HasPrefix(name, "eq.caption") || strings.HasPrefix(name, "list.caption"))
+	return false
 }
 
 // scale2x retains only source colors while refining connected pixel edges.
@@ -149,27 +146,17 @@ func polishLogo(two *image.NRGBA, one image.Image, id, name string) {
 	var x, y, size, sample int
 	if name == "main.face" {
 		switch id {
-		case "winamp":
+		case "slate":
 			x, y, size = 250, 76, 15
-		case "winamp-classified":
-			x, y, size = 243, 71, 24
-		case "winamp-amber", "calculator":
-			x, y, size = 248, 76, 20
-		case "windows-98":
-			x, y, size = 250, 78, 18
 		default:
 			return
 		}
 		sample = x - 2
-	} else if name == "caption.normal" || name == "caption.inactive" || id == "winamp-amber" && (name == "eq.caption" || name == "eq.caption.inactive") {
+	} else if name == "caption.normal" || name == "caption.inactive" {
 		y, size = 2, 10
 		switch id {
-		case "winamp":
+		case "slate":
 			x, sample = 5, 16
-		case "winamp-classified":
-			x, sample = 4, 16
-		case "winamp-amber", "windows-98":
-			x, sample = 1, 12
 		default:
 			return
 		}
@@ -179,11 +166,6 @@ func polishLogo(two *image.NRGBA, one image.Image, id, name string) {
 	for yy := y; yy < y+size; yy++ {
 		bg := color.NRGBAModel.Convert(one.At(sample, yy)).(color.NRGBA)
 		for xx := x; xx < x+size; xx++ {
-			// Match the original Classified branding crop: its diagonal
-			// resize grip reaches the logo's transparent lower-right corner.
-			if id == "winamp-classified" && name == "main.face" && xx+yy >= 352 {
-				continue
-			}
 			for dy := 0; dy < 2; dy++ {
 				for dx := 0; dx < 2; dx++ {
 					two.SetNRGBA(xx*2+dx, yy*2+dy, bg)
@@ -195,4 +177,12 @@ func polishLogo(two *image.NRGBA, one image.Image, id, name string) {
 	logo := image.NewRGBA(image.Rect(0, 0, size*2, size*2))
 	xdraw.CatmullRom.Scale(logo, logo.Bounds(), playerLogo(), playerLogo().Bounds(), draw.Src, nil)
 	draw.Draw(two, r, logo, image.Point{}, draw.Over)
+}
+
+// cropImage copies a rect of a drawn sheet.
+func cropImage(src image.Image, x, y, w, h int) *image.NRGBA {
+	r := image.Rect(x, y, x+w, y+h)
+	out := image.NewNRGBA(image.Rect(0, 0, w, h))
+	draw.Draw(out, out.Bounds(), src, r.Min, draw.Src)
+	return out
 }

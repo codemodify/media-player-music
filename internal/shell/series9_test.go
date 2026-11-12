@@ -32,7 +32,7 @@ func series9Modes(t *testing.T, s *Shell) compactPresentation {
 }
 
 func TestSeries9RequiresAllFiveLayoutsBeforeReplacingPresentation(t *testing.T) {
-	names := []string{"series9.main", "series9.transport", "series9.equalizer", "series9.playlist", "series9.compact"}
+	names := []string{"cobalt.main", "cobalt.transport", "cobalt.equalizer", "cobalt.playlist", "cobalt.compact"}
 	for _, missing := range names {
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.ITunesSkin)

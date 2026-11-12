@@ -1,12 +1,9 @@
 package xbox
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
 	"image"
 	"image/color"
-	"image/gif"
 	"math"
 	"net/url"
 	"os"
@@ -18,8 +15,8 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	xbsource "github.com/codemodify/media-player-music/internal/skins/sources/xbox"
 	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui-widgets"
 	"goframework.io/desktop-ui/a11y"
 	"goframework.io/desktop-ui/platform"
@@ -115,33 +112,24 @@ func TestOriginalWindowGeometryAndShapedTransparencyAtEveryScale(t *testing.T) {
 	}
 }
 
-func originalPositionMap(t *testing.T, name string) image.Image {
+// positionMap renders the pack's value map for a curved slider at its
+// design size: grey along the strip is the value there.
+func positionMap(t *testing.T, lk style.LookAndFeel, name string) image.Image {
 	t.Helper()
-	data := xbsource.Archive()
-	z, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		t.Fatal(err)
+	w, h, ok := skins.SkinSpriteSize(lk, name)
+	if !ok {
+		t.Fatalf("the pack has no %s", name)
 	}
-	for _, entry := range z.File {
-		if entry.Name != name {
-			continue
-		}
-		r, err := entry.Open()
-		if err != nil {
-			t.Fatal(err)
-		}
-		im, err := gif.Decode(r)
-		r.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-		return im
+	im := paint2d.NewImage(int(w), int(h))
+	ctx := paint2d.NewContext(im)
+	ctx.Clear(paint2d.Transparent)
+	if !skins.DrawSkinSprite(lk, ctx, paint2d.XYWH(0, 0, w, h), name, paint2d.Color{}) {
+		t.Fatalf("%s did not draw", name)
 	}
-	t.Fatalf("original archive omitted %s", name)
-	return nil
+	return im
 }
 
-func originalCurvePoint(t *testing.T, im image.Image, target uint8) (image.Point, uint8) {
+func curvePoint(t *testing.T, im image.Image, target uint8) (image.Point, uint8) {
 	t.Helper()
 	best, point, value := 256, image.Point{}, uint8(0)
 	for y := im.Bounds().Min.Y + 1; y < im.Bounds().Max.Y-1; y++ {
@@ -160,12 +148,12 @@ func originalCurvePoint(t *testing.T, im image.Image, target uint8) (image.Point
 		}
 	}
 	if best > 10 {
-		t.Fatal("source position map lacks the expected grayscale curve")
+		t.Fatal("the position map lacks the expected grayscale curve")
 	}
 	return point, value
 }
 
-func TestCurvedSourcePositionMapsDrivePointerValuesAtEveryScale(t *testing.T) {
+func TestCurvedPositionMapsDrivePointerValuesAtEveryScale(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
@@ -178,19 +166,19 @@ func TestCurvedSourcePositionMapsDrivePointerValuesAtEveryScale(t *testing.T) {
 				source string
 				reset  func()
 			}{
-				{p.body.seek, "seek_map.gif", func() { p.Host.Seek(0) }},
-				{p.body.volume, "vol_map.gif", func() { p.Host.SetVolume(0) }},
+				{p.body.seek, "seek.map", func() { p.Host.Seek(0) }},
+				{p.body.volume, "volume.map", func() { p.Host.SetVolume(0) }},
 			} {
-				im := originalPositionMap(t, item.source)
+				im := positionMap(t, p.Main.Look(), item.source)
 				item.reset()
 				p.Refresh()
 				a.PumpOnce()
 				for _, target := range []uint8{64, 224} {
-					point, gray := originalCurvePoint(t, im, target)
+					point, gray := curvePoint(t, im, target)
 					local := paint2d.Pt((float32(point.X-im.Bounds().Min.X)+.5)*scale, (float32(point.Y-im.Bounds().Min.Y)+.5)*scale)
 					at := widget.DeviceOrigin(item.f).Add(local)
 					if item.f.HitTest(local) != item.f {
-						t.Fatal("original grayscale curve is absent from the slider hit area")
+						t.Fatal("the grayscale curve is absent from the slider hit area")
 					}
 					before, value := syncs, item.f.Value
 					if item.f.MousePress(widget.MouseEvent{Button: platform.ButtonRight, Pos: local}) || item.f.MouseRelease(widget.MouseEvent{Button: platform.ButtonRight, Pos: local}) || item.f.Dragging() || syncs != before || item.f.Value != value {

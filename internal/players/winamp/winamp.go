@@ -81,7 +81,7 @@ type Options struct {
 func New(h *players.Host, opts Options) (*Player, error) {
 	a := h.App
 	if !faceOf(a.Look()).panelled() {
-		return nil, fmt.Errorf("Winamp requires a skin with layout %q", layoutStrip)
+		return nil, fmt.Errorf("The panel face requires a skin with layout %q", layoutStrip)
 	}
 	p := &Player{
 		Host:      h,

@@ -7,7 +7,7 @@ import (
 	"math"
 
 	fdlayout "github.com/codemodify/media-player-music/internal/skins/fandom"
-	fdsource "github.com/codemodify/media-player-music/internal/skins/sources/fandom"
+	fdsource "github.com/codemodify/media-player-music/internal/skins/fandomart"
 	"goframework.io/graphics-paint2d"
 	"golang.org/x/image/draw"
 )
@@ -86,9 +86,9 @@ func Fandom() *Plan {
 		{Name: "title", At: [4]int{13, 12, 32, 15}, StretchX: true},
 		{Name: "status", At: [4]int{77, 4, 20, 14}, StretchX: true, FromBottom: true},
 	}}
-	return &Plan{Name: "fandom", Label: "Win Media Player - Fandom", Year: 2026,
-		Lineage: "Project reference adaptation · original skin identity unverified",
-		Summary: "Silver tablet, Settings wing and separate playlist adapted from the supplied reference, with project-generated artwork.",
+	return &Plan{Name: "fandom", Label: "Fandom", Year: 2026,
+		Lineage: "media-player-music",
+		Summary: "Silver tablet, Settings wing and separate playlist, in the project's generated artwork.",
 		Family:  "fandom", Base: "win95", Sheets: []*Sheet{sh}, Layouts: []LayoutSpec{main, playlist},
 		Text:   []TextRole{{Name: "player.text", Color: "#A5E975", Size: 11}, {Name: "player.row", Color: "#E2EAE2", Size: 10}, {Name: "player.current", Color: "#ACF175"}, {Name: "player.selected", Color: "#243B27"}, {Name: "player.selectedText", Color: "#FFFFFF"}, {Name: "player.info", Color: "#20262A", Size: 10}},
 		Colors: map[string]string{"focus": "#75C847"}, Metrics: map[string]float32{"menuItemH": 20}, Window: &WindowSpec{Layout: ":"},

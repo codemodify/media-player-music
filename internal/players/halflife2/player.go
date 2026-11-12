@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	LayoutMain      = "halflife2.main"
-	LayoutEqualizer = "halflife2.equalizer"
-	LayoutPlaylist  = "halflife2.playlist"
+	LayoutMain      = "gauge.main"
+	LayoutEqualizer = "gauge.equalizer"
+	LayoutPlaylist  = "gauge.playlist"
 	MainW           = 339
 	MainH           = 300
 	EqW             = 430
@@ -57,7 +57,7 @@ type Player struct {
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutEqualizer, LayoutPlaylist} {
 		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
-			return nil, fmt.Errorf("Half Life 2 requires skin layout %q", role)
+			return nil, fmt.Errorf("Gauge requires skin layout %q", role)
 		}
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser}

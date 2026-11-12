@@ -78,8 +78,8 @@ func winamp() *Plan {
 	sh := &Sheet{Name: "chrome", Pixelated: true}
 	l := &lay{sh: sh, gap: 2}
 	p := &Plan{
-		Name:    "winamp",
-		Label:   "Winamp",
+		Name:    "slate",
+		Label:   "Slate",
 		Year:    2026,
 		Lineage: "uitoolkit",
 		Summary: "The compact player's base-skin look of the era: slate-blue chrome, gold grooves, a black display with green segments — a pixel panel the player lays its own keys on.",

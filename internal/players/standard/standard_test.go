@@ -341,7 +341,7 @@ func TestAutoPresetAndSkinChoicesUseSharedActions(t *testing.T) {
 	p.Main.RequestFocus(p.body.main.skin)
 	p.Main.Inject(platform.Event{Kind: platform.EventKeyDown, Rune: 'k', Mods: platform.ModCtrl})
 	a.PumpOnce()
-	if chosen != "winamp" {
+	if chosen != "slate" {
 		t.Fatalf("Ctrl+K chose %q", chosen)
 	}
 	p.body.main.skin.OnClick()

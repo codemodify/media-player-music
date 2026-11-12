@@ -11,15 +11,15 @@ import (
 	"goframework.io/desktop-ui-skins"
 )
 
-func TestSkinLabelsUseTheRequestedBrandingWithoutChangingIDs(t *testing.T) {
+func TestSkinLabelsAreTheSkinsNeutralNamesWithoutChangingIDs(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	skins.InvalidateSkinCache()
 	t.Cleanup(skins.InvalidateSkinCache)
 	want := []string{
-		"Default (no skin)", "WinAmp - classic", "WinAmp - Silver", "WinAmp - Classified", "WinAmp - DOSamp", "WinAmp - Windows 98",
-		"WinAmp - Classic Amber", "WinAmp - Calculator", "WinAmp - Sony CDX-MP3", "WinAmp - TI-82", "WinAmp - Radar Amp", "WinAmp - Quake 3 Arena",
-		"Win Media Player - Headspace", "Win Media Player - Xbox", "Win Media Player - Half Life 2", "Win Media Player - Fandom", "Mac OS X - iTunes", "Win Media Player - Series 9",
-		"VLC - Classic", "RealPlayer - Classic", "KDE - Amarok 1.4", "Fancy",
+		"Default (no skin)", "Slate", "Silver", "Dossier", "Text Mode", "Bevel",
+		"Amber", "Tally", "Head Unit", "Graphing", "Radar", "Forge",
+		"Wingspan", "Pod", "Gauge", "Fandom", "Aluminium", "Cobalt",
+		"Utility", "Console", "Sidebar", "Fancy",
 	}
 	ids := AppearanceIDs()
 	if len(ids) != len(want) {
@@ -30,64 +30,40 @@ func TestSkinLabelsUseTheRequestedBrandingWithoutChangingIDs(t *testing.T) {
 			t.Errorf("%s label=%q, want %q", id, got, want[i])
 		}
 		if normalized, ok := NormalizeSkin(id); !ok || normalized != id {
-			t.Errorf("display branding changed saved/CLI identity %q", id)
+			t.Errorf("the label changed saved/CLI identity %q", id)
 		}
 	}
 	if SkinLabel(Themed) != want[0] || SkinLabel("unknown-choice") != "unknown-choice" {
-		t.Fatal("branding changed the default label or an unrecognized identifier")
+		t.Fatal("the default label or an unrecognized identifier changed")
 	}
 }
 
-func TestFormatSkinLabelNormalizesOverridesAndIsIdempotent(t *testing.T) {
+func TestFormatSkinLabelTidiesWhiteSpaceAndIsIdempotent(t *testing.T) {
 	for _, tc := range []struct{ supplied, want string }{
-		{"Winamp", "WinAmp - classic"},
-		{" wInAmP \t", "WinAmp - classic"},
-		{"Winamp Classic Amber", "WinAmp - Classic Amber"},
-		{"Night WINAMP Slate Winamp", "WinAmp - Night Slate"},
-		{"\tWinamp\n My\u00a0 Blue\t", "WinAmp - My Blue"},
-		{"WinampCustom", "WinAmp - Custom"},
-		{"WinAmp - Silver", "WinAmp - Silver"},
-		{"WINAMP- WINamp - Custom", "WinAmp - Custom"},
-		{"WinAmp - ", "WinAmp - classic"},
-		{"Sony CDX-MP3", "WinAmp - Sony CDX-MP3"},
+		{"Slate", "Slate"},
+		{" sLaTe \t", "sLaTe"},
+		{"\tMy\u00a0 Blue\t", "My Blue"},
+		{"  ", "fallback"},
+		{"", "fallback"},
 	} {
 		t.Run(tc.supplied, func(t *testing.T) {
-			got := FormatSkinLabel(tc.supplied)
-			if got != tc.want || FormatSkinLabel(got) != got {
+			got := FormatSkinLabel(tc.supplied, "fallback")
+			if got != tc.want || FormatSkinLabel(got, "fallback") != got {
 				t.Fatalf("format %q=%q; want stable %q", tc.supplied, got, tc.want)
 			}
 		})
 	}
 }
 
-func TestSkinLabelFormatsTheUserOverrideBeforeCatalogueFallback(t *testing.T) {
+func TestSkinLabelUsesTheUserOverride(t *testing.T) {
 	for _, tc := range []struct{ id, label, want string }{
-		{WinampSilverSkin, "WINAMP   My Silver", "WinAmp - My Silver"},
-		{HeadspaceSkin, "Headspace", "Win Media Player - Headspace"},
-		{HeadspaceSkin, " Win Media Player - My Headspace ", "Win Media Player - My Headspace"},
-		{XboxSkin, "Xbox", "Win Media Player - Xbox"},
-		{XboxSkin, "  wIN Media Player - Win Media Player - My Xbox ", "Win Media Player - My Xbox"},
-		{HalfLife2Skin, "Half Life 2", "Win Media Player - Half Life 2"},
-		{HalfLife2Skin, " Win Media Player - My Half-Life 2 ", "Win Media Player - My Half-Life 2"},
-		{FandomSkin, "Fandom", "Win Media Player - Fandom"},
-		{FandomSkin, " Win Media Player - My Fandom ", "Win Media Player - My Fandom"},
-		{ITunesSkin, "iTunes", "Mac OS X - iTunes"},
-		{ITunesSkin, "  mAC OS x - Mac OS X - My iTunes ", "Mac OS X - My iTunes"},
-		{ITunesSkin, " Mac OS X - ", "Mac OS X - iTunes"},
-		{Series9Skin, "Series 9", "Win Media Player - Series 9"},
-		{Series9Skin, " WIN Media Player - Win Media Player - My Series 9 ", "Win Media Player - My Series 9"},
-		{Series9Skin, "Win Media Player - ", "Win Media Player - Series 9"},
-		{VLCSkin, "Classic", "VLC - Classic"},
-		{VLCSkin, "vlc - VLC - Custom", "VLC - Custom"},
-		{VLCSkin, "VLC - ", "VLC - Classic"},
-		{RealPlayerSkin, "RealPlayer - Custom", "RealPlayer - Custom"},
-		{RealPlayerSkin, "RealPlayer - ", "RealPlayer - Classic"},
-		{AmarokSkin, "Amarok 1.4", "KDE - Amarok 1.4"},
-		{AmarokSkin, "KDE - KDE - Custom", "KDE - Custom"},
-		{AmarokSkin, "KDE - ", "KDE - Amarok 1.4"},
-		{FancySkin, "Fancy", "Fancy"},
-		{FancySkin, "WinAmp - Fancy", "Fancy"},
-		{FancySkin, "Win Media Player - Custom Fancy", "Fancy"},
+		{WinampSilverSkin, "  My   Silver ", "My Silver"},
+		{HeadspaceSkin, "My Wings", "My Wings"},
+		{XboxSkin, " ", "Pod"},
+		{ITunesSkin, "Brushed", "Brushed"},
+		{VLCSkin, "Custom", "Custom"},
+		{AmarokSkin, "", "Sidebar"},
+		{FancySkin, "Custom Fancy", "Fancy"},
 	} {
 		t.Run(tc.id+"/"+tc.label, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -105,7 +81,7 @@ func TestSkinLabelFormatsTheUserOverrideBeforeCatalogueFallback(t *testing.T) {
 			skins.InvalidateSkinCache()
 			t.Cleanup(skins.InvalidateSkinCache)
 			if got := SkinLabel(tc.id); got != tc.want {
-				t.Fatalf("user-supplied label lost precedence or branding: %q", got)
+				t.Fatalf("user-supplied label: %q, want %q", got, tc.want)
 			}
 		})
 	}
@@ -134,7 +110,7 @@ func TestWMPCatalogueKeepsTheWinampFamilySeparate(t *testing.T) {
 }
 
 func TestEveryImportedAppearanceRetainsItsSavedSession(t *testing.T) {
-	want := []string{"default", "winamp", "winamp-silver", "winamp-classified", "dosamp", "windows-98", "winamp-amber", "calculator", "sony-cdx-mp3", "ti-82", "radar-amp", "quake-3-arena", "headspace", "xbox", "half-life-2", "fandom", "itunes", "series-9", "vlc", "realplayer", "amarok", "fancy"}
+	want := []string{"default", "slate", "silver", "dossier", "textmode", "bevel", "amber", "tally", "headunit", "graphing", "radar", "forge", "wingspan", "pod", "gauge", "fandom", "aluminium", "cobalt", "utility", "console", "sidebar", "fancy"}
 	if got := AppearanceIDs(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("menu/keyboard order=%v, want %v", got, want)
 	}

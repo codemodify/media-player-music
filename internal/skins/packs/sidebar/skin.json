@@ -1,0 +1,251 @@
+{
+  "base": "win95",
+  "colors": {
+    "focus": "#5560C4"
+  },
+  "family": "sidebar",
+  "label": "Sidebar",
+  "layouts": {
+    "sidebar.main": {
+      "size": [920, 620],
+      "slots": {
+        "add": {
+          "at": [40, 32, 28, 28]
+        },
+        "analyser": {
+          "at": [205, 64, 190, 28],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "appearance": {
+          "at": [136, 32, 28, 28]
+        },
+        "caption": {
+          "art": "chrome.title",
+          "at": [1, 1, 1, 25],
+          "stretchX": true
+        },
+        "close": {
+          "at": [5, 4, 22, 18],
+          "fromRight": true
+        },
+        "context": {
+          "at": [38, 68, 218, 102],
+          "stretchY": true
+        },
+        "eq": {
+          "at": [104, 32, 28, 28]
+        },
+        "equalizer": {
+          "at": [266, 102, 8, 190],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "minimize": {
+          "at": [31, 4, 22, 18],
+          "fromRight": true
+        },
+        "next": {
+          "art": "icon.next",
+          "at": [100, 64, 26, 26],
+          "fromBottom": true
+        },
+        "open": {
+          "at": [8, 32, 28, 28]
+        },
+        "play": {
+          "art": "icon.play",
+          "at": [40, 64, 26, 26],
+          "fromBottom": true
+        },
+        "playlist": {
+          "at": [200, 32, 28, 28]
+        },
+        "prev": {
+          "art": "icon.prev",
+          "at": [10, 64, 26, 26],
+          "fromBottom": true
+        },
+        "queue": {
+          "at": [266, 68, 8, 102],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "rail": {
+          "at": [6, 68, 27, 102],
+          "stretchY": true
+        },
+        "remove": {
+          "at": [72, 32, 28, 28]
+        },
+        "repeat": {
+          "at": [169, 64, 26, 26],
+          "fromBottom": true
+        },
+        "resize": {
+          "at": [1, 1, 17, 17],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "search": {
+          "at": [306, 32, 8, 28],
+          "stretchX": true
+        },
+        "seek": {
+          "at": [47, 31, 118, 18],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "settings": {
+          "at": [168, 32, 28, 28]
+        },
+        "shuffle": {
+          "at": [139, 64, 26, 26],
+          "fromBottom": true
+        },
+        "status": {
+          "at": [6, 2, 20, 22],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "stop": {
+          "art": "icon.stop",
+          "at": [70, 64, 26, 26],
+          "fromBottom": true
+        },
+        "title": {
+          "at": [28, 3, 76, 20],
+          "stretchX": true
+        },
+        "volume": {
+          "at": [12, 62, 155, 26],
+          "fromBottom": true,
+          "fromRight": true
+        }
+      }
+    }
+  },
+  "lineage": "media-player-music",
+  "metrics": {
+    "menuItemH": 20
+  },
+  "parts": {},
+  "sheets": {
+    "art": {
+      "1x": "art/art.png",
+      "2x": "art/art@2x.png"
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "app.icon": {
+      "at": [96, 137, 16, 16],
+      "sheet": "art"
+    },
+    "app.logo": {
+      "at": [151, 0, 48, 48],
+      "sheet": "art"
+    },
+    "chrome.title": {
+      "at": [201, 0, 12, 26],
+      "sheet": "art",
+      "slice": [0, 3, 0, 3]
+    },
+    "cover.empty": {
+      "at": [0, 0, 149, 135],
+      "sheet": "art"
+    },
+    "icon.add": {
+      "at": [215, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.context": {
+      "at": [239, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.eq": {
+      "at": [263, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.next": {
+      "at": [287, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.open": {
+      "at": [311, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.pause": {
+      "at": [335, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.play": {
+      "at": [359, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.playlist": {
+      "at": [383, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.prev": {
+      "at": [407, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.remove": {
+      "at": [431, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.repeat": {
+      "at": [455, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.repeat.off": {
+      "at": [479, 0, 22, 22],
+      "sheet": "art"
+    },
+    "icon.repeat.one": {
+      "at": [0, 137, 22, 22],
+      "sheet": "art"
+    },
+    "icon.settings": {
+      "at": [24, 137, 22, 22],
+      "sheet": "art"
+    },
+    "icon.shuffle": {
+      "at": [48, 137, 22, 22],
+      "sheet": "art"
+    },
+    "icon.stop": {
+      "at": [72, 137, 22, 22],
+      "sheet": "art"
+    }
+  },
+  "summary": "A light library window with an indigo caption, two-tone indigo toolbar icons, a tabbed sidebar and a multi-column playlist.",
+  "text": {
+    "player.current": {
+      "color": "#2B3590"
+    },
+    "player.info": {
+      "color": "#33334A",
+      "size": 11
+    },
+    "player.row": {
+      "color": "#17171F",
+      "size": 11
+    },
+    "player.selected": {
+      "color": "#5560C4"
+    },
+    "player.selectedText": {
+      "color": "#FFFFFF"
+    },
+    "player.text": {
+      "color": "#1A1A24",
+      "size": 11
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

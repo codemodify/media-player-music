@@ -19,7 +19,7 @@ import (
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "-generate" {
-		if err := plans.Write("internal/skins/packs", plans.Amarok()); err != nil {
+		if err := plans.Write("internal/skins/packs", plans.Sidebar()); err != nil {
 			panic(err)
 		}
 		return
@@ -27,7 +27,7 @@ func main() {
 	if err := skins.Register(); err != nil {
 		panic(err)
 	}
-	os.Setenv(style.ThemeEnv, "amarok")
+	os.Setenv(style.ThemeEnv, "sidebar")
 	dir := "/tmp/music-player-amarok-render"
 	if len(os.Args) > 1 {
 		dir = os.Args[1]

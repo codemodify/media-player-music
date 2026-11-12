@@ -1,4 +1,4 @@
-// Package amarok names the layouts of the KDE3/Qt3 Amarok 1.4 adaptation.
+// Package amarok names the layouts of the sidebar skin (internal/skins/plans).
 package amarok
 
-const LayoutMain = "amarok.main"
+const LayoutMain = "sidebar.main"

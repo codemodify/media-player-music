@@ -42,14 +42,14 @@ func TestMain(m *testing.M) {
 	// Standalone plan validation is useful before the shared catalogue is
 	// generated. Once shipped, all UI tests consume the actual embedded pack.
 	var temporary string
-	if _, ok := uiskins.LoadSkin("amarok"); !ok {
+	if _, ok := uiskins.LoadSkin("sidebar"); !ok {
 		var err error
 		temporary, err = os.MkdirTemp("", "music-player-amarok-test-")
 		if err == nil {
-			err = plans.Write(temporary, plans.Amarok())
+			err = plans.Write(temporary, plans.Sidebar())
 		}
 		if err == nil {
-			err = uiskins.RegisterSkinFS(os.DirFS(filepath.Join(temporary, "amarok")), "amarok")
+			err = uiskins.RegisterSkinFS(os.DirFS(filepath.Join(temporary, "sidebar")), "sidebar")
 		}
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -66,7 +66,7 @@ func TestMain(m *testing.M) {
 func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	t.Setenv(style.ThemeEnv, "amarok")
+	t.Setenv(style.ThemeEnv, "sidebar")
 	a := ui.New(ui.Options{Headless: true, Scale: scale, DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.Packs = players.SkinnedIDs
@@ -91,7 +91,7 @@ func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifier
 	a.PumpOnce()
 }
 
-func TestSingleResizableWindowScalesAllContentAndPaintsOriginalIcons(t *testing.T) {
+func TestSingleResizableWindowScalesAllContentAndPaintsItsIcons(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
@@ -140,7 +140,7 @@ func TestSingleResizableWindowScalesAllContentAndPaintsOriginalIcons(t *testing.
 					}
 				}
 				if bluePixels < 10 {
-					t.Fatal("original blue transport icon was not painted")
+					t.Fatal("the indigo transport icon was not painted")
 				}
 				playertest.Audit(t, "Amarok", p.Main)
 			}

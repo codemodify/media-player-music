@@ -63,8 +63,8 @@ func WinampSilver() *Plan {
 	sh := &Sheet{Name: "chrome"}
 	l := &lay{sh: sh, gap: 2}
 	p := &Plan{
-		Name:    "winamp-silver",
-		Label:   "Winamp Silver",
+		Name:    "silver",
+		Label:   "Silver",
 		Year:    2026,
 		Lineage: "uitoolkit",
 		Summary: "The compact player's rounded look of the later era: silver chrome, a blue dot-matrix display, glossy round keys — a shaped panel with the desktop beyond its corners.",

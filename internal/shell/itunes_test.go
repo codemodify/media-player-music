@@ -32,7 +32,7 @@ func iTunesModes(t *testing.T, s *Shell) miniPresentation {
 }
 
 func TestITunesRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) {
-	for _, missing := range []string{"itunes.main", "itunes.mini", "itunes.equalizer"} {
+	for _, missing := range []string{"aluminium.main", "aluminium.mini", "aluminium.equalizer"} {
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.FandomSkin)
 			w, model := s.MainWindow(), s.Host.Model
@@ -41,7 +41,7 @@ func TestITunesRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) 
 				t.Fatal(err)
 			}
 			layouts := map[string]any{}
-			for _, name := range []string{"itunes.main", "itunes.mini", "itunes.equalizer"} {
+			for _, name := range []string{"aluminium.main", "aluminium.mini", "aluminium.equalizer"} {
 				if name != missing {
 					layouts[name] = map[string]any{"size": []int{800, 560}}
 				}

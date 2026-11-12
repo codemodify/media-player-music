@@ -17,7 +17,7 @@ func TestFandomRetainsSourceAlphaAndIndependentHighResolution(t *testing.T) {
 	p := Fandom()
 	for _, name := range []string{"face.main", "face.settings", "face.playlist", "app.icon"} {
 		t.Run(name, func(t *testing.T) {
-			c := xboxTestCell(t, p, name)
+			c := testCell(t, p, name)
 			sh := &Sheet{W: c.W, H: c.H, Cells: []Cell{c}}
 			one, two := skingen.Render(sh, 1), skingen.Render(sh, 2)
 			if two.Width != 2*one.Width || two.Height != 2*one.Height {

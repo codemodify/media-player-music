@@ -1,8 +1,6 @@
 package halflife2
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -18,7 +16,6 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	source "github.com/codemodify/media-player-music/internal/skins/sources/half-life-2"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/a11y"
@@ -187,30 +184,30 @@ func TestOriginalTransportSpritesAndCrossWindowShortcuts(t *testing.T) {
 	}
 }
 
-func TestOriginalCurvedPositionMapsDriveSharedPlayback(t *testing.T) {
+// spriteImage draws one of the look's sprites at w × h.
+func spriteImage(t *testing.T, lk style.LookAndFeel, name string, w, h int) *paint2d.Image {
+	t.Helper()
+	im := paint2d.NewImage(w, h)
+	ctx := paint2d.NewContext(im)
+	ctx.Clear(paint2d.Transparent)
+	if !skins.DrawSkinSprite(lk, ctx, paint2d.XYWH(0, 0, float32(w), float32(h)), name, paint2d.Color{}) {
+		t.Fatalf("the skin has no %s", name)
+	}
+	return im
+}
+
+func TestCurvedPositionMapsDriveSharedPlayback(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
 			syncs := 0
 			p.Host.SyncPlayback = func() { syncs++ }
-			archiveBytes := source.Archive()
-			archive, err := zip.NewReader(bytes.NewReader(archiveBytes), int64(len(archiveBytes)))
-			if err != nil {
-				t.Fatal(err)
-			}
 			for _, item := range []struct {
 				f    *curvedSlider
 				name string
-			}{{p.body.seek, "seek_map.png"}, {p.body.volume, "volume_map.png"}} {
-				reader, err := archive.Open(item.name)
-				if err != nil {
-					t.Fatal(err)
-				}
-				im, _, err := image.Decode(reader)
-				reader.Close()
-				if err != nil {
-					t.Fatal(err)
-				}
+				w, h int
+			}{{p.body.seek, "seek.map", 70, 102}, {p.body.volume, "volume.map", 68, 125}} {
+				im := spriteImage(t, p.Main().Look(), item.name, item.w, item.h)
 				for _, target := range []int{64, 224} {
 					best, point, gray := 256, image.Point{}, uint8(0)
 					for y := im.Bounds().Min.Y; y < im.Bounds().Max.Y; y++ {
@@ -225,11 +222,11 @@ func TestOriginalCurvedPositionMapsDriveSharedPlayback(t *testing.T) {
 						}
 					}
 					if best > 2 {
-						t.Fatalf("%s lacks source grayscale near %d", item.name, target)
+						t.Fatalf("%s lacks a grayscale near %d", item.name, target)
 					}
 					local := paint2d.Pt((float32(point.X)+.5)*scale, (float32(point.Y)+.5)*scale)
 					if item.f.HitTest(local) != item.f {
-						t.Fatal("original curve point is absent from the control hit map")
+						t.Fatal("a curve point is absent from the control hit map")
 					}
 					at, before := widget.DeviceOrigin(item.f).Add(local), syncs
 					click(p.Main(), platform.ButtonLeft, at)
@@ -295,22 +292,9 @@ func TestSeparateEqualizerHooksAndHonestEffects(t *testing.T) {
 	}
 }
 
-func TestEqualizerSourceThumbRemainsVisibleAboveChangingLevelFill(t *testing.T) {
+func TestEqualizerThumbRemainsVisibleAboveChangingLevelFill(t *testing.T) {
 	a, p := open(t, 1)
-	data := source.Archive()
-	archive, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	r, err := archive.Open("eq_thumb.png")
-	if err != nil {
-		t.Fatal(err)
-	}
-	thumb, _, err := image.Decode(r)
-	r.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
+	thumb := spriteImage(t, p.Eq().Look(), "eq.thumb", 11, 12)
 	want := color.NRGBAModel.Convert(thumb.At(thumb.Bounds().Dx()/2, thumb.Bounds().Dy()/2)).(color.NRGBA)
 	band := p.eqPane.bands[0]
 	origin := widget.DeviceOrigin(band)
@@ -325,7 +309,7 @@ func TestEqualizerSourceThumbRemainsVisibleAboveChangingLevelFill(t *testing.T) 
 		}
 		got := im.NRGBAAt(int(origin.X)+thumb.Bounds().Dx()/2, top+thumb.Bounds().Dy()/2)
 		if got != want {
-			t.Fatalf("gain%g thumb was covered by its level fill: got%v original%v", gain, got, want)
+			t.Fatalf("gain%g thumb was covered by its level fill: got%v sprite%v", gain, got, want)
 		}
 		count := 0
 		for y := int(origin.Y); y < int(origin.Y+band.Bounds().Dy()); y++ {
@@ -339,7 +323,7 @@ func TestEqualizerSourceThumbRemainsVisibleAboveChangingLevelFill(t *testing.T) 
 		counts = append(counts, count)
 	}
 	if counts[1] <= counts[0] {
-		t.Fatalf("source orange level did not increase with gain: min%d max%d", counts[0], counts[1])
+		t.Fatalf("the orange level did not increase with gain: min%d max%d", counts[0], counts[1])
 	}
 }
 
@@ -390,7 +374,7 @@ func TestVisualizerToggleAndMeasuredBandsChangeVisiblePixels(t *testing.T) {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
 			if p.body.visual.Visible() || !p.body.buttons["logo"].Visible() {
-				t.Fatal("default view must show the original Lambda artwork")
+				t.Fatal("default view must show the dial's mark")
 			}
 			p.Transport.State = players.Playing
 			p.Spectrum.Live = true
@@ -403,7 +387,7 @@ func TestVisualizerToggleAndMeasuredBandsChangeVisiblePixels(t *testing.T) {
 			}
 			a.PumpOnce()
 			if !p.body.visual.Visible() || p.body.buttons["logo"].Visible() {
-				t.Fatal("visualization toggle left the opaque Lambda over the analyser")
+				t.Fatal("visualization toggle left the opaque mark over the analyser")
 			}
 			active := p.Main().CaptureSurface()
 			p.Spectrum.Reset()

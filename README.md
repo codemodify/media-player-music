@@ -30,171 +30,128 @@ repeatable pictures.
 
 ![Default interface with playback and equaliser on the left and playlist on the right](docs/screenshots/default.png)
 
-| WinAmp - classic | WinAmp - Silver | WinAmp - Classified |
-| --- | --- | --- |
-| ![WinAmp - classic strip](docs/screenshots/winamp-strip.png) | ![WinAmp - Silver strip](docs/screenshots/winamp-silver-strip.png) | ![WinAmp - Classified strip](docs/screenshots/winamp-classified-strip.png) |
+Every skin's art is the app's own, drawn in Go by `internal/skins/plans`
+(paths, gradients and the app's own pixel faces; the generator reads no
+picture). The skins carry neutral names; each keeps the layout, controls and
+behaviour of the presentation it wears.
 
-| WinAmp - DOSamp | WinAmp - Windows 98 |
-| --- | --- |
-| ![WinAmp - DOSamp strip](docs/screenshots/dosamp-strip.png) | ![WinAmp - Windows 98 strip](docs/screenshots/windows-98-strip.png) |
-| WinAmp - Classic Amber | WinAmp - Calculator |
-| ![WinAmp - Classic Amber strip](docs/screenshots/winamp-amber-strip.png) | ![WinAmp - Calculator strip](docs/screenshots/calculator-strip.png) |
-| WinAmp - Sony CDX-MP3 | WinAmp - TI-82 |
-| ![WinAmp - Sony CDX-MP3 strip](docs/screenshots/sony-cdx-mp3-strip.png) | ![WinAmp - TI-82 strip](docs/screenshots/ti-82-strip.png) |
-| WinAmp - Radar Amp | WinAmp - Quake 3 Arena |
-| ![WinAmp - Radar Amp strip](docs/screenshots/radar-amp-strip.png) | ![WinAmp - Quake 3 Arena strip](docs/screenshots/quake-3-arena-strip.png) |
+| Slate | Silver | Dossier |
+| --- | --- | --- |
+| ![Slate strip](docs/screenshots/slate-strip.png) | ![Silver strip](docs/screenshots/silver-strip.png) | ![Dossier strip](docs/screenshots/dossier-strip.png) |
+| Text Mode | Bevel | Amber |
+| ![Text Mode strip](docs/screenshots/textmode-strip.png) | ![Bevel strip](docs/screenshots/bevel-strip.png) | ![Amber strip](docs/screenshots/amber-strip.png) |
+| Tally | Head Unit | Graphing |
+| ![Tally strip](docs/screenshots/tally-strip.png) | ![Head Unit strip](docs/screenshots/headunit-strip.png) | ![Graphing strip](docs/screenshots/graphing-strip.png) |
+| Radar | Forge | |
+| ![Radar strip](docs/screenshots/radar-strip.png) | ![Forge strip](docs/screenshots/forge-strip.png) | |
 
 **Default** opens one ordinary, resizable 920 × 560 window. Playback and the
 equaliser sit on the left; the playlist sits on the right. Buttons,
 shortcuts and context menus provide its actions without a menu bar.
-**WinAmp - classic** and **WinAmp - Silver** use three compact windows:
-a playback strip, an equaliser
-and a resizable playlist that snap together where the desktop permits positioning.
-**WinAmp - Classified** adapts the artwork from
-[Winamp3 Classified v5.5](https://skins.webamp.org/skin/cd251187a5e6ff54ce938d26f1f2de02/Winamp3_Classified_v5.5.wsz/)
-to the same three-panel player. Imported skins also include DOSamp, Windows 98,
-Winamp Classic Amber, Calculator, Sony CDX-MP3, TI-82, Radar Amp and Quake 3 Arena.
-Their original archives and credits are retained in [skin sources](internal/skins/sources/README.md).
 
-**Win Media Player - Headspace** adapts the original Windows Media Player
-skin into one shaped window, with its green head, speaker wings, equalizer
-and playlist. Its transparent surroundings let the desktop show through.
+**The compact panel skins** (Slate, Silver, Dossier, Text Mode, Bevel, Amber,
+Tally, Head Unit, Graphing, Radar, Forge) use three compact windows: a
+playback strip, an equaliser and a resizable playlist that snap together
+where the desktop permits positioning. Slate is slate-blue chrome with gold
+grooves; Silver rounded silver chrome with a blue dot-matrix display;
+Dossier olive field-case chrome; Text Mode a blue character-cell screen;
+Bevel light grey bevels with a teal caption; Amber a dark terminal in amber
+phosphor; Tally a beige desk adding machine; Head Unit a black dashboard
+stereo; Graphing a slate school calculator; Radar a green phosphor scope;
+Forge dark iron with a red glow.
 
-![Win Media Player - Headspace](docs/screenshots/headspace-main.png)
+**Wingspan** is one shaped window: a jade console with a display, a brow of
+transport keys and two speaker wings that fold out for the equaliser (left)
+and the playlist (right). Its surroundings are transparent.
 
-The purple Play button toggles pause during playback. The yellow visualization
-button switches between lightning and spectrum bars; both use the app's audio
-levels. The lower-center logo opens appearances and Settings. The playlist
-heading opens file and queue actions; **reset** opens EQ presets, On/Auto,
-preamp and reset. Ctrl+O and file/folder drops work as in the other appearances.
+![Wingspan](docs/screenshots/wingspan-main.png)
 
-**Win Media Player - Xbox** uses the original official 2002 Xbox skin by
-The Skins Factory: a shaped silver and black main window, green display,
-curved seek and volume controls, and an equalizer inside the display.
-Its separate playlist is resizable and stays out of the taskbar on desktops
-supporting utility windows. The original archive, artwork, credits and
-scripts are preserved in [Xbox sources](internal/skins/sources/xbox/README.md).
+The play key toggles pause during playback. The visualization key switches
+between lightning and spectrum bars; both use the app's audio levels. The
+lower mark opens appearances and Settings. The playlist heading opens file
+and queue actions; **reset** opens EQ presets, On/Auto, preamp and reset.
+Ctrl+O and file/folder drops work as in the other appearances.
 
-![Win Media Player - Xbox](docs/screenshots/xbox-main.png)
+**Pod** is a shaped gunmetal capsule with a gridded screen, curved seek and
+volume tracks, and an equalizer inside the screen. Its separate playlist is
+resizable and stays out of the taskbar on desktops supporting utility
+windows.
 
-The silver transport strip provides Play/Pause, Stop, Open, Previous and Next.
-The small EQ, effects and playlist buttons switch the display or show the
-playlist. The Xbox logo and top full-mode button open appearances and Settings.
-In EQ mode, the preset name opens On/Auto, preamp, balance, presets and reset;
-the arrows cycle presets. The glow and bars use the app's audio levels.
-Right-clicking the playlist provides file/queue actions. File and folder drops work on either
-window; playlist rows start playback on double-click.
+| Pod | Pod playlist |
+| --- | --- |
+| ![Pod](docs/screenshots/pod-main.png) | ![Pod playlist](docs/screenshots/pod-playlist.png) |
 
-**Win Media Player - Half Life 2** uses the original Valve/The Skins Factory
-skin: an orange circular main window with curved seek and volume controls,
-and separate equalizer and resizable playlist windows. The three windows snap
-together and retain their placement. The small shutter button cycles through
-the open display, inner cover and outer Lambda cover. Covered playback
-controls leave keyboard focus on the shutter button so it can reopen them.
+The transport shelf provides Play/Pause, Stop, Open, Previous and Next. The
+small EQ, effects and playlist keys switch the display or show the playlist.
+The round mark and the top key open appearances and Settings. In EQ mode,
+the preset name opens On/Auto, preamp, balance, presets and reset; the
+arrows cycle presets. Right-clicking the playlist provides file/queue
+actions; rows play on double-click.
 
-![Win Media Player - Half Life 2](docs/screenshots/half-life-2-group.png)
+**Gauge** is a round gunmetal dial with copper trim and curved seek and
+volume arcs, with separate equalizer and resizable playlist windows that
+snap together and retain their placement. The small shutter key cycles
+through the open dial, an iris and a closed visor; covered controls leave
+keyboard focus on the shutter key so it can reopen them.
 
-The original Play/Pause, Stop, Previous, Next, Open and mute controls drive
-the shared playback engine. The lower buttons toggle the visualizer,
-equalizer and playlist. The central Lambda logo and small menu button open
-appearances and Settings. The equalizer supports ten bands, balance and
-presets; its preset name opens On/Auto, preamp and reset. Original SRS WOW,
-TruBass and crossfade controls remain disabled because the player does not
-provide those effects. The original archive and notices are retained in
-[Half Life 2 sources](internal/skins/sources/half-life-2/README.md).
-Video, promotional web views, startup animations and skin sound effects
-are preserved as source material; the music player uses the three audio views.
-
-**Win Media Player - Fandom** recreates the supplied silver player reference
-with an embedded settings wing, green spectrum, inset equalizer and a
-separate resizable playlist. Its controls use the same playback engine,
-queue and app settings. The original skin name, creator and archive have not
-been verified; this is a reference adaptation with artwork generated using
-the built-in image tool, rather than an imported original WMP skin.
-[Artwork and prompts](internal/skins/sources/fandom/README.md).
-
-![Win Media Player - Fandom](docs/screenshots/fandom-group.png)
-
-**Mac OS X - iTunes** adapts original Apple iTunes 4.0 controls and brushed-metal
-chrome from the 2003 Music Store era. Its resizable main window has a searchable,
-sortable music library, playback controls and a floating equalizer. Double-click
-a song or press Enter to play; file and folder drops append to the shared queue.
-The original Music Store service is unavailable in this player.
-[Original resources and provenance](internal/skins/sources/itunes/README.md).
-
-![Mac OS X - iTunes](docs/screenshots/itunes-main.png)
-
-The green zoom button or **Ctrl+Shift+M** switches the same main window to
-MiniPlayer. Drag its bottom-right grip to show or hide track information;
-its height stays fixed. The wide and compact views keep working transport and
-volume controls. Each mode remembers its size and keeps the current position.
-**Ctrl+F** returns to the library and focuses search. Closing either main view
-uses the existing close-to-tray behavior.
-
-![iTunes MiniPlayer](docs/screenshots/itunes-mini.png)
-![iTunes compact MiniPlayer](docs/screenshots/itunes-mini-compact.png)
-
-**Win Media Player - Series 9** adapts Microsoft's original blue-and-silver
-9 Series Default skin. Its resizable main window contains the visualizer,
-playback controls and sliding playlist and equalizer drawers. The original
-archive, artwork and scripts are retained in
-[Series 9 sources](internal/skins/sources/series-9/README.md).
-
-![Win Media Player - Series 9](docs/screenshots/series-9-main.png)
-
-The round toolbar buttons open files, toggle the playlist, switch the
-visualizer and toggle the equalizer. The lower controls provide Play/Pause,
-Stop, Previous, Next, mute, seek and volume. Rewind and fast-forward seek ten
-seconds. The app logo opens Settings; the return button opens appearances.
-The playlist heading opens file and queue actions, and its songs play on
-double-click or Enter. File and folder drops append to the queue.
-
-![Series 9 with playlist and equalizer drawers](docs/screenshots/series-9-group.png)
-
-The bottom full/compact button or **Ctrl+Shift+M** switches the same native
-window to the original fixed-size compact player. Playback continues, and
-returning to full mode restores its size and drawer visibility. Closing either
-view uses the existing close-to-tray behavior.
-
-![Series 9 compact player](docs/screenshots/series-9-compact.png)
-
-Three classic desktop appearances reproduce the older players' layouts and
-controls, with original transport artwork where available:
-
-- **VLC - Classic** uses VLC 0.8.6's wxWidgets-era toolbar, gray beveled controls,
-  an embedded playlist and equalizer. [Original sources](internal/skins/sources/vlc/README.md).
-- **RealPlayer - Classic** uses the RealPlayer 8 gray-and-blue arrangement and
-  original Windows control sprites, with the local queue and equalizer inside
-  the main window. [Original resources](internal/skins/sources/realplayer/README.md).
-- **KDE - Amarok 1.4** uses KDE 3 silver chrome, blue transport buttons,
-  current-track context and a searchable playlist table.
-  [Original sources](internal/skins/sources/amarok/README.md).
-
-| VLC - Classic | RealPlayer - Classic | KDE - Amarok 1.4 |
+| Gauge | Equalizer | Playlist |
 | --- | --- | --- |
-| ![VLC - Classic](docs/screenshots/vlc-main.png) | ![RealPlayer - Classic](docs/screenshots/realplayer-main.png) | ![KDE - Amarok 1.4](docs/screenshots/amarok-main.png) |
+| ![Gauge](docs/screenshots/gauge-main.png) | ![Gauge equalizer](docs/screenshots/gauge-equaliser.png) | ![Gauge playlist](docs/screenshots/gauge-playlist.png) |
 
-**Fancy** adapts the supplied blue player reference into three shaped windows:
-a 420 × 220 main player, a separate equalizer and a resizable playlist.
-Ctrl+Shift+M switches the same main window between the full player and its
-420 × 40 compact mode while playback continues.
-The panels and compact mode use the shared queue, playback and tray behavior.
-The app draws the artwork and defines the layout from the supplied reference.
+The equalizer supports ten bands, balance and presets; its preset name opens
+On/Auto, preamp and reset. The surround, bass and width controls stay
+disabled because the player does not provide those effects.
+
+**Fandom** is a silver tablet with an embedded settings wing, green
+spectrum, inset equalizer and a separate resizable playlist, in the
+project's own generated artwork.
+
+![Fandom](docs/screenshots/fandom-group.png)
+
+**Aluminium** is brushed aluminium: a resizable main window with a
+searchable, sortable music library, playback controls and a floating
+equalizer. Double-click a song or press Enter to play; file and folder drops
+append to the shared queue. Its zoom key or **Ctrl+Shift+M** switches the
+same window to a mini player (each mode remembers its size); **Ctrl+F**
+returns to the library and focuses search.
+
+| Aluminium | Equalizer |
+| --- | --- |
+| ![Aluminium](docs/screenshots/aluminium-main.png) | ![Aluminium equalizer](docs/screenshots/aluminium-equaliser.png) |
+
+**Cobalt** is deep cobalt and pale steel: a resizable main window with the
+visualizer, playback controls and sliding playlist and equalizer drawers.
+The round toolbar keys open files, toggle the playlist, switch the
+visualizer and toggle the equalizer; rewind and fast-forward seek ten
+seconds. The bottom full/compact key or **Ctrl+Shift+M** switches the same
+window to a fixed-size compact player.
+
+![Cobalt with its playlist and equalizer drawers](docs/screenshots/cobalt-main.png)
+
+Three plain desktop appearances, each one resizable window:
+
+- **Utility**: a grey window with a toolbar of flat pixel icons, an
+  embedded equalizer and the playlist below.
+- **Console**: a warm grey console with a slate caption, the playlist and
+  equalizer side by side, and a status strip.
+- **Sidebar**: a light window with a tabbed sidebar (current track, cover,
+  equalizer), a toolbar of line icons and a searchable multi-column playlist.
+
+| Utility | Console | Sidebar |
+| --- | --- | --- |
+| ![Utility](docs/screenshots/utility-main.png) | ![Console](docs/screenshots/console-main.png) | ![Sidebar](docs/screenshots/sidebar-main.png) |
+
+**Fancy** is three shaped windows: a 420 × 220 main player, a separate
+equalizer and a resizable playlist. Ctrl+Shift+M switches the main window
+between the full player and its 420 × 40 compact mode while playback
+continues.
 
 ![Fancy](docs/screenshots/fancy-main.png)
 
 ![Fancy compact player](docs/screenshots/fancy-compact.png)
 
-The three classic desktop appearances each have one resizable window and use the shared playback engine,
-queue, file and folder drops, double-click/Enter playback and close-to-tray
-behavior. The VLC skin is an appearance only: playback is the player's own.
-Original network services and
-media-library databases are outside these local music views.
-
-The ten bitmap-based skins include separate 2× artwork for sharper control
-edges at enlarged display scales. Small bitmap letters, clock digits and
-display patterns keep their original pixel rendering. Silver retains its
-existing artwork and rendering.
+The plain desktop appearances use the shared playback engine, queue, file
+and folder drops, double-click/Enter playback and close-to-tray behavior.
 
 The app defines its model, windows, controls, actions, layouts, and all skin
 packs, including their artwork inputs and generators. goframework.io's desktop-ui (built from a local
@@ -228,20 +185,15 @@ go build -o . ./cmd/... .
 ./media-player-music                         # the desktop UI: the daemon's queue and place
 ./media-player-music song.mp3 album.flac      # queue files and play the first
 ./media-player-music -skin default           # ordinary interface
-./media-player-music -skin winamp            # classic panel windows
-./media-player-music -skin winamp-silver      # silver panel windows
-./media-player-music -skin winamp-classified  # Classified panel windows
-./media-player-music -skin dosamp            # DOSamp
-./media-player-music -skin windows-98        # Windows 98
-./media-player-music -skin headspace         # Win Media Player - Headspace
-./media-player-music -skin xbox              # Win Media Player - Xbox
-./media-player-music -skin half-life-2       # Win Media Player - Half Life 2
-./media-player-music -skin fandom            # Win Media Player - Fandom
-./media-player-music -skin itunes            # Mac OS X - iTunes, with MiniPlayer
-./media-player-music -skin series-9          # Win Media Player - Series 9
-./media-player-music -skin vlc               # classic VLC 0.8 wxWidgets appearance
-./media-player-music -skin realplayer        # classic RealPlayer 8 appearance
-./media-player-music -skin amarok            # KDE 3 Amarok 1.4 appearance
+./media-player-music -skin slate             # compact panel windows (also silver, dossier, textmode,
+                                             # bevel, amber, tally, headunit, graphing, radar, forge)
+./media-player-music -skin wingspan          # one shaped window with speaker wings
+./media-player-music -skin pod               # shaped capsule and a separate playlist
+./media-player-music -skin gauge             # round dial, equalizer and playlist windows
+./media-player-music -skin fandom            # silver tablet and a separate playlist
+./media-player-music -skin aluminium         # library window, with a mini player
+./media-player-music -skin cobalt            # drawers and a compact player
+./media-player-music -skin utility           # plain grey window (also console, sidebar)
 ./media-player-music -skin fancy             # blue shaped panels and compact player
 ./media-player-music -scale 1.75              # fractional display scale
 ./media-player-music -skin default -shot /tmp/player-shots -at 1m37s
@@ -273,7 +225,7 @@ ten minutes, exchanged for a session); it reaches the daemon with that
 token, never the browser's cookie.
 
 The app embeds [logo.png](logo.png) for its window, taskbar and system-tray
-icons and replaces legacy Winamp logos in the adapted skin artwork. Every
+icons; the skins carry their own mark. Every
 main window is titled **Music Player**. Closing the main window hides the
 player to the tray and leaves music playing. Clicking the tray icon or
 choosing **Show player** restores the main
@@ -281,7 +233,7 @@ window and its previously visible panels. **Quit**, Ctrl+Q and Escape exit the
 player. If no tray host is showing the icon, closing the main window exits;
 if the tray host disappears while hidden, the player returns to the desktop.
 
-The panelled skins (the Winamp skins, Fancy, Fandom and Half Life 2) keep
+The panelled skins (the compact panel skins, Fancy, Fandom and Gauge) keep
 their panels together through desktop-ui-rack's `Group`, on whatever
 backend the toolkit chooses. Where a program may place its windows (X11,
 Windows, macOS) each panel is a window of its own that snaps to the others
@@ -302,16 +254,16 @@ and `goframework-gaps.md` as of 1da0430).
 
 The desktop UI remembers its skin, panel visibility and window placement in
 `$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json`. Default keeps its own
-size and position; Winamp skins share panel positions, playlist size and
-snap relationships. Headspace keeps its own position and fixed 760 × 394
-layout. Xbox keeps its own main and playlist positions and playlist size.
-Half Life 2 separately remembers its three window positions, panel visibility,
+size and position; the compact panel skins share panel positions, playlist size and
+snap relationships. Wingspan keeps its own position and fixed 760 × 394
+layout. Pod keeps its own main and playlist positions and playlist size.
+Gauge separately remembers its three window positions, panel visibility,
 playlist size and snap relationships. Fandom keeps separate main/playlist
 positions, playlist size and snap relationships; its EQ is in the main display.
-iTunes remembers its full and MiniPlayer sizes and library visibility.
-Series 9 keeps its own position, full base size and full/compact mode; its
+Aluminium remembers its full and mini player sizes and library visibility.
+Cobalt keeps its own position, full base size and full/compact mode; its
 playlist and equalizer drawers share the main window.
-Classic VLC, RealPlayer and Amarok each remember their own window size and
+Utility, Console and Sidebar each remember their own window size and
 position, with shared playlist/equalizer visibility.
 Positions restore where the desktop supports them. Missing
 files are skipped when the daemon restores the queue. Without saved
@@ -323,8 +275,8 @@ Every build includes all of desktop-ui's era theme engines (imported in
 fallback, which lets native-font song/artist labels borrow missing glyphs
 for CJK and other supported scripts from installed fonts.
 A covering font must be installed;
-`GOFRAMEWORK_DESKTOP_UI_SYSTEM_FONTS=0` disables that lookup. The original Winamp bitmap title
-alphabet retains its source-art character limits. The plain build does not shape
+`GOFRAMEWORK_DESKTOP_UI_SYSTEM_FONTS=0` disables that lookup. The panel skins' bitmap title
+alphabet has its own character limits. The plain build does not shape
 or reorder complex scripts. The player's own optional `font_emoji` tag adds
 desktop-ui-text-complex: complex-script shaping and colour emoji with
 installed covering fonts (`font_complex` shapes without colour emoji):
@@ -394,7 +346,7 @@ or opened folder leaves them out and says how many it left. A file whose
 format turns out not to play stops with the same kind of message.
 
 All appearances use the shared playback commands; their controls and placement
-vary with the original design. Default and the Winamp skins provide:
+vary with the presentation. Default and the compact panel skins provide:
 
 - Playback: Previous, Play, Pause, Stop, Next and Eject; seek, volume,
   balance, shuffle, repeat, Equaliser, Playlist and Skin controls.
@@ -451,9 +403,8 @@ Shift+F10     skin menu         Escape / Ctrl+Q  quit
 ```
 
 Focused controls also handle their own navigation keys. Skin choices are
-available from the Skin control and context menus. Default keeps its name;
-Winamp choices use **WinAmp -** followed by their skin name, with the
-original Winamp listed as **WinAmp - classic**. Scroll with the wheel
+available from the Skin control and context menus. Each skin is listed by its
+own name. Scroll with the wheel
 or arrow keys to reach the full list in compact windows.
 The [skin catalogue](docs/faces.md#one-default-layout-twenty-one-skins) lists all
 command-line IDs.
@@ -518,7 +469,7 @@ For a file-manager drop that still fails, enable native transfer and app
 loader diagnostics while reproducing it on an unlocked desktop:
 
 ```bash
-GOFRAMEWORK_DESKTOP_UI_XDND_DEBUG=1 MUSIC_PLAYER_DROP_DEBUG=1 ./media-player-music -skin winamp
+GOFRAMEWORK_DESKTOP_UI_XDND_DEBUG=1 MUSIC_PLAYER_DROP_DEBUG=1 ./media-player-music -skin slate
 ```
 
 The trace on stderr records incoming drag positions and action negotiation,
@@ -530,8 +481,9 @@ the native data transfer. Normal runs leave this logging disabled.
 
 The Free License — see [LICENSE](LICENSE).
 
-Imported artwork retains its original authors' copyright and notices;
-see each skin's [source and credits](internal/skins/sources/README.md).
+Every skin's artwork is the app's own, drawn in Go (internal/skins/plans).
+The originals the earlier skins were cut from stay in internal/skins/sources,
+built into nothing, until the owner's history rewrite removes them.
 
 ### Monkey's Audio
 

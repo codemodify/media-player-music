@@ -298,9 +298,9 @@ var Silver = &Face{
 // vocabulary: it binds its controls to these names and asks the skin where
 // each one is. A skin drawn for this player states these three.
 const (
-	LayoutStrip     = "winamp.strip"
-	LayoutEqualiser = "winamp.equaliser"
-	LayoutPlaylist  = "winamp.playlist"
+	LayoutStrip     = "panel.strip"
+	LayoutEqualiser = "panel.equaliser"
+	LayoutPlaylist  = "panel.playlist"
 )
 
 // Slot is one named rect of a layout, and the sprite its control is painted

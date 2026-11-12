@@ -11,24 +11,29 @@ import (
 	"github.com/codemodify/media-player-music/internal/skins/plans"
 	uiskins "goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/style"
+	"goframework.io/graphics-paint2d"
 )
 
-var packNames = []string{"amarok", "calculator", "dosamp", "fancy", "fandom", "half-life-2", "headspace", "itunes", "quake-3-arena", "radar-amp", "realplayer", "series-9", "sony-cdx-mp3", "ti-82", "vlc", "winamp", "winamp-amber", "winamp-classified", "winamp-silver", "windows-98", "xbox"}
+var packNames = []string{"aluminium", "amber", "bevel", "cobalt", "console", "dossier", "fancy", "fandom", "forge", "gauge", "graphing", "headunit", "pod", "radar", "sidebar", "silver", "slate", "tally", "textmode", "utility", "wingspan"}
 
 var packLabels = map[string]string{
-	"calculator": "Calculator", "dosamp": "DOSamp", "quake-3-arena": "Quake 3 Arena", "radar-amp": "Radar Amp",
-	"sony-cdx-mp3": "Sony CDX-MP3", "ti-82": "TI-82", "winamp": "Winamp", "winamp-amber": "Winamp Classic Amber",
-	"winamp-classified": "Winamp Classified", "winamp-silver": "Winamp Silver", "windows-98": "Windows 98",
-	"headspace":   "Win Media Player - Headspace",
-	"xbox":        "Win Media Player - Xbox",
-	"half-life-2": "Win Media Player - Half Life 2",
-	"fandom":      "Win Media Player - Fandom",
-	"itunes":      "Mac OS X - iTunes",
-	"series-9":    "Win Media Player - Series 9",
-	"vlc":         "VLC - Classic",
-	"realplayer":  "RealPlayer - Classic",
-	"amarok":      "KDE - Amarok 1.4",
-	"fancy":       "Fancy",
+	"slate": "Slate", "silver": "Silver", "dossier": "Dossier", "textmode": "Text Mode", "bevel": "Bevel",
+	"amber": "Amber", "tally": "Tally", "headunit": "Head Unit", "graphing": "Graphing", "radar": "Radar", "forge": "Forge",
+	"wingspan": "Wingspan", "pod": "Pod", "gauge": "Gauge", "fandom": "Fandom", "aluminium": "Aluminium",
+	"cobalt": "Cobalt", "utility": "Utility", "console": "Console", "sidebar": "Sidebar", "fancy": "Fancy",
+}
+
+var packLayouts = map[string][]string{
+	"wingspan":  {"wingspan.main"},
+	"pod":       {"pod.main", "pod.playlist"},
+	"gauge":     {"gauge.main", "gauge.equalizer", "gauge.playlist"},
+	"fandom":    {"fandom.main", "fandom.playlist"},
+	"aluminium": {"aluminium.main", "aluminium.mini", "aluminium.equalizer"},
+	"cobalt":    {"cobalt.main", "cobalt.transport", "cobalt.equalizer", "cobalt.playlist", "cobalt.compact"},
+	"utility":   {"utility.main"},
+	"console":   {"console.main", "console.playlist", "console.equalizer"},
+	"sidebar":   {"sidebar.main"},
+	"fancy":     {"fancy.main", "fancy.equalizer", "fancy.playlist", "fancy.compact"},
 }
 
 func TestBundledPacksLoadAndLint(t *testing.T) {
@@ -60,36 +65,9 @@ func TestBundledPacksLoadAndLint(t *testing.T) {
 			if sk.Label != label {
 				t.Errorf("label = %q, want %q", sk.Label, label)
 			}
-			layouts := []string{"winamp.strip", "winamp.equaliser", "winamp.playlist"}
-			if name == "headspace" {
-				layouts = []string{"headspace.main"}
-			}
-			if name == "xbox" {
-				layouts = []string{"xbox.main", "xbox.playlist"}
-			}
-			if name == "half-life-2" {
-				layouts = []string{"halflife2.main", "halflife2.equalizer", "halflife2.playlist"}
-			}
-			if name == "fandom" {
-				layouts = []string{"fandom.main", "fandom.playlist"}
-			}
-			if name == "itunes" {
-				layouts = []string{"itunes.main", "itunes.mini", "itunes.equalizer"}
-			}
-			if name == "series-9" {
-				layouts = []string{"series9.main", "series9.transport", "series9.equalizer", "series9.playlist", "series9.compact"}
-			}
-			if name == "vlc" {
-				layouts = []string{"vlc.main"}
-			}
-			if name == "realplayer" {
-				layouts = []string{"realplayer.main", "realplayer.playlist", "realplayer.equalizer"}
-			}
-			if name == "amarok" {
-				layouts = []string{"amarok.main"}
-			}
-			if name == "fancy" {
-				layouts = []string{"fancy.main", "fancy.equalizer", "fancy.playlist", "fancy.compact"}
+			layouts := []string{"panel.strip", "panel.equaliser", "panel.playlist"}
+			if l, ok := packLayouts[name]; ok {
+				layouts = l
 			}
 			if len(sk.Layouts) != len(layouts) {
 				t.Errorf("layout count = %d, want %d", len(sk.Layouts), len(layouts))
@@ -193,29 +171,29 @@ func TestRegistrationPreservesUserOverride(t *testing.T) {
 		t.Fatalf("registration wrote toolkit configuration: %v", err)
 	}
 
-	userDir := uiskins.UserSkinDir("winamp")
+	userDir := uiskins.UserSkinDir("slate")
 	if err := os.MkdirAll(userDir, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	userManifest := filepath.Join(userDir, "skin.json")
-	if err := os.WriteFile(userManifest, []byte(`{"skin":1,"label":"My Winamp","base":"win95"}`), 0o600); err != nil {
+	if err := os.WriteFile(userManifest, []byte(`{"skin":1,"label":"My Slate","base":"win95"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	uiskins.InvalidateSkinCache()
-	if sk, ok := uiskins.LoadSkin("winamp"); !ok || sk.Label != "My Winamp" {
+	if sk, ok := uiskins.LoadSkin("slate"); !ok || sk.Label != "My Slate" {
 		t.Fatalf("user skin did not override the app pack: %#v, %v", sk, ok)
 	}
-	if pack, ok := style.LoadTheme("winamp"); !ok || pack.Label != "My Winamp" {
+	if pack, ok := style.LoadTheme("slate"); !ok || pack.Label != "My Slate" {
 		t.Fatalf("user skin did not override the app theme: %+v, %v", pack, ok)
 	}
-	if got := uiskins.SkinSourceFile("winamp"); got != userManifest {
+	if got := uiskins.SkinSourceFile("slate"); got != userManifest {
 		t.Errorf("override source = %q, want %q", got, userManifest)
 	}
 	if err := os.RemoveAll(userDir); err != nil {
 		t.Fatal(err)
 	}
 	uiskins.InvalidateSkinCache()
-	if sk, ok := uiskins.LoadSkin("winamp"); !ok || sk.Label != "Winamp" {
+	if sk, ok := uiskins.LoadSkin("slate"); !ok || sk.Label != "Slate" {
 		t.Fatalf("removing the override did not restore the embedded app skin: %#v, %v", sk, ok)
 	}
 }
@@ -249,4 +227,51 @@ func isolateSkinLookups(t *testing.T) {
 		style.ResetSearchPathsForTest()
 		uiskins.InvalidateSkinCache()
 	})
+}
+
+// Every built-in skin registers, and every layout's face and every slot's
+// art draws through the toolkit.
+func TestEveryPackDrawsItsLayouts(t *testing.T) {
+	if err := Register(); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range plans.Plans() {
+		t.Run(p.Name, func(t *testing.T) {
+			if _, ok := uiskins.LoadSkin(p.Name); !ok {
+				t.Fatal("does not load")
+			}
+			lk := style.Appearance{Name: p.Name}.Look()
+			for _, l := range p.Layouts {
+				if l.Art != "" {
+					img := paint2d.NewImage(l.W, l.H)
+					if !uiskins.DrawSkinSprite(lk, paint2d.NewContext(img), paint2d.XYWH(0, 0, float32(l.W), float32(l.H)), l.Art, paint2d.Color{}) {
+						t.Errorf("%s: its face %s does not draw", l.Name, l.Art)
+					} else if inked(img) == 0 {
+						t.Errorf("%s: its face %s is empty", l.Name, l.Art)
+					}
+				}
+				for _, slot := range l.Slots {
+					if len(slot.Art) == 0 {
+						continue
+					}
+					img := paint2d.NewImage(48, 48)
+					if !uiskins.DrawSkinSlot(lk, paint2d.NewContext(img), paint2d.XYWH(0, 0, 48, 48), l.Name, slot.Name, 0) {
+						t.Errorf("%s: slot %s does not draw", l.Name, slot.Name)
+					} else if inked(img) == 0 {
+						t.Errorf("%s: slot %s draws nothing", l.Name, slot.Name)
+					}
+				}
+			}
+		})
+	}
+}
+
+func inked(img *paint2d.Image) int {
+	n := 0
+	for i := 3; i < len(img.Pix); i += 4 {
+		if img.Pix[i] > 0 {
+			n++
+		}
+	}
+	return n
 }

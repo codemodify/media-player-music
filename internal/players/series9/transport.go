@@ -18,7 +18,7 @@ type transportPane struct {
 
 func newTransportPane(p *Player, role string) *transportPane {
 	b := &transportPane{}
-	b.pane = newPane(p, role, "Series 9 playback controls", b)
+	b.pane = newPane(p, role, "Cobalt playback controls", b)
 	b.addTransportControls()
 	if role == LayoutTransport {
 		g := newResizeGrip(p)
@@ -100,7 +100,7 @@ type compactPane struct{ *transportPane }
 
 func newCompactPane(p *Player) *compactPane {
 	b := &compactPane{transportPane: &transportPane{}}
-	b.pane = newPane(p, LayoutCompact, "Series 9 compact player", b)
+	b.pane = newPane(p, LayoutCompact, "Cobalt compact player", b)
 	b.addTransportControls()
 	b.button("open", "Open music files", players.GlyphEject, func() { p.Host.OpenFiles(b.buttons["open"], false) })
 	b.button("minimize", "Minimize Music Player", players.GlyphNone, p.Main.Minimize)

@@ -14,7 +14,11 @@ import (
 
 //go:generate go run ./cmd/generate -out packs
 
-//go:embed packs/*/skin.json packs/*/art/*.png
+// Only the redrawn packs are built in. The old-named folders beside them in
+// packs/ (the originals' art, and Slate's and Silver's under their old
+// names) stay on disk, not embedded, until the owner's history rewrite.
+//
+//go:embed packs/slate packs/silver packs/dossier packs/textmode packs/bevel packs/amber packs/tally packs/headunit packs/graphing packs/radar packs/forge packs/wingspan packs/pod packs/gauge packs/fandom packs/aluminium packs/cobalt packs/utility packs/console packs/sidebar packs/fancy
 var bundled embed.FS
 
 var registration struct {

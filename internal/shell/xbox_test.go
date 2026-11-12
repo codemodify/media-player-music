@@ -21,13 +21,13 @@ func TestXboxRequiresPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		t.Fatal(err)
 	}
-	manifest := `{"skin":1,"label":"Xbox main only","base":"dark","layouts":{"xbox.main":{"size":[350,216]}}}`
+	manifest := `{"skin":1,"label":"Xbox main only","base":"dark","layouts":{"pod.main":{"size":[350,216]}}}`
 	if err := os.WriteFile(filepath.Join(dir, skins.SkinFile), []byte(manifest), 0600); err != nil {
 		t.Fatal(err)
 	}
 	skins.InvalidateSkinCache()
 	t.Cleanup(skins.InvalidateSkinCache)
-	if err := s.SetSkin(players.XboxSkin); err == nil || !strings.Contains(err.Error(), `missing layout "xbox.playlist"`) {
+	if err := s.SetSkin(players.XboxSkin); err == nil || !strings.Contains(err.Error(), `missing layout "pod.playlist"`) {
 		t.Fatalf("Xbox main-only override: %v", err)
 	}
 	if s.MainWindow() != w || w.Closed() || s.Skin() != players.HeadspaceSkin || s.Host.Model != model {
@@ -70,7 +70,7 @@ func TestXboxSkinKeysCycleFromHeadspaceAndRememberChoice(t *testing.T) {
 		}
 		key(named.Window, platform.ModCtrl|platform.ModShift)
 		if s.Skin() != players.DefaultSkin || !named.Window.Closed() {
-			t.Fatal("Xbox playlist key did not replace its family with Default")
+			t.Fatal("Pod playlist key did not replace its family with Default")
 		}
 		key(s.MainWindow(), platform.ModCtrl|platform.ModShift)
 		if s.Skin() != players.XboxSkin {
@@ -78,5 +78,5 @@ func TestXboxSkinKeysCycleFromHeadspaceAndRememberChoice(t *testing.T) {
 		}
 		return
 	}
-	t.Fatal("Xbox playlist did not receive the shared skin shortcuts")
+	t.Fatal("Pod playlist did not receive the shared skin shortcuts")
 }

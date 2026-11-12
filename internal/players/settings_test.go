@@ -12,15 +12,15 @@ func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 		json string
 		want Settings
 	}{
-		{`{"skin":"winamp"}`, Settings{Skin: WinampSkin}},
-		{`{"skin":"winamp-classified"}`, Settings{Skin: WinampClassifiedSkin}},
+		{`{"skin":"slate"}`, Settings{Skin: WinampSkin}},
+		{`{"skin":"dossier"}`, Settings{Skin: WinampClassifiedSkin}},
 		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin}},
 		// What earlier builds saved is not carried over: an old skin name,
 		// an engine, the queue and ReplayGain (the daemon's now) are simply
 		// not the desktop UI's.
 		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin}},
 		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin}},
-		{`{"skin":"winamp","replaygain":{"mode":"album"},"playlist":{"tracks":[{"Path":"/a.mp3"}]}}`, Settings{Skin: WinampSkin}},
+		{`{"skin":"slate","replaygain":{"mode":"album"},"playlist":{"tracks":[{"Path":"/a.mp3"}]}}`, Settings{Skin: WinampSkin}},
 		{`not json`, Settings{Skin: DefaultSkin}},
 	} {
 		t.Run(test.json, func(t *testing.T) {
@@ -61,7 +61,7 @@ func TestSessionSettingsRoundTripAndPermissions(t *testing.T) {
 	want := Settings{
 		Skin:   WinampClassifiedSkin,
 		Panels: &SavedPanels{Equaliser: false, Playlist: true},
-		Windows: map[string]map[string]WindowPlacement{"winamp": {
+		Windows: map[string]map[string]WindowPlacement{"slate": {
 			"main":     {X: 0, Y: -20, Positioned: true},
 			"playlist": {X: 0, Y: 96, Positioned: true, Dock: &WindowDock{Parent: "main", Side: "bottom", Along: 0}},
 		}},

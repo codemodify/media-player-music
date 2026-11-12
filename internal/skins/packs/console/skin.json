@@ -1,0 +1,628 @@
+{
+  "base": "win95",
+  "colors": {
+    "focus": "#1F8C84"
+  },
+  "family": "console",
+  "label": "Console",
+  "layouts": {
+    "console.equalizer": {
+      "art": "face.equalizer",
+      "size": [354, 178],
+      "slots": {
+        "auto": {
+          "at": [55, 6, 52, 21]
+        },
+        "balance": {
+          "at": [54, 157, 120, 14]
+        },
+        "band.0": {
+          "at": [52, 35, 20, 104]
+        },
+        "band.1": {
+          "at": [80, 35, 20, 104]
+        },
+        "band.2": {
+          "at": [108, 35, 20, 104]
+        },
+        "band.3": {
+          "at": [136, 35, 20, 104]
+        },
+        "band.4": {
+          "at": [164, 35, 20, 104]
+        },
+        "band.5": {
+          "at": [192, 35, 20, 104]
+        },
+        "band.6": {
+          "at": [220, 35, 20, 104]
+        },
+        "band.7": {
+          "at": [248, 35, 20, 104]
+        },
+        "band.8": {
+          "at": [276, 35, 20, 104]
+        },
+        "band.9": {
+          "at": [304, 35, 20, 104]
+        },
+        "on": {
+          "at": [8, 6, 44, 21]
+        },
+        "preamp": {
+          "at": [12, 35, 20, 104]
+        },
+        "preset": {
+          "at": [7, 6, 120, 21],
+          "fromRight": true
+        },
+        "reset": {
+          "at": [7, 153, 61, 21],
+          "fromRight": true
+        }
+      }
+    },
+    "console.main": {
+      "art": "face.main",
+      "size": [720, 520],
+      "slots": {
+        "add": {
+          "art": {
+            "checked": "key.open",
+            "checkedHover": "key.open.hover",
+            "checkedPressed": "key.open.down",
+            "disabled": "key.open.disabled",
+            "hover": "key.open.hover",
+            "normal": "key.open",
+            "pressed": "key.open.down"
+          },
+          "at": [43, 76, 22, 22]
+        },
+        "backends": {
+          "at": [236, 29, 106, 24],
+          "fromBottom": true
+        },
+        "canvas": {
+          "art": {
+            "checked": "face.canvas",
+            "disabled": "face.canvas",
+            "hover": "face.canvas",
+            "normal": "face.canvas",
+            "pressed": "face.canvas"
+          },
+          "at": [244, 102, 8, 94],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "clock": {
+          "at": [11, 6, 194, 16],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "close": {
+          "art": {
+            "checked": "caption.close",
+            "checkedHover": "caption.close.hover",
+            "checkedPressed": "caption.close.down",
+            "disabled": "caption.close.disabled",
+            "hover": "caption.close.hover",
+            "normal": "caption.close",
+            "pressed": "caption.close.down"
+          },
+          "at": [5, 5, 16, 15],
+          "fromRight": true
+        },
+        "eq": {
+          "at": [124, 29, 106, 24],
+          "fromBottom": true
+        },
+        "equalizer": {
+          "at": [244, 94, 8, 178],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "file": {
+          "at": [5, 25, 36, 19]
+        },
+        "help": {
+          "at": [167, 25, 43, 19]
+        },
+        "location": {
+          "at": [145, 77, 12, 20],
+          "stretchX": true
+        },
+        "location.label": {
+          "at": [81, 77, 60, 20]
+        },
+        "logo": {
+          "art": {
+            "checked": "app.icon",
+            "disabled": "app.icon",
+            "hover": "app.icon",
+            "normal": "app.icon",
+            "pressed": "app.icon"
+          },
+          "at": [5, 3, 20, 20]
+        },
+        "maximize": {
+          "art": {
+            "checked": "caption.maximize",
+            "checkedHover": "caption.maximize.hover",
+            "checkedPressed": "caption.maximize.down",
+            "disabled": "caption.maximize.disabled",
+            "hover": "caption.maximize.hover",
+            "normal": "caption.maximize",
+            "pressed": "caption.maximize.down"
+          },
+          "at": [23, 5, 16, 15],
+          "fromRight": true
+        },
+        "minimize": {
+          "art": {
+            "checked": "caption.minimize",
+            "checkedHover": "caption.minimize.hover",
+            "checkedPressed": "caption.minimize.down",
+            "disabled": "caption.minimize.disabled",
+            "hover": "caption.minimize.hover",
+            "normal": "caption.minimize",
+            "pressed": "caption.minimize.down"
+          },
+          "at": [41, 5, 16, 15],
+          "fromRight": true
+        },
+        "mute": {
+          "art": {
+            "checked": "key.mute",
+            "checkedHover": "key.mute.hover",
+            "checkedPressed": "key.mute.down",
+            "disabled": "key.mute.disabled",
+            "hover": "key.mute.hover",
+            "normal": "key.mute",
+            "pressed": "key.mute.down"
+          },
+          "at": [133, 66, 22, 22],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "next": {
+          "art": {
+            "checked": "key.next",
+            "checkedHover": "key.next.hover",
+            "checkedPressed": "key.next.down",
+            "disabled": "key.next.disabled",
+            "hover": "key.next.hover",
+            "normal": "key.next",
+            "pressed": "key.next.down"
+          },
+          "at": [146, 51, 24, 16]
+        },
+        "open": {
+          "art": {
+            "checked": "key.open",
+            "checkedHover": "key.open.hover",
+            "checkedPressed": "key.open.down",
+            "disabled": "key.open.disabled",
+            "hover": "key.open.hover",
+            "normal": "key.open",
+            "pressed": "key.open.down"
+          },
+          "at": [13, 76, 22, 22]
+        },
+        "pause": {
+          "art": {
+            "checked": "key.pause",
+            "checkedHover": "key.pause.hover",
+            "checkedPressed": "key.pause.down",
+            "disabled": "key.pause.disabled",
+            "hover": "key.pause.hover",
+            "normal": "key.pause",
+            "pressed": "key.pause.down"
+          },
+          "at": [48, 48, 22, 22]
+        },
+        "play": {
+          "art": {
+            "checked": "key.play",
+            "checkedHover": "key.play.hover",
+            "checkedPressed": "key.play.down",
+            "disabled": "key.play.disabled",
+            "hover": "key.play.hover",
+            "normal": "key.play",
+            "pressed": "key.play.down"
+          },
+          "at": [18, 48, 22, 22]
+        },
+        "play.menu": {
+          "at": [82, 25, 39, 19]
+        },
+        "playlist": {
+          "at": [8, 102, 226, 94],
+          "stretchY": true
+        },
+        "prev": {
+          "art": {
+            "checked": "key.prev",
+            "checkedHover": "key.prev.hover",
+            "checkedPressed": "key.prev.down",
+            "disabled": "key.prev.disabled",
+            "hover": "key.prev.hover",
+            "normal": "key.prev",
+            "pressed": "key.prev.down"
+          },
+          "at": [114, 51, 24, 16]
+        },
+        "queue": {
+          "at": [12, 29, 106, 24],
+          "fromBottom": true
+        },
+        "resize": {
+          "at": [0, 0, 14, 14],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "seek": {
+          "at": [185, 51, 75, 14],
+          "stretchX": true
+        },
+        "settings": {
+          "art": {
+            "checked": "key.info",
+            "checkedHover": "key.info.hover",
+            "checkedPressed": "key.info.down",
+            "disabled": "key.info.disabled",
+            "hover": "key.info.hover",
+            "normal": "key.info",
+            "pressed": "key.info.down"
+          },
+          "at": [5, 48, 22, 22],
+          "fromRight": true
+        },
+        "skins": {
+          "at": [348, 29, 106, 24],
+          "fromBottom": true
+        },
+        "status": {
+          "at": [11, 6, 210, 16],
+          "fromBottom": true,
+          "stretchX": true
+        },
+        "stop": {
+          "art": {
+            "checked": "key.stop",
+            "checkedHover": "key.stop.hover",
+            "checkedPressed": "key.stop.down",
+            "disabled": "key.stop.disabled",
+            "hover": "key.stop.hover",
+            "normal": "key.stop",
+            "pressed": "key.stop.down"
+          },
+          "at": [78, 48, 22, 22]
+        },
+        "title": {
+          "at": [30, 4, 85, 17],
+          "stretchX": true
+        },
+        "tools": {
+          "at": [121, 25, 46, 19]
+        },
+        "view": {
+          "at": [41, 25, 41, 19]
+        },
+        "visual": {
+          "art": {
+            "checked": "key.visual",
+            "checkedHover": "key.visual.hover",
+            "checkedPressed": "key.visual.down",
+            "disabled": "key.visual.disabled",
+            "hover": "key.visual.hover",
+            "normal": "key.visual",
+            "pressed": "key.visual.down"
+          },
+          "at": [34, 48, 22, 22],
+          "fromRight": true
+        },
+        "volume": {
+          "at": [8, 70, 118, 14],
+          "fromBottom": true,
+          "fromRight": true
+        }
+      }
+    },
+    "console.playlist": {
+      "art": "face.playlist",
+      "size": [226, 300],
+      "slots": {
+        "add": {
+          "at": [7, 4, 61, 22],
+          "fromBottom": true
+        },
+        "header": {
+          "at": [7, 5, 7, 22],
+          "stretchX": true
+        },
+        "hide": {
+          "at": [7, 4, 61, 22],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "list": {
+          "at": [4, 32, 4, 30],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "remove": {
+          "at": [72, 4, 73, 22],
+          "fromBottom": true
+        },
+        "rows": {
+          "at": [6, 34, 18, 32],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "scroll": {
+          "at": [5, 34, 12, 32],
+          "fromRight": true,
+          "stretchY": true
+        }
+      }
+    }
+  },
+  "lineage": "media-player-music",
+  "metrics": {
+    "menuItemH": 21
+  },
+  "parts": {},
+  "sheets": {
+    "art": {
+      "1x": "art/art.png",
+      "2x": "art/art@2x.png"
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "app.icon": {
+      "at": [312, 1004, 20, 20],
+      "sheet": "art"
+    },
+    "caption.close": {
+      "at": [542, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.close.disabled": {
+      "at": [560, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.close.down": {
+      "at": [578, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.close.hover": {
+      "at": [596, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.maximize": {
+      "at": [614, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.maximize.disabled": {
+      "at": [632, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.maximize.down": {
+      "at": [650, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.maximize.hover": {
+      "at": [668, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.minimize": {
+      "at": [686, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.minimize.disabled": {
+      "at": [704, 1004, 16, 15],
+      "sheet": "art"
+    },
+    "caption.minimize.down": {
+      "at": [0, 1028, 16, 15],
+      "sheet": "art"
+    },
+    "caption.minimize.hover": {
+      "at": [18, 1028, 16, 15],
+      "sheet": "art"
+    },
+    "face.canvas": {
+      "at": [0, 522, 354, 300],
+      "sheet": "art",
+      "slice": [4, 4, 4, 4]
+    },
+    "face.equalizer": {
+      "at": [0, 824, 354, 178],
+      "sheet": "art",
+      "slice": [30, 4, 25, 4]
+    },
+    "face.main": {
+      "at": [0, 0, 720, 520],
+      "sheet": "art",
+      "slice": [100, 8, 94, 8]
+    },
+    "face.playlist": {
+      "at": [356, 522, 226, 300],
+      "sheet": "art",
+      "slice": [34, 4, 30, 4]
+    },
+    "key.info": {
+      "at": [356, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.info.disabled": {
+      "at": [380, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.info.down": {
+      "at": [404, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.info.hover": {
+      "at": [428, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.mute": {
+      "at": [452, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.mute.disabled": {
+      "at": [476, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.mute.down": {
+      "at": [500, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.mute.hover": {
+      "at": [524, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.next": {
+      "at": [334, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.next.disabled": {
+      "at": [360, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.next.down": {
+      "at": [386, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.next.hover": {
+      "at": [412, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.open": {
+      "at": [548, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.open.disabled": {
+      "at": [572, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.open.down": {
+      "at": [596, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.open.hover": {
+      "at": [620, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.pause": {
+      "at": [644, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.pause.disabled": {
+      "at": [668, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.pause.down": {
+      "at": [692, 824, 22, 22],
+      "sheet": "art"
+    },
+    "key.pause.hover": {
+      "at": [0, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.play": {
+      "at": [24, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.play.disabled": {
+      "at": [48, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.play.down": {
+      "at": [72, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.play.hover": {
+      "at": [96, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.prev": {
+      "at": [438, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.prev.disabled": {
+      "at": [464, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.prev.down": {
+      "at": [490, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.prev.hover": {
+      "at": [516, 1004, 24, 16],
+      "sheet": "art"
+    },
+    "key.stop": {
+      "at": [120, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.stop.disabled": {
+      "at": [144, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.stop.down": {
+      "at": [168, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.stop.hover": {
+      "at": [192, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.visual": {
+      "at": [216, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.visual.disabled": {
+      "at": [240, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.visual.down": {
+      "at": [264, 1004, 22, 22],
+      "sheet": "art"
+    },
+    "key.visual.hover": {
+      "at": [288, 1004, 22, 22],
+      "sheet": "art"
+    }
+  },
+  "summary": "A warm grey console with a slate caption band, soft keys in a recessed tray, light panels, a dark playlist and a green status strip.",
+  "text": {
+    "player.current": {
+      "color": "#8FF0B4"
+    },
+    "player.info": {
+      "color": "#46D28A",
+      "size": 10
+    },
+    "player.row": {
+      "color": "#E4E6E0",
+      "size": 11
+    },
+    "player.selected": {
+      "color": "#2C6A72"
+    },
+    "player.selectedText": {
+      "color": "#FFFFFF"
+    },
+    "player.text": {
+      "color": "#1C2229",
+      "size": 11
+    }
+  },
+  "window": {
+    "layout": ":"
+  },
+  "year": 2026
+}

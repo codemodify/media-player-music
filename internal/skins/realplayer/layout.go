@@ -1,8 +1,8 @@
-// Package realplayer names the application's classic RealPlayer layouts.
+// Package realplayer names the layouts of the console skin (internal/skins/plans).
 package realplayer
 
 const (
-	LayoutMain      = "realplayer.main"
-	LayoutPlaylist  = "realplayer.playlist"
-	LayoutEqualizer = "realplayer.equalizer"
+	LayoutMain      = "console.main"
+	LayoutPlaylist  = "console.playlist"
+	LayoutEqualizer = "console.equalizer"
 )

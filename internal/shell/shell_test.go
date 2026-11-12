@@ -304,7 +304,7 @@ func TestSinglePreferenceAndScreenshotIsolation(t *testing.T) {
 		t.Fatal("screenshot run read the saved preference")
 	}
 	data, err := os.ReadFile(players.SettingsPath())
-	if err != nil || string(data) != "{\n  \"skin\": \"winamp-silver\"\n}\n" {
+	if err != nil || string(data) != "{\n  \"skin\": \"silver\"\n}\n" {
 		t.Fatalf("preference is not one skin choice: %s, %v", data, err)
 	}
 }

@@ -22,8 +22,8 @@ type face uint8
 
 const (
 	faceWidgets face = iota // generic paint fallback for a helper without a panel
-	faceClassic             // "winamp"
-	faceSilver              // "winamp-silver"
+	faceClassic             // "slate" and the redrawn panel skins
+	faceSilver              // "silver"
 )
 
 // The layouts a panel skin states for the three windows, and the frame role

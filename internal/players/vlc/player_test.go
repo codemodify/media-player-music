@@ -12,8 +12,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/players"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
-	vlcsource "github.com/codemodify/media-player-music/internal/skins/sources/vlc"
 	"goframework.io/desktop-ui"
+	"goframework.io/desktop-ui-skingen"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/a11y"
 	"goframework.io/desktop-ui/platform"
@@ -25,7 +25,7 @@ import (
 func open(t *testing.T, scale float32) (*ui.Application, *Player) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	plan := plans.VLC()
+	plan := plans.Utility()
 	plan.Name = "vlc-private-ui-probe"
 	dir := t.TempDir()
 	if err := plans.Write(dir, plan); err != nil {
@@ -225,24 +225,15 @@ func TestVLCActualClassicToolbarPaletteAndCaptures(t *testing.T) {
 			if image == nil {
 				t.Fatal("classic VLC cannot capture its painted UI")
 			}
-			// The source16x16 toolbar images must remain palette-sharp in
-			// actual rendering, including fractional display scaling.
+			// The 16 × 16 toolbar icons are pixel art: in actual rendering,
+			// including fractional display scaling, they must show only their
+			// own inks and the toolbar under them, never an interpolated mix.
 			for _, item := range []struct{ button, icon string }{{"open", "eject"}, {"play", "play"}, {"stop", "stop"}, {"prev", "prev"}, {"next", "next"}} {
-				original, err := vlcsource.Picture(item.icon)
-				if err != nil {
-					t.Fatal(err)
-				}
-				palette := map[color.NRGBA]bool{{R: 212, G: 208, B: 200, A: 255}: true}
-				for y := 0; y < 16; y++ {
-					for x := 0; x < 16; x++ {
-						c := color.NRGBAModel.Convert(original.At(x, y)).(color.NRGBA)
-						if c.A != 0 {
-							palette[c] = true
-						}
-					}
-				}
-				c := p.body.buttons[item.button]
-				o := widget.DeviceOrigin(c)
+				palette := iconInks(t, item.icon)
+				c0 := p.body.buttons[item.button]
+				o0 := widget.DeviceOrigin(c0)
+				palette[image.NRGBAAt(int(o0.X+1), int(o0.Y+1))] = true // the toolbar behind the icon
+				c, o := c0, o0
 				size := 16 * scale
 				r := paint2d.XYWH(o.X+(c.Bounds().Dx()-size)/2, o.Y+(c.Bounds().Dy()-size)/2, size, size)
 				for y := int(r.Min.Y + .5); y < int(r.Max.Y); y++ {
@@ -336,4 +327,34 @@ func TestVLCSecondarySliderPressOpensContextWithoutEditing(t *testing.T) {
 			}
 		})
 	}
+}
+
+// iconInks are the colours the Utility skin's icon of that name is drawn in.
+func iconInks(t *testing.T, name string) map[color.NRGBA]bool {
+	t.Helper()
+	inks := map[color.NRGBA]bool{}
+	for _, sh := range plans.Utility().Sheets {
+		for _, c := range sh.Cells {
+			if c.Name != "icon."+name {
+				continue
+			}
+			if !sh.Pixelated {
+				t.Fatalf("%s is not on a pixelated sheet", c.Name)
+			}
+			img := skingen.Render(sh, 1)
+			for y := c.Y; y < c.Y+c.H; y++ {
+				for x := c.X; x < c.X+c.W; x++ {
+					if got := img.NRGBAAt(x, y); got.A != 0 {
+						if got.A != 255 {
+							t.Fatalf("%s has a partly covered pixel at %d,%d", c.Name, x-c.X, y-c.Y)
+						}
+						inks[got] = true
+					}
+				}
+			}
+			return inks
+		}
+	}
+	t.Fatalf("no icon.%s", name)
+	return nil
 }

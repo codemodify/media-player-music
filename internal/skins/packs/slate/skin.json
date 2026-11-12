@@ -1,0 +1,1305 @@
+{
+  "base": "win95",
+  "colors": {
+    "focus": "#00e000"
+  },
+  "family": "dark",
+  "label": "Slate",
+  "layouts": {
+    "panel.equaliser": {
+      "art": "eq.face",
+      "size": [273, 101],
+      "slots": {
+        "auto": {
+          "art": {
+            "checked": "key.auto.on",
+            "checkedPressed": "key.auto.on.down",
+            "normal": "key.auto",
+            "pressed": "key.auto.down"
+          },
+          "at": [39, 4, 32, 12]
+        },
+        "band.0": {
+          "at": [77, 24, 14, 63]
+        },
+        "band.1": {
+          "at": [95, 24, 14, 63]
+        },
+        "band.2": {
+          "at": [113, 24, 14, 63]
+        },
+        "band.3": {
+          "at": [131, 24, 14, 63]
+        },
+        "band.4": {
+          "at": [149, 24, 14, 63]
+        },
+        "band.5": {
+          "at": [167, 24, 14, 63]
+        },
+        "band.6": {
+          "at": [185, 24, 14, 63]
+        },
+        "band.7": {
+          "at": [203, 24, 14, 63]
+        },
+        "band.8": {
+          "at": [221, 24, 14, 63]
+        },
+        "band.9": {
+          "at": [239, 24, 14, 63]
+        },
+        "graph": {
+          "at": [85, 2, 113, 19]
+        },
+        "on": {
+          "art": {
+            "checked": "key.on.on",
+            "checkedPressed": "key.on.on.down",
+            "normal": "key.on",
+            "pressed": "key.on.down"
+          },
+          "at": [13, 4, 26, 12]
+        },
+        "preamp": {
+          "at": [20, 24, 14, 63]
+        },
+        "presets": {
+          "art": {
+            "checked": "key.presets",
+            "checkedPressed": "key.presets.down",
+            "normal": "key.presets",
+            "pressed": "key.presets.down"
+          },
+          "at": [216, 4, 44, 12]
+        }
+      }
+    },
+    "panel.playlist": {
+      "art": "list.face",
+      "size": [273, 217],
+      "slots": {
+        "add": {
+          "art": {
+            "checked": "key.add",
+            "checkedPressed": "key.add.down",
+            "normal": "key.add",
+            "pressed": "key.add.down"
+          },
+          "at": [13, 11, 25, 18],
+          "fromBottom": true
+        },
+        "clock": {
+          "at": [52, 7, 39, 10],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "info": {
+          "at": [52, 19, 92, 11],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "list": {
+          "at": [11, 5, 6, 37],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "mini.0": {
+          "art": {
+            "checked": "mini.prev",
+            "checkedPressed": "mini.prev.down",
+            "normal": "mini.prev",
+            "pressed": "mini.prev.down"
+          },
+          "at": [136, 8, 8, 8],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "mini.1": {
+          "art": {
+            "checked": "mini.play",
+            "checkedPressed": "mini.play.down",
+            "normal": "mini.play",
+            "pressed": "mini.play.down"
+          },
+          "at": [128, 8, 8, 8],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "mini.2": {
+          "art": {
+            "checked": "mini.pause",
+            "checkedPressed": "mini.pause.down",
+            "normal": "mini.pause",
+            "pressed": "mini.pause.down"
+          },
+          "at": [120, 8, 8, 8],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "mini.3": {
+          "art": {
+            "checked": "mini.stop",
+            "checkedPressed": "mini.stop.down",
+            "normal": "mini.stop",
+            "pressed": "mini.stop.down"
+          },
+          "at": [112, 8, 8, 8],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "mini.4": {
+          "art": {
+            "checked": "mini.next",
+            "checkedPressed": "mini.next.down",
+            "normal": "mini.next",
+            "pressed": "mini.next.down"
+          },
+          "at": [104, 8, 8, 8],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "mini.5": {
+          "art": {
+            "checked": "mini.eject",
+            "checkedPressed": "mini.eject.down",
+            "normal": "mini.eject",
+            "pressed": "mini.eject.down"
+          },
+          "at": [95, 8, 9, 8],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "misc": {
+          "art": {
+            "checked": "key.misc",
+            "checkedPressed": "key.misc.down",
+            "normal": "key.misc",
+            "pressed": "key.misc.down"
+          },
+          "at": [100, 11, 25, 18],
+          "fromBottom": true
+        },
+        "opts": {
+          "art": {
+            "checked": "key.opts",
+            "checkedPressed": "key.opts.down",
+            "normal": "key.opts",
+            "pressed": "key.opts.down"
+          },
+          "at": [24, 11, 22, 18],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "rem": {
+          "art": {
+            "checked": "key.rem",
+            "checkedPressed": "key.rem.down",
+            "normal": "key.rem",
+            "pressed": "key.rem.down"
+          },
+          "at": [42, 11, 25, 18],
+          "fromBottom": true
+        },
+        "row": {
+          "at": [11, 5, 18, 15],
+          "stretchX": true
+        },
+        "rows": {
+          "at": [11, 5, 18, 37],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "scroll": {
+          "at": [6, 5, 9, 37],
+          "fromRight": true,
+          "stretchY": true
+        },
+        "scroll.arrows": {
+          "art": {
+            "normal": "list.arrows",
+            "pressed": "list.arrows"
+          },
+          "at": [6, 17, 9, 20],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "sel": {
+          "art": {
+            "checked": "key.sel",
+            "checkedPressed": "key.sel.down",
+            "normal": "key.sel",
+            "pressed": "key.sel.down"
+          },
+          "at": [71, 11, 25, 18],
+          "fromBottom": true
+        },
+        "well.clock": {
+          "art": {
+            "normal": "list.clock",
+            "pressed": "list.clock"
+          },
+          "at": [52, 7, 39, 10],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "well.info": {
+          "art": {
+            "normal": "list.info",
+            "pressed": "list.info"
+          },
+          "at": [52, 19, 92, 11],
+          "fromBottom": true,
+          "fromRight": true
+        },
+        "well.rows": {
+          "art": {
+            "normal": "list.rows",
+            "pressed": "list.rows"
+          },
+          "at": [10, 4, 17, 36],
+          "stretchX": true,
+          "stretchY": true
+        },
+        "well.scroll": {
+          "art": {
+            "normal": "list.scroll",
+            "pressed": "list.scroll"
+          },
+          "at": [5, 4, 11, 36],
+          "fromRight": true,
+          "stretchY": true
+        }
+      }
+    },
+    "panel.strip": {
+      "art": "main.face",
+      "size": [273, 101],
+      "slots": {
+        "analyser": {
+          "at": [23, 29, 76, 16]
+        },
+        "backdrop.display": {
+          "art": "backdrop.display",
+          "at": [8, 6, 95, 42]
+        },
+        "backdrop.freq": {
+          "art": "backdrop.freq",
+          "at": [155, 30, 10, 6]
+        },
+        "backdrop.labels": {
+          "art": "backdrop.labels",
+          "at": [104, 24, 164, 18]
+        },
+        "backdrop.rate": {
+          "art": "backdrop.rate",
+          "at": [110, 30, 15, 6]
+        },
+        "backdrop.title": {
+          "art": "backdrop.title",
+          "at": [110, 12, 152, 6]
+        },
+        "balance": {
+          "at": [176, 43, 38, 13]
+        },
+        "colon": {
+          "at": [70, 12, 3, 13]
+        },
+        "digit.0": {
+          "at": [47, 12, 9, 13]
+        },
+        "digit.1": {
+          "at": [59, 12, 9, 13]
+        },
+        "digit.2": {
+          "at": [77, 12, 9, 13]
+        },
+        "digit.3": {
+          "at": [89, 12, 9, 13]
+        },
+        "display": {
+          "at": [8, 6, 95, 42]
+        },
+        "eject": {
+          "art": {
+            "checked": "key.eject",
+            "checkedPressed": "key.eject.down",
+            "normal": "key.eject",
+            "pressed": "key.eject.down"
+          },
+          "at": [135, 75, 22, 16]
+        },
+        "eq": {
+          "art": {
+            "checked": "key.eq.on",
+            "checkedPressed": "key.eq.on.down",
+            "normal": "key.eq",
+            "pressed": "key.eq.down"
+          },
+          "at": [218, 44, 23, 12]
+        },
+        "freq": {
+          "at": [155, 30, 10, 6]
+        },
+        "mono": {
+          "at": [211, 28, 25, 10]
+        },
+        "next": {
+          "art": {
+            "checked": "key.next",
+            "checkedPressed": "key.next.down",
+            "normal": "key.next",
+            "pressed": "key.next.down"
+          },
+          "at": [107, 74, 22, 18]
+        },
+        "pause": {
+          "art": {
+            "checked": "key.pause",
+            "checkedPressed": "key.pause.down",
+            "normal": "key.pause",
+            "pressed": "key.pause.down"
+          },
+          "at": [61, 74, 23, 18]
+        },
+        "pl": {
+          "art": {
+            "checked": "key.pl.on",
+            "checkedPressed": "key.pl.on.down",
+            "normal": "key.pl",
+            "pressed": "key.pl.down"
+          },
+          "at": [241, 44, 23, 12]
+        },
+        "play": {
+          "art": {
+            "checked": "key.play",
+            "checkedPressed": "key.play.down",
+            "normal": "key.play",
+            "pressed": "key.play.down"
+          },
+          "at": [38, 74, 23, 18]
+        },
+        "prev": {
+          "art": {
+            "checked": "key.prev",
+            "checkedPressed": "key.prev.down",
+            "normal": "key.prev",
+            "pressed": "key.prev.down"
+          },
+          "at": [15, 74, 23, 18]
+        },
+        "rate": {
+          "at": [110, 30, 15, 6]
+        },
+        "repeat": {
+          "art": {
+            "checked": "key.repeat.on",
+            "checkedPressed": "key.repeat.on.down",
+            "normal": "key.repeat",
+            "pressed": "key.repeat.down"
+          },
+          "at": [209, 75, 28, 15]
+        },
+        "seek": {
+          "at": [15, 58, 248, 10]
+        },
+        "shuffle": {
+          "art": {
+            "checked": "key.shuffle.on",
+            "checkedPressed": "key.shuffle.on.down",
+            "normal": "key.shuffle",
+            "pressed": "key.shuffle.down"
+          },
+          "at": [163, 75, 47, 15]
+        },
+        "skin": {
+          "art": {
+            "checked": "key.skin",
+            "checkedPressed": "key.skin.down",
+            "normal": "key.skin",
+            "pressed": "key.skin.down"
+          },
+          "at": [9, 8, 8, 40]
+        },
+        "state": {
+          "at": [25, 14, 9, 9]
+        },
+        "stereo": {
+          "at": [237, 28, 30, 10]
+        },
+        "stop": {
+          "art": {
+            "checked": "key.stop",
+            "checkedPressed": "key.stop.down",
+            "normal": "key.stop",
+            "pressed": "key.stop.down"
+          },
+          "at": [84, 74, 23, 18]
+        },
+        "title": {
+          "at": [110, 12, 152, 6]
+        },
+        "volume": {
+          "at": [106, 43, 68, 13]
+        }
+      }
+    }
+  },
+  "lineage": "uitoolkit",
+  "metrics": {
+    "menuItemH": 20
+  },
+  "parts": {
+    "caption": {
+      "states": {
+        "inactive": "caption.inactive",
+        "normal": "caption.normal"
+      },
+      "text": "caption"
+    },
+    "caption.button": {
+      "states": {
+        "hover": "capbtn.hover",
+        "normal": "capbtn.normal",
+        "pressed": "capbtn.pressed"
+      },
+      "text": "capkey"
+    },
+    "caption.title": {
+      "states": {
+        "inactive": "caption.plate.inactive",
+        "normal": "caption.plate"
+      }
+    },
+    "focus": {
+      "states": {
+        "normal": "focus.ring"
+      }
+    },
+    "window": {
+      "states": {
+        "normal": "window.normal"
+      }
+    }
+  },
+  "sheets": {
+    "chrome": {
+      "1x": "art/chrome.png",
+      "2x": "art/chrome@2x.png",
+      "pixelated": false
+    },
+    "pixels": {
+      "1x": "art/pixels.png",
+      "2x": "art/pixels@2x.png",
+      "pixelated": true
+    }
+  },
+  "skin": 1,
+  "sprites": {
+    "backdrop.display": {
+      "at": [8, 6, 95, 42],
+      "sheet": "pixels"
+    },
+    "backdrop.freq": {
+      "at": [155, 30, 10, 6],
+      "sheet": "pixels"
+    },
+    "backdrop.labels": {
+      "at": [104, 24, 164, 18],
+      "sheet": "pixels"
+    },
+    "backdrop.rate": {
+      "at": [110, 30, 15, 6],
+      "sheet": "pixels"
+    },
+    "backdrop.title": {
+      "at": [110, 12, 152, 6],
+      "sheet": "pixels"
+    },
+    "capbtn.hover": {
+      "at": [181, 865, 9, 9],
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "capbtn.normal": {
+      "at": [170, 865, 9, 9],
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "capbtn.pressed": {
+      "at": [192, 865, 9, 9],
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "caption.inactive": {
+      "at": [76, 865, 64, 14],
+      "sheet": "chrome",
+      "slice": [0, 30, 0, 22]
+    },
+    "caption.normal": {
+      "at": [10, 865, 64, 14],
+      "sheet": "chrome",
+      "slice": [0, 30, 0, 22]
+    },
+    "caption.plate": {
+      "at": [142, 865, 12, 14],
+      "sheet": "chrome",
+      "slice": [0, 4, 0, 4]
+    },
+    "caption.plate.inactive": {
+      "at": [156, 865, 12, 14],
+      "sheet": "chrome",
+      "slice": [0, 4, 0, 4]
+    },
+    "eq.face": {
+      "at": [0, 103, 273, 101],
+      "sheet": "pixels"
+    },
+    "eq.thumb": {
+      "at": [47, 845, 11, 11],
+      "sheet": "chrome"
+    },
+    "eq.thumb.down": {
+      "at": [117, 845, 11, 11],
+      "sheet": "chrome"
+    },
+    "focus.ring": {
+      "at": [203, 865, 8, 8],
+      "middle": "none",
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "font.20": {
+      "at": [0, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2014": {
+      "at": [335, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.21": {
+      "at": [5, 837, 1, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.22": {
+      "at": [8, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.23": {
+      "at": [13, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.25": {
+      "at": [20, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.26": {
+      "at": [26, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.27": {
+      "at": [33, 837, 1, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.28": {
+      "at": [36, 837, 2, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.29": {
+      "at": [40, 837, 2, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2a": {
+      "at": [44, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2b": {
+      "at": [49, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2c": {
+      "at": [54, 837, 2, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2d": {
+      "at": [58, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2e": {
+      "at": [63, 837, 1, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.2f": {
+      "at": [66, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.30": {
+      "at": [71, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.31": {
+      "at": [77, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.32": {
+      "at": [82, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.33": {
+      "at": [88, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.34": {
+      "at": [94, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.35": {
+      "at": [100, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.36": {
+      "at": [106, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.37": {
+      "at": [112, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.38": {
+      "at": [118, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.39": {
+      "at": [124, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.3a": {
+      "at": [130, 837, 1, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.3b": {
+      "at": [133, 837, 2, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.3c": {
+      "at": [137, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.3d": {
+      "at": [142, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.3e": {
+      "at": [147, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.3f": {
+      "at": [152, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.41": {
+      "at": [158, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.42": {
+      "at": [164, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.43": {
+      "at": [170, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.44": {
+      "at": [176, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.45": {
+      "at": [182, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.46": {
+      "at": [188, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.47": {
+      "at": [194, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.48": {
+      "at": [200, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.49": {
+      "at": [206, 837, 3, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.4a": {
+      "at": [211, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.4b": {
+      "at": [217, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.4c": {
+      "at": [223, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.4d": {
+      "at": [229, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.4e": {
+      "at": [236, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.4f": {
+      "at": [242, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.50": {
+      "at": [248, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.51": {
+      "at": [254, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.52": {
+      "at": [260, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.53": {
+      "at": [266, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.54": {
+      "at": [272, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.55": {
+      "at": [279, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.56": {
+      "at": [285, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.57": {
+      "at": [292, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.58": {
+      "at": [299, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.59": {
+      "at": [305, 837, 5, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.5a": {
+      "at": [312, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.5b": {
+      "at": [318, 837, 2, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.5d": {
+      "at": [322, 837, 2, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.5f": {
+      "at": [326, 837, 4, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "font.b7": {
+      "at": [332, 837, 1, 6],
+      "sheet": "pixels",
+      "tint": true
+    },
+    "key.add": {
+      "at": [0, 647, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.add.down": {
+      "at": [27, 647, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.auto": {
+      "at": [0, 619, 32, 12],
+      "sheet": "pixels"
+    },
+    "key.auto.down": {
+      "at": [34, 619, 32, 12],
+      "sheet": "pixels"
+    },
+    "key.auto.on": {
+      "at": [68, 619, 32, 12],
+      "sheet": "pixels"
+    },
+    "key.auto.on.down": {
+      "at": [102, 619, 32, 12],
+      "sheet": "pixels"
+    },
+    "key.eject": {
+      "at": [0, 525, 22, 16],
+      "sheet": "chrome"
+    },
+    "key.eject.down": {
+      "at": [24, 525, 22, 16],
+      "sheet": "chrome"
+    },
+    "key.eq": {
+      "at": [0, 577, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.eq.down": {
+      "at": [25, 577, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.eq.on": {
+      "at": [50, 577, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.eq.on.down": {
+      "at": [75, 577, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.misc": {
+      "at": [0, 707, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.misc.down": {
+      "at": [27, 707, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.next": {
+      "at": [0, 505, 22, 18],
+      "sheet": "chrome"
+    },
+    "key.next.down": {
+      "at": [24, 505, 22, 18],
+      "sheet": "chrome"
+    },
+    "key.on": {
+      "at": [0, 605, 26, 12],
+      "sheet": "pixels"
+    },
+    "key.on.down": {
+      "at": [28, 605, 26, 12],
+      "sheet": "pixels"
+    },
+    "key.on.on": {
+      "at": [56, 605, 26, 12],
+      "sheet": "pixels"
+    },
+    "key.on.on.down": {
+      "at": [84, 605, 26, 12],
+      "sheet": "pixels"
+    },
+    "key.opts": {
+      "at": [0, 727, 22, 18],
+      "sheet": "pixels"
+    },
+    "key.opts.down": {
+      "at": [24, 727, 22, 18],
+      "sheet": "pixels"
+    },
+    "key.pause": {
+      "at": [0, 465, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.pause.down": {
+      "at": [25, 465, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.pl": {
+      "at": [0, 591, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.pl.down": {
+      "at": [25, 591, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.pl.on": {
+      "at": [50, 591, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.pl.on.down": {
+      "at": [75, 591, 23, 12],
+      "sheet": "pixels"
+    },
+    "key.play": {
+      "at": [0, 445, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.play.down": {
+      "at": [25, 445, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.presets": {
+      "at": [0, 633, 44, 12],
+      "sheet": "pixels"
+    },
+    "key.presets.down": {
+      "at": [46, 633, 44, 12],
+      "sheet": "pixels"
+    },
+    "key.prev": {
+      "at": [0, 425, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.prev.down": {
+      "at": [25, 425, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.rem": {
+      "at": [0, 667, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.rem.down": {
+      "at": [27, 667, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.repeat": {
+      "at": [0, 560, 28, 15],
+      "sheet": "pixels"
+    },
+    "key.repeat.down": {
+      "at": [30, 560, 28, 15],
+      "sheet": "pixels"
+    },
+    "key.repeat.on": {
+      "at": [60, 560, 28, 15],
+      "sheet": "pixels"
+    },
+    "key.repeat.on.down": {
+      "at": [90, 560, 28, 15],
+      "sheet": "pixels"
+    },
+    "key.sel": {
+      "at": [0, 687, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.sel.down": {
+      "at": [27, 687, 25, 18],
+      "sheet": "pixels"
+    },
+    "key.shuffle": {
+      "at": [0, 543, 47, 15],
+      "sheet": "pixels"
+    },
+    "key.shuffle.down": {
+      "at": [49, 543, 47, 15],
+      "sheet": "pixels"
+    },
+    "key.shuffle.on": {
+      "at": [98, 543, 47, 15],
+      "sheet": "pixels"
+    },
+    "key.shuffle.on.down": {
+      "at": [147, 543, 47, 15],
+      "sheet": "pixels"
+    },
+    "key.skin": {
+      "at": [0, 747, 8, 40],
+      "sheet": "pixels"
+    },
+    "key.skin.down": {
+      "at": [10, 747, 8, 40],
+      "sheet": "pixels"
+    },
+    "key.stop": {
+      "at": [0, 485, 23, 18],
+      "sheet": "chrome"
+    },
+    "key.stop.down": {
+      "at": [25, 485, 23, 18],
+      "sheet": "chrome"
+    },
+    "lamp.mono": {
+      "at": [0, 825, 25, 10],
+      "sheet": "pixels"
+    },
+    "lamp.stereo": {
+      "at": [27, 825, 30, 10],
+      "sheet": "pixels"
+    },
+    "led.-": {
+      "at": [110, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.0": {
+      "at": [0, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.1": {
+      "at": [11, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.2": {
+      "at": [22, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.3": {
+      "at": [33, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.4": {
+      "at": [44, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.5": {
+      "at": [55, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.6": {
+      "at": [66, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.7": {
+      "at": [77, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.8": {
+      "at": [88, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.9": {
+      "at": [99, 799, 9, 13],
+      "sheet": "pixels"
+    },
+    "led.colon": {
+      "at": [121, 799, 3, 13],
+      "sheet": "pixels"
+    },
+    "list.arrows": {
+      "at": [671, 206, 9, 20],
+      "sheet": "chrome"
+    },
+    "list.clock": {
+      "at": [630, 206, 39, 10],
+      "sheet": "chrome"
+    },
+    "list.face": {
+      "at": [0, 206, 273, 217],
+      "sheet": "chrome",
+      "slice": [6, 8, 36, 8]
+    },
+    "list.info": {
+      "at": [536, 206, 92, 11],
+      "sheet": "chrome"
+    },
+    "list.rows": {
+      "at": [275, 206, 246, 177],
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "list.scroll": {
+      "at": [523, 206, 11, 177],
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    },
+    "list.thumb": {
+      "at": [60, 845, 8, 18],
+      "sheet": "chrome"
+    },
+    "list.thumb.down": {
+      "at": [130, 845, 8, 18],
+      "sheet": "chrome"
+    },
+    "main.face": {
+      "at": [0, 0, 273, 101],
+      "sheet": "chrome"
+    },
+    "mini.eject": {
+      "at": [100, 789, 9, 8],
+      "sheet": "pixels"
+    },
+    "mini.eject.down": {
+      "at": [111, 789, 9, 8],
+      "sheet": "pixels"
+    },
+    "mini.next": {
+      "at": [80, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.next.down": {
+      "at": [90, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.pause": {
+      "at": [40, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.pause.down": {
+      "at": [50, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.play": {
+      "at": [20, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.play.down": {
+      "at": [30, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.prev": {
+      "at": [0, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.prev.down": {
+      "at": [10, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.stop": {
+      "at": [60, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "mini.stop.down": {
+      "at": [70, 789, 8, 8],
+      "sheet": "pixels"
+    },
+    "seek.thumb": {
+      "at": [16, 845, 29, 10],
+      "sheet": "chrome"
+    },
+    "seek.thumb.down": {
+      "at": [86, 845, 29, 10],
+      "sheet": "chrome"
+    },
+    "state.pause": {
+      "at": [11, 814, 9, 9],
+      "sheet": "pixels"
+    },
+    "state.play": {
+      "at": [0, 814, 9, 9],
+      "sheet": "pixels"
+    },
+    "state.stop": {
+      "at": [22, 814, 9, 9],
+      "sheet": "pixels"
+    },
+    "thumb": {
+      "at": [0, 845, 14, 11],
+      "sheet": "chrome"
+    },
+    "thumb.down": {
+      "at": [70, 845, 14, 11],
+      "sheet": "chrome"
+    },
+    "window.normal": {
+      "at": [0, 865, 8, 8],
+      "sheet": "chrome",
+      "slice": [2, 2, 2, 2]
+    }
+  },
+  "summary": "The compact player's base-skin look of the era: slate-blue chrome, gold grooves, a black display with green segments — a pixel panel the player lays its own keys on.",
+  "text": {
+    "capkey": {
+      "color": "#d4bd7b",
+      "disabled": "#5c5a50",
+      "hover": "#ffefa6",
+      "pressed": "#ffefa6"
+    },
+    "caption": {
+      "bold": true,
+      "case": "upper",
+      "color": "#f4f6fb",
+      "disabled": "#9aa0b8",
+      "size": 9
+    },
+    "caption.main": {
+      "bold": true,
+      "color": "#f4f6fb",
+      "disabled": "#9aa0b8",
+      "size": 9
+    },
+    "control": {
+      "color": "#101018",
+      "disabled": "#6c7082"
+    }
+  },
+  "window": {
+    "border": [0, 1, 1, 1],
+    "caption": 14,
+    "layout": ":minimize,close",
+    "variants": {
+      "panel.strip": {
+        "parts": {
+          "caption": {
+            "states": {
+              "inactive": "caption.inactive",
+              "normal": "caption.normal"
+            },
+            "text": "caption.main"
+          }
+        }
+      }
+    }
+  },
+  "year": 2026
+}
