@@ -1,7 +1,22 @@
 # media-player-music
 
-A Go desktop music player with one default layout and twenty-one optional skins.
-Audio plays in the player itself, on goframework's audio-playback (MP3, AAC,
+A Go music player in four programs: **media-player-musicd**, the daemon that
+owns the music (the queue, the track playing and where it is, the sound,
+the equaliser and ReplayGain, the library, what is kept between runs) and
+plays it; and three UIs that show it and drive it, each its own program:
+**media-player-music**, the desktop UI with one default layout and
+twenty-one optional skins; **media-player-music-tui**, a cmus-like terminal
+UI; and **media-player-music-wui**, a web UI (a remote control in a browser).
+A track chosen in one shows playing in all of them.
+
+The library holds the music of the folders you choose (your music folder
+at the first run), read with every container's tags (ID3, APE, Vorbis
+comments, MP4) and watched, so a file added, changed or removed shows at
+once; it is browsed by artist, album, genre and year, and searched. M3U,
+M3U8, PLS and CUE playlists open in every UI, and the queue saves as M3U8
+or PLS.
+
+Audio plays in the daemon, on goframework's audio-playback (MP3, AAC,
 FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF, AU: nothing to install), with
 ReplayGain (track gain by default, or album, or off; a preamp; the peak keeps
 it from clipping; a change is heard at once), read from ID3 (TXXX, RVA2), APE,
@@ -192,12 +207,19 @@ framework is in goframework's one ledger, `app-requests.md` in the workspace
 
 ## Build and run
 
-Playback needs nothing installed: the player decodes in its own process
-(goframework's audio-playback) and plays through the system's sound.
+Playback needs nothing installed: the daemon decodes in its own process
+(goframework's audio-playback) and plays through the system's sound. Start
+the daemon, then any of the UIs (until goframework's "ensure daemon"
+facility lands, a UI does not start the daemon itself: it says it cannot
+reach it, and keeps trying):
 
 ```bash
-go build .
-./media-player-music                         # restore the last session
+go build -o . ./cmd/... .
+./media-player-musicd &                      # the daemon: the user's socket and ws://127.0.0.1:50130/clients
+./media-player-music-tui                     # the terminal UI
+./media-player-music-wui                     # the web UI: prints a link good once, for ten minutes
+./media-player-music-wui open                # or opens a new one in the browser
+./media-player-music                         # the desktop UI: the daemon's queue and place
 ./media-player-music song.mp3 album.flac      # queue files and play the first
 ./media-player-music -skin default           # ordinary interface
 ./media-player-music -skin winamp            # classic panel windows
@@ -219,15 +241,30 @@ go build .
 ./media-player-music -skin default -shot /tmp/player-shots -at 1m37s
 ```
 
-The command accepts `./media-player-music [flags] file1.mp3 file2.flac`.
-With files it starts the first track; without files it restores the saved
-queue and position, stopped until Play. A first run opens an empty playlist.
-Use Ctrl+O, Eject, or Playlist → Add to choose music, or
-drag files and folders from a file manager onto the playlist.
-The public options are `-skin`, `-scale`, `-shot`, and `-at`. A screenshot run
-uses headless rendering and synthetic fixtures, writes a posed PNG for each
-open window, and plays nothing. `-at` is a Go duration and defaults to
-97 seconds.
+The command accepts `./media-player-music [flags] file1.mp3 album.cue`.
+With files (or playlists, or folders) it gives the daemon a new queue and
+plays its first track; without, it shows the daemon's queue and place
+(after a restart of the daemon, stopped until Play). Use Ctrl+O, Eject,
+or Playlist → Add to choose music or a playlist, or drag files and
+folders from a file manager onto the playlist; Ctrl+S saves the queue as
+a playlist. The options are `-skin`, `-scale`, `-shot`, `-at`, `-daemon`
+(another daemon's address: `unix://…` or `ws://…`) and `-token` (its
+WebSocket's token). A screenshot run uses headless rendering and
+synthetic fixtures, writes a posed PNG for each open window, needs no
+daemon and plays nothing. `-at` is a Go duration and defaults to 97
+seconds.
+
+The daemon keeps the queue, the track and its place, the volume, the
+equaliser and ReplayGain in `session.json`, and the library in
+`library.index`, in its state folder (`$XDG_STATE_HOME/media-player-music`
+on Linux and the BSDs); `media-player-musicd.json` in its config folder
+configures it (`listen`, `tokens`, `wui`), the environment's
+`MEDIA_PLAYER_MUSICD_*` overriding that. Only the user's own programs come
+in: through the socket in the user's runtime folder, and over the
+WebSocket with the token in `media-player-musicd.token` beside it. The
+web UI's page is the person's who opens its launch link (good once, for
+ten minutes, exchanged for a session); it reaches the daemon with that
+token, never the browser's cookie.
 
 The app embeds [logo.png](logo.png) for its window, taskbar and system-tray
 icons and replaces legacy Winamp logos in the adapted skin artwork. Every
@@ -257,8 +294,7 @@ taskbar policy. These limits are documented in the
 uitoolkit gap report's item 12 (in this repository's history: `uitoolkit-gaps.md`,
 and `goframework-gaps.md` as of 1da0430).
 
-The app remembers the ReplayGain settings, queue, selected track, playback offset, skin, panel
-visibility and window placement in
+The desktop UI remembers its skin, panel visibility and window placement in
 `$XDG_CONFIG_HOME/goframework-desktop-ui/media-player-music.json`. Default keeps its own
 size and position; Winamp skins share panel positions, playlist size and
 snap relationships. Headspace keeps its own position and fixed 760 × 394
@@ -272,9 +308,9 @@ playlist and equalizer drawers share the main window.
 Classic VLC, RealPlayer and Amarok each remember their own window size and
 position, with shared playlist/equalizer visibility.
 Positions restore where the desktop supports them. Missing
-files are skipped when restoring the queue. Without saved settings the app
-opens in Default, and legacy classic/silver skin preferences migrate to the
-current names. Screenshot runs neither restore nor save the live session.
+files are skipped when the daemon restores the queue. Without saved
+settings the app opens in Default. Screenshot runs neither restore nor
+save the live session.
 
 Every build includes all of desktop-ui's era theme engines (imported in
 [internal/players/toolkit.go](internal/players/toolkit.go)) and font
@@ -386,7 +422,7 @@ Space         play / pause     Z / B          previous / next
 V             stop             M              mute
 Left / Right  seek             Up / Down      volume
 S             shuffle          R              repeat: off → all → one
-Ctrl+O        open music files
+Ctrl+O        open music files or a playlist    Ctrl+S    save the queue as a playlist
 Ctrl+,        settings (ReplayGain)
 Ctrl+K        cycle Default and all optional skins
 Ctrl+Shift+K  toggle Default / last optional skin
@@ -403,6 +439,19 @@ The [skin catalogue](docs/faces.md#one-default-layout-twenty-one-skins) lists al
 command-line IDs.
 
 ## Tests
+
+`e2e` runs media-player-musicd as a program in folders of its own, its sound
+in memory (goframework's audiotest: nothing is heard), and drives it as
+two renderers at once, one on its socket and one on its WebSocket with
+its token: a queue played to its end, the levels and the equaliser seen by
+the other, the library read, browsed and searched, everything kept across a
+restart, a WebSocket without the token refused. `internal/service` tests
+the daemon's player on a fake engine (loads, seeks, the end of a track, an
+engine's error, the queue's edits, playlists and CUE sheets, what is kept);
+`internal/library` the library (tags of every container, browsing, search
+without case or accents, the index kept and only changed files read again,
+folders watched); `internal/playlist` the playlists (and a fuzz test of
+their readers); the TUI's and the WUI's packages their own.
 
 The UI tests open headless windows. Run them isolated from the desktop:
 
