@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; see "The daemon split" at the end)
+# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; see the last two sections)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -110,7 +110,7 @@ process on a fake engine.
 | `internal/library` | the library: folders read (only changed files' tags again) and watched (vfs-watch), browse, search (data-search's Parse; case and accents folded), the gzip index |
 | `internal/playlist` | M3U/M3U8 (#EXTINF), PLS, CUE read (Windows-1252 when not UTF-8, codecs-text-charsets); M3U8 and PLS written; fuzzed |
 | `internal/tags` | a file's tags and length from every container (codecs-container-spec's Open: ID3, APE, Vorbis comments, MP4, Matroska); `tags/cover` the ID3 front cover for the desktop UI |
-| `internal/link` | the Go renderers' connection: link.Start with the four states, the token for ws://, `Ensure` (the F1 spot) |
+| `internal/link` | the Go renderers' connection: link.Start with the four states, the token for ws://, `Ensure` and `Daemon` (R115's ensure: starting media-player-musicd, with Retry) |
 | `internal/model` | the model with no UI: Track, Playlist, Transport, commands, Equalizer; `internal/players` aliases its names for the faces |
 | `internal/playback` | the one engine, `Builtin`, on audio-playback, with ReplayGain; `Engine` is its contract, which tests fake |
 | `internal/players` | the faces' shared pieces (host, queue view, settings, skins list) and one package per face; `playertest` the test helpers |
@@ -140,31 +140,29 @@ TUI), terminal-ui and -widgets, vfs, vfs-source-disk (UserPlaces, Single,
 WriteFile, Write), vfs-statefile, vfs-watch, data-search (Parse only),
 codecs-text-charsets, audio-playback (with `/all`), audio-dsp,
 system-audio-spec (audiotest: tests and the daemon's `sound: memory`),
-codecs-container-spec, -id3, -apetag; desktop-ui and its widgets, skins,
+codecs-container-spec, -id3, -apetag, codecs-audio-ape (R101);
+app-plugin's client/ensure and ensure/userservice (R115); desktop-ui and its widgets, skins,
 skingen, rack, text-complex (tags), platform-all, themes-breeze/-luna/-win95,
 graphics-paint2d, -gpu-gles; system-dbus in tests and probes.
 
 **Could use, not yet:** media-session (F5: MPRIS, media keys; not built),
-the ensure-daemon facility (F1, being built), a pure-Go store with
+a pure-Go store with
 full-text search (F9; the library keeps its own gzip index meanwhile),
 vfs-trash (F3) for deleting from the library, logging in the UIs.
 
 ## Next steps, in order
 
-1. **F1 (ensure daemon)**: when the framework's facility lands, set
-   `link.Options.Ensure` in main.go (the GUI) and cmd/media-player-music-tui
-   (both have the spot, a `// F1` comment), and the WUI's server as the
-   calculator's does since R115 (a daemon starter, `/daemon`,
-   `Unreachable`). Until then a UI alone says it cannot reach the daemon.
-2. **A library browser in the desktop UI** (a window of its own, themed,
-   reachable from every face: artists, albums, tracks, search, folders):
-   the TUI and the WUI have one, the GUI not yet.
-3. **The owner's questions** (see the end): what closing the desktop UI
-   does to the music; a first run's folder.
-4. MPRIS and media keys (F5), gapless (F14), WMA/APE (R101).
-5. The adopted gaps: R114, R121, R122, R123 when the framework answers.
-6. Re-shoot the pictures; a user guide; start time and RSS; VMs on the six
-   systems; vet openbsd/netbsd.
+1. **The owner's questions** (see "The daemon split" and the last
+   section): what closing the desktop UI does to the music; a first run's
+   folder; F9; whether the desktop UI should manage the library's folders.
+2. A real first run on a desktop (the owner's: no UI on the host): the
+   GUI, TUI and WUI starting media-player-musicd through ensure, the user
+   service path; a browser run of the WUI's Retry.
+3. MPRIS and media keys (F5), gapless (F14), WMA (R101: stopped on its
+   sources, the owner's).
+4. The adopted gaps: R114, R121, R122, R123 when the framework answers.
+5. Re-shoot the pictures (the library window too); a user guide; start
+   time and RSS; VMs on the six systems.
 
 ## goframework round, 2026-11-11 (R66, R33, R34): 51cc616, 9d94e8f
 - internal/players/standard/body.go and internal/players/fancy/body.go
@@ -526,3 +524,69 @@ The skin art is not part of it (the owner: redrawn and renamed later).
      or ask in a first-run screen?
   3. F9's shape (a pure-Go store with full-text search) for a library past
      some 100 000 tracks: the in-memory index serves until then.
+
+## F1, APE and the GUI's library window, 2026-11-13 (overnight)
+- **ad01b8e, F1 adopted (ledger R115, app-plugin client/ensure)**: link's
+  `Options.Ensure` (bool) and `Options.Daemon`: on the default address
+  each UI calls ensure.Daemon before the first dial (the user's service
+  through userservice.Starter, else media-player-musicd next to the
+  program or on PATH, detached, its output in UserPlaces("media-player-music").Logs'
+  media-player-musicd.log; ensure's default lock, by the daemon's name, so
+  the GUI, TUI and WUI share one), and dials once it runs.
+  `link.Daemon{Starting, Err, Retry}`; `musicapi.DaemonName`. GUI: every
+  face shows "Starting media-player-musicd…" or why it could not be where
+  it shows errors (Model.Error), and internal/shell/daemon.go opens a small
+  window of the default look over the player with the reason, Retry
+  (focused) and Close (Escape). TUI: the line under the views, Ctrl+R
+  retries. WUI (cmd/media-player-music-wui/daemon.go): the calculator's
+  starter (at start, again when a page's connection cannot reach the
+  daemon, at most every 30 s), `server.Config.Starter`, GET /daemon for
+  the page, POST /daemon (its origin, behind the session) for the page's
+  Retry button beside the status chip. The page bundle was rebuilt by
+  web/build.sh (the old source rebuilt the committed bundle byte for byte
+  first). With `-daemon`/`--daemon`/a configured address nothing is started.
+- **9a597e0, APE (R101)**: codecs-audio-ape imported in internal/playback
+  (beside audio-playback/all) and internal/tags; ".ape" out of
+  `unsupported`, into `Playable` and `Formats`; the settings panel and the
+  README no longer say APE does not play; the README's Licence section
+  reproduces Monkey's Audio's 3-clause BSD notice (the module's
+  license-monkeys-audio). go.mod unchanged: as every suite app's, it names
+  no goframework module (go.work replaces each at v0.0.6). testdata: the
+  module's stereo-c1000..c5000.ape (testdata/readme).
+- **511aa6b, the library window** (internal/shell/library.go): "Library…" (Ctrl+B)
+  in every face's menu (Host.ContextMenu, which every face's menu key and
+  appearance menu opens, and the faces' own playlist/File/Tools menus
+  through `Host.LibraryItem`/`WithLibrary`); only with a daemon (the
+  screenshot fixture has none, so the popup matrix test's rows are as
+  before). A window of the default look: Artists | Albums | Genres |
+  Years (Ctrl+1..4), a search field (Ctrl+F or /; the daemon's Search),
+  three lists (groups, the group's albums, the tracks), Play (the tracks
+  listed in the queue's place, from the one chosen) and Add to queue
+  (Insert), a status line from the daemon's `player.library` state (now
+  passed to the GUI: `Shell.ShowLibrary`), listed again when the library
+  changes. Enter goes on to the next list or plays; Escape clears the
+  search, then closes. Calls on the UI thread with the shell's 5 s bound
+  (an Add 30 s). It does not manage the library's folders (the TUI and WUI
+  do): a question for the owner.
+- Tests (nothing starts a real daemon: ensure replaced): internal/link
+  TestEnsureStartsTheDaemonThenDials, TestNoEnsureStartsNothing,
+  TestEnsureOptions; internal/shell TestTheWindowSaysTheDaemonIsStartingOrWhyNot,
+  TestTheLibraryWindowBrowsesSearchesAndPlaysByKeys,
+  TestTheLibraryWindowsButtonsAndChanges, TestEveryFacesMenuOpensTheLibrary
+  (all 22 looks); internal/tui TestTheScreenSaysTheDaemonIsStartingOrWhyNot;
+  cmd/media-player-music-tui TestTheDaemonStartingTellsTheView; wui
+  TestStarter, server TestTheDaemonAway, TestNoStarter; internal/playback
+  TestBuiltinPlaysMonkeysAudio (each level into audiotest),
+  TestBuiltinSeeksMonkeysAudioAndReadsItsTags; internal/tags
+  TestMonkeysAudioTagsAndLength.
+- **Checked**: vet on linux, windows, darwin, freebsd; `go test -race`
+  of every package, one at a time, on 511aa6b's tree: all pass
+  (internal/shell 1568 s, internal/players/winamp 567 s, internal/skins
+  529 s); goframework's footprint.py --check passes. The library and
+  daemon windows were looked at as headless PNGs (scratchpad), not on a
+  display. Not run: any program for real, a sound device, a browser, the
+  VMs, ensure against a real service manager.
+- **For the owner** (not decided, overnight rule): should the desktop UI's
+  library window also add and remove the library's folders (a folder
+  chooser), as the TUI and WUI settings do? Recommended: yes, a "Folders…"
+  button opening the file chooser in folder mode.
