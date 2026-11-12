@@ -290,7 +290,7 @@ func (b *body) playbackMenu() {
 	b.menuAt(b.buttons["settings.playback"], []*widgets.MenuItem{widgets.Item("Play / pause", func() { b.p.Host.Command(players.CmdPlayPause) }), widgets.Item("Stop", func() { b.p.Host.Command(players.CmdStop) }), widgets.Sep(), widgets.CheckItem("Shuffle", t.Random, func() { b.p.Host.Command(players.CmdShuffle) }), widgets.Item("Repeat: "+t.Repeat.String(), func() { b.p.Host.Command(players.CmdRepeat) }), widgets.CheckItem("Playlist", b.p.Host.Model.PlaylistVisible, func() { b.p.ShowPlaylist(!b.p.Host.Model.PlaylistVisible) })})
 }
 func (b *body) aboutMenu() {
-	item := widgets.Item("Music Player · reference-inspired Fandom skin", nil)
+	item := widgets.Item("Music Player "+players.Version+" · reference-inspired Fandom skin", nil)
 	item.Disabled = true
 	b.menuAt(b.buttons["settings.about"], []*widgets.MenuItem{item})
 }

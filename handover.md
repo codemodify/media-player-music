@@ -32,9 +32,9 @@ external engines (mpv, VLC, MPlayer, mpg123) were removed on 2026-11-12 (the
 owner: "there is no backward compatibility, this is a new app"). `-shot DIR`
 paints posed screenshots headless with synthetic tracks and plays nothing.
 
-Until recently the app was built on the owner's uitoolkit
-(github.com/codemodify/uitoolkit). The uncommitted work moves it to
-goframework desktop-ui (see "where it stands").
+The app was built on the owner's uitoolkit
+(github.com/codemodify/uitoolkit) until 2026-11-09; it is on goframework's
+desktop-ui since (committed), and the uitoolkit notes below are history.
 
 ## The owner's rules (follow them)
 
@@ -190,7 +190,9 @@ b98836d), and the X11 preference dropped.
 - **backend.go and backend_test.go are gone**: `ui.New` takes the
   toolkit's own backend choice. README and docs/faces.md say how the
   panels behave on each kind of desktop now.
-- **R21 kept, one workaround** (internal/players/racked.go, `HeldSize`):
+- **R21 kept, one workaround** (since gone: R45, desktop-ui-rack 8bed9f8,
+  keeps a declared size while the group settles; `HeldSize` is no longer
+  in the code. What follows is how it stood) (internal/players/racked.go, `HeldSize`):
   Group keeps declared bonds and places while it settles but adopts each
   window's size from the desktop, so a late first configure undid the
   restored playlist size (winamp's TestPlaylistStartupResize…). Each face
@@ -325,7 +327,8 @@ The owner approved adopting R36's audio half. What changed:
 - **The default**: `NormalizeAudioBackend("")` and unknown ids give
   "builtin" (was mpv); a saved choice of mpv, VLC, MPlayer or mpg123 is
   kept. `-audio-backend builtin`. Settings' window is 550 high (min 520)
-  for five rows. **For the owner:** new installs play in-process; the
+  for five rows. (Since 2026-11-12 the external engines are gone: the
+  built-in engine is the only one.) **For the owner, then:** new installs play in-process; the
   external engines remain for formats the framework lacks (WMA, APE,
   Musepack, WavPack...).
 - **ID3 for the library and now-playing** (`internal/tags`): files added
@@ -562,3 +565,11 @@ test." What changed:
   "track"}` beside the skin, and the test wants the skin alone. Left to
   that work (is track, the default, meant to be written?). goframework's
   footprint.py --check passes (no program changed).
+
+## the cheap sweep, 2026-11-12 (release-gaps.md)
+- TestSinglePreferenceAndScreenshotIsolation passes again. The file's convention decides: a default is never written (every field is omitempty/omitzero; ReplayGain's doc says its zero value is the default, and TestSettingsReplayGainDefaultsToTrack wants no "replaygain" for none chosen). LoadSettings normalised the mode to "track", and the shell's next Save wrote it back. Fixed in the code, not the test: `Settings.Save` writes track gain as no mode (`ReplayGain.saved`); off, album and a preamp are still written. TestSettingsReplayGainDefaultsToTrack now also saves what it loaded and finds no "replaygain".
+- Settings are written by vfs-source-disk's WriteFile (temporary file, synced, renamed, folder synced, 0600) in place of a temp+rename with no fsync. Not on vfs-statefile's debounced Saver: the shell saves at its own moments, and moving it is the daemon split's work.
+- Version 0.0.1: `players.Version` (a var, ldflags-ready), `-version`, and the Fandom skin's About line. go.mod untouched (x/image stays until the probes drop it).
+- This file's lines on uitoolkit ("the uncommitted work"), `HeldSize` (gone with R45) and the external engines corrected.
+- Checked: vet on linux, windows, darwin, freebsd; `go test -race` of internal/players, internal/players/fandom and internal/shell (370 s), one at a time, all pass but one.
+- **Not this change's: TestSkinMenuOffersTheSameChoicesOnEveryPopupBackend hangs** (killed at 4 and 40 minutes) at HEAD f9e1f15 too, with this change stashed. Its goroutine is runnable in graphics-paint2d's raster (RectCoverage under CPUDevice.fillAxisAlignedRect, from openAtScale at shell_test.go:36, the itunes subtest at 1x); paint2d's fills changed on 2026-11-11 evening (7ce99e6 "a run at a time", f179ea8 "an upright rectangle's..."). For the framework session to look at; the rest of internal/shell passes with `-skip` of it.

@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+// Version is media-player-music's: what -version prints and an About
+// shows. A release may set it with -ldflags
+// "-X github.com/codemodify/media-player-music/internal/players.Version=...".
+var Version = "0.0.1"
+
 // Track is one media file, or an invented screenshot fixture when Path is empty.
 type Track struct {
 	Path   string

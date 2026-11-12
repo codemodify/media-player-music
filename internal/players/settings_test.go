@@ -62,6 +62,13 @@ func TestSettingsReplayGainDefaultsToTrack(t *testing.T) {
 	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainTrack}) {
 		t.Fatalf("with none saved: %+v, want track gain", got)
 	}
+	// what was loaded, saved again (the shell does), still holds no default
+	if err := LoadSettings().Save(); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(SettingsPath()); err != nil || strings.Contains(string(data), "replaygain") {
+		t.Fatalf("the loaded default was written back: %s, %v", data, err)
+	}
 	if err := (Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff}}).Save(); err != nil {
 		t.Fatal(err)
 	}

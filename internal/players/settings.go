@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"goframework.io/desktop-ui/style"
+	"goframework.io/vfs"
+	disk "goframework.io/vfs-source-disk"
 )
 
 // Settings remembers the appearance, the ReplayGain settings and the desktop
@@ -139,26 +141,28 @@ func LoadSettings() Settings {
 	return saved
 }
 
+// Save writes the settings whole or not at all (vfs-source-disk's
+// WriteFile: a temporary file beside them, synced, renamed over them, the
+// folder synced), private to the user. A default is not written, as
+// everywhere in the file: ReplayGain's track gain is saved as nothing, so
+// that a file holds only what the person chose.
 func (s Settings) Save() error {
 	path := SettingsPath()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
+	s.ReplayGain = s.ReplayGain.saved()
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
-	f, err := os.CreateTemp(filepath.Dir(path), ".media-player-music-*.tmp")
-	if err != nil {
-		return err
+	return disk.WriteFile(path, append(data, '\n'), vfs.Mode(0o600))
+}
+
+// saved is r as the file keeps it: the default mode, track gain, as none.
+func (r ReplayGain) saved() ReplayGain {
+	if r.Mode == ReplayGainTrack {
+		r.Mode = ""
 	}
-	defer os.Remove(f.Name())
-	if _, err := f.Write(append(data, '\n')); err != nil {
-		_ = f.Close()
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	return os.Rename(f.Name(), path)
+	return r
 }

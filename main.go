@@ -32,7 +32,12 @@ func run() error {
 	scale := flag.Float64("scale", 0, "display scale (0: desktop scale or $"+platform.EnvScale+")")
 	shot := flag.String("shot", "", "paint posed screenshots into this directory and exit")
 	at := flag.Duration("at", 97*time.Second, "playback position in screenshot mode")
+	version := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+	if *version {
+		fmt.Println("media-player-music", players.Version)
+		return nil
+	}
 	log.SetFlags(0)
 	log.SetPrefix("media-player-music: ")
 

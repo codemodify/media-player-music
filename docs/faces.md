@@ -1,5 +1,11 @@
 # The interface and skins
 
+> The links below to `goframework-gaps.md` point at a file retired on
+> 2026-11-09 (its last version is in this repository's history, before
+> c64f45b; "UIToolkit" there is the toolkit desktop-ui grew out of). What
+> the player needs from the framework now is in goframework's ledger,
+> `goframework.io/app-requests.md`.
+
 The player has one default interface and twenty-one optional skins. The default
 uses ordinary toolkit controls in a single window. Eleven Winamp skins use
 compact panels; Headspace, Xbox and Half Life 2 reproduce separate Windows
