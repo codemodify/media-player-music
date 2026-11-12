@@ -184,7 +184,7 @@ func (b *body) menu(kind string, from widget.Component) {
 			}
 		}), widgets.Item("Stop", func() { h.Command(players.CmdStop) }), widgets.Item("Previous track", func() { h.Command(players.CmdPrev) }), widgets.Item("Next track", func() { h.Command(players.CmdNext) }), widgets.Sep(), widgets.CheckItem("Shuffle", t.Random, func() { h.Command(players.CmdShuffle) }), widgets.Item("Repeat: "+t.Repeat.String(), func() { h.Command(players.CmdRepeat) })}
 	case "tools":
-		items = []*widgets.MenuItem{widgets.Item("Playback settings…", h.OpenSettings), widgets.Submenu("Appearance", h.SkinItems()...), widgets.Item("Equalizer presets…", b.eq.presetMenu)}
+		items = append(h.WithLibrary(), widgets.Item("Playback settings…", h.OpenSettings), widgets.Submenu("Appearance", h.SkinItems()...), widgets.Item("Equalizer presets…", b.eq.presetMenu))
 	case "help":
 		info := widgets.Item("Music Player · classic RealPlayer 8 appearance", nil)
 		info.Disabled = true

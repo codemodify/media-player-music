@@ -60,6 +60,8 @@ type Shell struct {
 	settingsWindow *ui.Window
 	settingsPanel  *players.SettingsPanel
 	note           daemonNote // starting the daemon (daemon.go)
+	library        musicapi.Library
+	libraryView    *libraryView // the library window (library.go)
 	closed         bool
 	fileWindow     *ui.Window
 	fileLoader     *fileLoader
@@ -108,6 +110,9 @@ func New(a *ui.Application, opts Options) (*Shell, error) {
 	s.Host.DropFiles = s.dropFiles
 	s.Host.ClearTracks, s.Host.SavePlaylistTo = s.clearQueue, s.savePlaylist
 	s.Host.ShowSettings = s.openSettings
+	if opts.Player != nil {
+		s.Host.ShowLibrary = s.openLibrary
+	}
 	if opts.Player != nil {
 		s.Host.Model.Live = true
 		s.Host.Model.Spectrum.Live = true
@@ -169,6 +174,7 @@ func (s *Shell) Close() {
 		s.settingsWindow = nil
 	}
 	s.closeDaemonNote()
+	s.closeLibrary()
 	if s.presentation != nil {
 		s.presentation.Close()
 	}
@@ -282,6 +288,9 @@ func (s *Shell) SetSkin(id string) error {
 	if s.note.window != nil && !s.note.window.Closed() {
 		s.note.window.SetOwner(next.MainWindow())
 	}
+	if w := s.LibraryWindow(); w != nil {
+		w.SetOwner(next.MainWindow())
+	}
 	s.Host.RememberSkin(skin)
 	if old != nil {
 		old.Close()
@@ -348,6 +357,10 @@ func (s *Shell) Keys(w *ui.Window, e widget.KeyEvent) bool {
 	if e.Mods.Ctrl() {
 		if e.Key == platform.KeyComma {
 			s.openSettings()
+			return true
+		}
+		if e.Key == platform.KeyB && s.Host.ShowLibrary != nil {
+			s.openLibrary()
 			return true
 		}
 		if e.Key == platform.KeyO {

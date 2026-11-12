@@ -209,10 +209,15 @@ framework is in goframework's one ledger, `app-requests.md` in the workspace
 ## Build and run
 
 Playback needs nothing installed: the daemon decodes in its own process
-(goframework's audio-playback) and plays through the system's sound. Start
-the daemon, then any of the UIs (until goframework's "ensure daemon"
-facility lands, a UI does not start the daemon itself: it says it cannot
-reach it, and keeps trying):
+(goframework's audio-playback) and plays through the system's sound. Each
+UI starts the daemon when it does not answer at its default address
+(goframework's ensure: the user's service when it is installed as one,
+else media-player-musicd next to the UI's program or on PATH, its output
+in the music's log folder, media-player-musicd.log), saying "Starting
+media-player-musicd…" meanwhile; when it cannot be started the UI says why,
+with Retry (the desktop UI in a small window over the player, the
+terminal UI under its views with Ctrl+R, the web UI's page beside its
+status). A UI given `-daemon` dials that address and starts nothing.
 
 ```bash
 go build -o . ./cmd/... .
@@ -355,6 +360,20 @@ go generate ./internal/skins
 
 ## Controls
 
+Open the **Library** from any look's menu ("Library…") or with **Ctrl+B**:
+a window of the default look listing the daemon's library by artist (an
+artist's albums beside it, and all its tracks), by album, genre or year,
+or what a search finds (words and "phrases"; `artist:`, `album:`,
+`genre:`, `title:`, `year:`). **Play** plays the tracks listed in place of
+the queue (from the track chosen), **Add to queue** adds the track chosen,
+or the tracks listed, at the queue's end. All of it by keys: Ctrl+1 to
+Ctrl+4 artists, albums, genres, years; Ctrl+F or / the search; in the
+lists the arrows, Page Up/Down, Home/End and a name's first letters
+choose, Enter goes on to the next list or plays a track, Insert adds to
+the queue; Tab moves between the search, the lists and the buttons;
+Escape clears the search, then closes the window. The library's folders
+are set in the terminal or web UI's settings.
+
 Open **Settings** from Default's gear button, a player context menu,
 or **Ctrl+,**. It says which formats play and sets ReplayGain:
 
@@ -424,7 +443,7 @@ V             stop             M              mute
 Left / Right  seek             Up / Down      volume
 S             shuffle          R              repeat: off → all → one
 Ctrl+O        open music files or a playlist    Ctrl+S    save the queue as a playlist
-Ctrl+,        settings (ReplayGain)
+Ctrl+,        settings (ReplayGain)    Ctrl+B    the library
 Ctrl+K        cycle Default and all optional skins
 Ctrl+Shift+K  toggle Default / last optional skin
 Ctrl+E        show/hide equaliser    Ctrl+L    show/hide playlist

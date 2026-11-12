@@ -84,6 +84,10 @@ type Host struct {
 	DeleteTrack  func()
 	SyncPlayback func()
 	ShowSettings func()
+	// ShowLibrary opens the library window (the daemon's library: browse,
+	// search, play, add to the queue); nil where there is none (the
+	// screenshots' fixture, a face on its own).
+	ShowLibrary func()
 	// ClearTracks empties the queue; SavePlaylistTo writes it as a
 	// playlist file (M3U8 or PLS by the name's extension). The shell's are
 	// the daemon's; nil, the model's own queue is cleared and nothing is
@@ -145,6 +149,30 @@ func (h *Host) SavePlaylist(path string) error {
 		return errors.New("this player saves no playlists")
 	}
 	return h.SavePlaylistTo(path)
+}
+
+// OpenLibrary opens the library window.
+func (h *Host) OpenLibrary() {
+	if h.ShowLibrary != nil {
+		h.ShowLibrary()
+	}
+}
+
+// LibraryItem is the menus' "Library…" (Ctrl+B), nil where there is no
+// library window: a face adds it beside its "Settings…".
+func (h *Host) LibraryItem() *widgets.MenuItem {
+	if h.ShowLibrary == nil {
+		return nil
+	}
+	return widgets.ItemAccel("Library…", "Ctrl+B", h.OpenLibrary)
+}
+
+// WithLibrary is items, then the library's item when there is one.
+func (h *Host) WithLibrary(items ...*widgets.MenuItem) []*widgets.MenuItem {
+	if library := h.LibraryItem(); library != nil {
+		return append(items, library)
+	}
+	return items
 }
 
 func (h *Host) OpenSettings() {
@@ -321,8 +349,14 @@ func (h *Host) SkinItems() []*widgets.MenuItem {
 
 func (h *Host) ContextMenu(from widget.Component, at paint2d.Point) {
 	items := h.SkinItems()
+	if h.ShowLibrary != nil || h.ShowSettings != nil {
+		items = append(items, widgets.Sep())
+	}
+	if library := h.LibraryItem(); library != nil {
+		items = append(items, library)
+	}
 	if h.ShowSettings != nil {
-		items = append(items, widgets.Sep(), widgets.ItemAccel("Settings…", "Ctrl+,", h.OpenSettings))
+		items = append(items, widgets.ItemAccel("Settings…", "Ctrl+,", h.OpenSettings))
 	}
 	if len(items) > 0 {
 		widgets.ShowContextMenu(from, at, items...)

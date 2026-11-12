@@ -127,6 +127,8 @@ type dialogBox struct {
 	content widget.Component
 	name    string
 	onClose func()
+	// keys, when given, has the keys the focused control left first.
+	keys func(widget.KeyEvent) bool
 }
 
 func newDialogBox(name string, content widget.Component, onClose func()) *dialogBox {
@@ -151,6 +153,9 @@ func (d *dialogBox) Paint(ctx *paint2d.Context) {
 func (d *dialogBox) Describe(n *a11y.Node) { n.Role, n.Name = a11y.RoleDialog, d.name }
 
 func (d *dialogBox) KeyPress(e widget.KeyEvent) bool {
+	if d.keys != nil && d.keys(e) {
+		return true
+	}
 	if e.Key == platform.KeyEscape && d.onClose != nil {
 		d.onClose()
 		return true

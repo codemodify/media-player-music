@@ -145,7 +145,7 @@ func (b *body) button(name, label, icon string, action func()) *widgets.Button {
 func (b *body) newMenu() *widgets.MenuBar {
 	p, h := b.p, b.p.Host
 	return widgets.NewMenuBar(
-		widgets.NewMenu("File", widgets.ItemAccel("Open music files…", "Ctrl+O", func() { h.OpenFiles(b, false) }), widgets.Item("Add music files…", func() { h.OpenFiles(b, true) }), widgets.Sep(), widgets.Item("Close to tray", p.Main.RequestClose)),
+		widgets.NewMenu("File", append(h.WithLibrary(widgets.ItemAccel("Open music files…", "Ctrl+O", func() { h.OpenFiles(b, false) }), widgets.Item("Add music files…", func() { h.OpenFiles(b, true) })), widgets.Sep(), widgets.Item("Close to tray", p.Main.RequestClose))...),
 		widgets.NewMenu("View", widgets.ItemAccel("Playlist", "Ctrl+L", func() { p.ShowPlaylist(!h.Model.PlaylistVisible) }), widgets.ItemAccel("Equalizer", "Ctrl+E", func() { p.ShowEqualiser(!h.Model.EqualizerVisible) })),
 		widgets.NewMenu("Settings", widgets.ItemAccel("Playback…", "Ctrl+,", h.OpenSettings), widgets.Item("Appearance…", func() {
 			h.ContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())))
@@ -279,7 +279,8 @@ func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 func (b *body) Drop(e widget.DropEvent) bool { return b.p.Host.AcceptFileDrop(e) }
 func (b *body) contextMenu(from widget.Component, at paint2d.Point) {
 	h, t := b.p.Host, b.p.Transport
-	items := []*widgets.MenuItem{widgets.Item("Add music files…", func() { h.OpenFiles(from, true) }), widgets.Item("Remove current track", h.RemoveTrack), widgets.Sep(), widgets.CheckItem("Shuffle", t.Random, func() { h.Command(players.CmdShuffle) }), widgets.Item("Repeat: "+t.Repeat.String(), func() { h.Command(players.CmdRepeat) }), widgets.Sep(), widgets.Item("Equalizer", func() { b.p.ShowEqualiser(!h.Model.EqualizerVisible) }), widgets.Item("Playlist", func() { b.p.ShowPlaylist(!h.Model.PlaylistVisible) }), widgets.Item("Settings…", h.OpenSettings)}
+	items := []*widgets.MenuItem{widgets.Item("Add music files…", func() { h.OpenFiles(from, true) }), widgets.Item("Remove current track", h.RemoveTrack), widgets.Sep(), widgets.CheckItem("Shuffle", t.Random, func() { h.Command(players.CmdShuffle) }), widgets.Item("Repeat: "+t.Repeat.String(), func() { h.Command(players.CmdRepeat) }), widgets.Sep(), widgets.Item("Equalizer", func() { b.p.ShowEqualiser(!h.Model.EqualizerVisible) }), widgets.Item("Playlist", func() { b.p.ShowPlaylist(!h.Model.PlaylistVisible) })}
+	items = append(h.WithLibrary(items...), widgets.Item("Settings…", h.OpenSettings))
 	if looks := h.SkinItems(); len(looks) > 0 {
 		items = append(items, widgets.Submenu("Appearance", looks...))
 	}

@@ -102,11 +102,14 @@ func run() error {
 		}
 		opts.Player = link.Start(ctx, link.Options{
 			Address: address, Name: "desktop", Version: players.Version, Token: given,
-			State:  func(state musicapi.State) { post(func(s *shell.Shell) { s.ShowState(state) }) },
-			Queue:  func(queue musicapi.Queue) { post(func(s *shell.Shell) { s.ShowQueue(queue) }) },
-			Now:    func(now musicapi.Now) { post(func(s *shell.Shell) { s.ShowNow(now) }) },
-			Status: func(text string, problem bool) { post(func(s *shell.Shell) { s.ShowLink(text, problem) }) },
-			Failed: func(err error) { post(func(s *shell.Shell) { s.ShowLink(err.Error(), true) }) },
+			State: func(state musicapi.State) { post(func(s *shell.Shell) { s.ShowState(state) }) },
+			Queue: func(queue musicapi.Queue) { post(func(s *shell.Shell) { s.ShowQueue(queue) }) },
+			Now:   func(now musicapi.Now) { post(func(s *shell.Shell) { s.ShowNow(now) }) },
+			// the library window's status, and its lists again when the
+			// library changed
+			Library: func(library musicapi.Library) { post(func(s *shell.Shell) { s.ShowLibrary(library) }) },
+			Status:  func(text string, problem bool) { post(func(s *shell.Shell) { s.ShowLink(text, problem) }) },
+			Failed:  func(err error) { post(func(s *shell.Shell) { s.ShowLink(err.Error(), true) }) },
 			// media-player-musicd started when it does not answer at the
 			// default address (goframework R115): the faces say "Starting
 			// media-player-musicd…", or why it could not be, with Retry

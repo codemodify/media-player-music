@@ -143,6 +143,9 @@ func (b *playlistPane) contextMenu(from widget.Component, at paint2d.Point) {
 	if skins := h.SkinItems(); len(skins) > 0 {
 		items = append(items, widgets.Sep(), widgets.Submenu("Appearance", skins...))
 	}
+	if library := h.LibraryItem(); library != nil {
+		items = append(items, library)
+	}
 	if h.ShowSettings != nil {
 		items = append(items, widgets.ItemAccel("Settings…", "Ctrl+,", h.OpenSettings))
 	}

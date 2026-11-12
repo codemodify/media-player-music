@@ -100,6 +100,9 @@ func (b *body) contextMenu(from widget.Component, at paint2d.Point) {
 	if appearances := h.SkinItems(); len(appearances) > 0 {
 		items = append(items, widgets.Sep(), widgets.Submenu("Appearance", appearances...))
 	}
+	if library := h.LibraryItem(); library != nil {
+		items = append(items, library)
+	}
 	if h.ShowSettings != nil {
 		items = append(items, widgets.ItemAccel("Settings…", "Ctrl+,", h.OpenSettings))
 	}

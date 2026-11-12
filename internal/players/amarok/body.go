@@ -390,7 +390,8 @@ func (b *body) contextMenu(from widget.Component) {
 	if from == nil {
 		from = b
 	}
-	widgets.ShowContextMenu(from, menuAt(from), widgets.Item("Open music files…", func() { b.p.Host.OpenFiles(from, false) }), widgets.Item("Add music files…", func() { b.p.Host.OpenFiles(from, true) }), widgets.Item("Remove the playing track", b.p.Host.RemoveTrack), widgets.Sep(), widgets.Item("Appearance…", func() { b.p.Host.ContextMenu(from, menuAt(from)) }), widgets.Item("Audio backend settings…", b.p.Host.OpenSettings))
+	items := b.p.Host.WithLibrary(widgets.Item("Open music files…", func() { b.p.Host.OpenFiles(from, false) }), widgets.Item("Add music files…", func() { b.p.Host.OpenFiles(from, true) }), widgets.Item("Remove the playing track", b.p.Host.RemoveTrack), widgets.Sep())
+	widgets.ShowContextMenu(from, menuAt(from), append(items, widgets.Item("Appearance…", func() { b.p.Host.ContextMenu(from, menuAt(from)) }), widgets.Item("Audio backend settings…", b.p.Host.OpenSettings))...)
 }
 func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(e) }
 func (b *body) MousePress(e widget.MouseEvent) bool {
