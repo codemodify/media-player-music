@@ -324,12 +324,12 @@ func TestPresetsAreTheModels(t *testing.T) {
 func TestUnsupportedFilesAreRefusedAndAFoldersAreSaid(t *testing.T) {
 	s, e, _ := start(t, Saved{})
 	ctx := context.Background()
-	paths := files(t, "song.wma", "album.ape", "song.mp3")
+	paths := files(t, "song.wma", "album.wv", "song.mp3")
 	if _, err := s.Add(ctx, musicapi.Add{Paths: paths[:1]}); err == nil || !strings.Contains(err.Error(), "song.wma: WMA files are not supported") || e.count(playback.OpLoad) != 0 {
 		t.Fatalf("an explicit WMA file: %v", err)
 	}
 	added, err := s.Add(ctx, musicapi.Add{Paths: []string{filepath.Dir(paths[0])}})
-	if err != nil || added.Tracks != 1 || !strings.Contains(added.Skipped, "2 files in formats the player does not play") || !strings.Contains(added.State.Error, "Monkey's Audio") {
+	if err != nil || added.Tracks != 1 || !strings.Contains(added.Skipped, "2 files in formats the player does not play") || !strings.Contains(added.State.Error, "WavPack") {
 		t.Fatalf("a folder's: %+v %v", added, err)
 	}
 }

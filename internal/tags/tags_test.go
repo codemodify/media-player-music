@@ -132,3 +132,25 @@ func TestWhatIsNotMusicGivesNothing(t *testing.T) {
 		t.Fatalf("%q, %v", info.Title, ok)
 	}
 }
+
+// A Monkey's Audio file (R101) gives its APE tag and its length to the
+// library.
+func TestMonkeysAudioTagsAndLength(t *testing.T) {
+	audio, err := os.ReadFile(filepath.Join("..", "playback", "testdata", "stereo-c3000.ape"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "song.ape")
+	tag := tagstest.APE([2]string{"Title", "Slow Ferry"}, [2]string{"Artist", "Kite & Tallow"}, [2]string{"Album", "Low Tide"},
+		[2]string{"Genre", "Ambient"}, [2]string{"Year", "2011"}, [2]string{"Track", "3/9"})
+	if err := os.WriteFile(path, append(audio, tag...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	info, ok := Read(path)
+	if !ok || info.Title != "Slow Ferry" || info.Artist != "Kite & Tallow" || info.Album != "Low Tide" || info.Genre != "Ambient" || info.Year != 2011 || info.Number != 3 {
+		t.Fatalf("%+v %v", info, ok)
+	}
+	if info.Length < 550*time.Millisecond || info.Length > 650*time.Millisecond {
+		t.Fatalf("the length: %v", info.Length)
+	}
+}

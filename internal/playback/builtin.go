@@ -17,6 +17,10 @@ import (
 	// LC, HE-AAC and HE-AAC v2 in M4A and MKV), FLAC, Ogg Vorbis and Opus,
 	// ALAC, WAV, AIFF, AU.
 	_ "goframework.io/audio-playback/all"
+	// Monkey's Audio (.ape, every level, 3.95 to 13.46), not in /all
+	// (goframework R101): a translation of Monkey's Audio's SDK under its
+	// 3-clause BSD licence, whose notice the README reproduces.
+	_ "goframework.io/codecs-audio-ape"
 	// ID3 tags (v1, v2.2 to 2.4) of MP3 and ADTS files in the stream's
 	// Tags: the now-playing title, artist and album, and ReplayGain's
 	// TXXX and RVA2 frames; and an MP3's APE tag (mp3gain's ReplayGain).
@@ -28,7 +32,7 @@ import (
 )
 
 // Formats are what the engine plays.
-const Formats = "MP3, AAC (M4A, .aac), FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF and AU"
+const Formats = "MP3, AAC (M4A, .aac), FLAC, Ogg Vorbis and Opus, ALAC, Monkey's Audio (APE), WAV, AIFF and AU"
 
 // BuiltinOptions make a built-in engine.
 type BuiltinOptions struct {
@@ -389,7 +393,7 @@ func UnsupportedMessage(path string) string {
 // unsupported are the formats a music library holds that the engine does
 // not play, by extension (goframework has no decoder for them).
 var unsupported = map[string]string{
-	".wma": "WMA", ".asf": "WMA", ".ape": "Monkey's Audio (APE)", ".mpc": "Musepack", ".mp+": "Musepack",
+	".wma": "WMA", ".asf": "WMA", ".mpc": "Musepack", ".mp+": "Musepack",
 	".wv": "WavPack", ".tta": "TTA", ".ac3": "AC-3", ".dts": "DTS", ".amr": "AMR", ".dsf": "DSD", ".dff": "DSD",
 	".m4p": "Protected AAC (M4P)", ".ra": "RealAudio", ".rm": "RealAudio", ".mid": "MIDI", ".midi": "MIDI",
 	".mod": "tracker module", ".xm": "tracker module", ".it": "tracker module", ".s3m": "tracker module",
@@ -409,7 +413,7 @@ func UnsupportedFormat(path string) (string, bool) {
 func Playable(path string) bool {
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".mp3", ".mp2", ".mp1", ".mpga", ".aac", ".m4a", ".m4b", ".mp4", ".m4v", ".mov", ".3gp",
-		".flac", ".ogg", ".oga", ".opus", ".wav", ".wave", ".aif", ".aiff", ".aifc", ".au", ".snd",
+		".flac", ".ogg", ".oga", ".opus", ".ape", ".wav", ".wave", ".aif", ".aiff", ".aifc", ".au", ".snd",
 		".mka", ".mkv", ".webm":
 		return true
 	}

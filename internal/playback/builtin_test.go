@@ -244,3 +244,87 @@ func TestBuiltinSeekReplaceAndStop(t *testing.T) {
 		}
 	})
 }
+
+// Monkey's Audio (goframework R101, codecs-audio-ape): a file of each
+// compression level (fast, normal, high, extra high, insane; 0.6 s of
+// 44.1 kHz stereo made by Monkey's Audio 13.46, the module's testdata)
+// plays to its end into the sound system, with its length, format,
+// positions and bands.
+func TestBuiltinPlaysMonkeysAudio(t *testing.T) {
+	for _, level := range []string{"1000", "2000", "3000", "4000", "5000"} {
+		t.Run("c"+level, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				b, system := builtinOn(t)
+				b.Apply(Command{Op: OpVolume, Volume: 1})
+				b.Apply(Command{Op: OpLoad, Generation: 1, Path: filepath.Join("testdata", "stereo-c"+level+".ape"), Epoch: 1})
+				updates := collect(t, b, 1, UpdateEnded, 10*time.Second)
+				if u, ok := find(updates, UpdateError); ok {
+					t.Fatalf("an error: %s", u.Error)
+				}
+				duration, ok := find(updates, UpdateDuration)
+				if !ok || duration.Duration < 550*time.Millisecond || duration.Duration > 650*time.Millisecond {
+					t.Fatalf("the length of a 0.6 s file: %+v", duration)
+				}
+				format, ok := find(updates, UpdateAudioFormat)
+				if !ok || format.Info.SampleRate != 44100 || format.Info.Channels != 2 {
+					t.Fatalf("the format: %+v", format)
+				}
+				positions, bands := 0, 0
+				var last time.Duration
+				for _, u := range updates {
+					switch u.Kind {
+					case UpdatePosition:
+						last = u.Position
+						positions++
+					case UpdateSpectrum:
+						for _, v := range u.Bands {
+							if v > 0 {
+								bands++
+							}
+						}
+					}
+				}
+				if positions < 3 || last < 300*time.Millisecond || bands == 0 {
+					t.Fatalf("%d positions to %v, %d bands lit", positions, last, bands)
+				}
+				if energy(t, system) == 0 {
+					t.Fatal("nothing was played into the sound system")
+				}
+			})
+		})
+	}
+}
+
+// An APE file seeks (by frame, then to the sample), and its APE tag is the
+// now-playing text.
+func TestBuiltinSeeksMonkeysAudioAndReadsItsTags(t *testing.T) {
+	audio, err := os.ReadFile(filepath.Join("testdata", "stereo-c2000.ape"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "tagged.ape")
+	tag := tagstest.APE([2]string{"Title", "Slow Ferry"}, [2]string{"Artist", "Kite & Tallow"}, [2]string{"Album", "Low Tide"})
+	if err := os.WriteFile(path, append(audio, tag...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	synctest.Test(t, func(t *testing.T) {
+		b, _ := builtinOn(t)
+		b.Apply(Command{Op: OpLoad, Generation: 2, Path: path, Epoch: 1})
+		updates := collect(t, b, 2, UpdateMetadata, 5*time.Second)
+		if meta, _ := find(updates, UpdateMetadata); meta.Info != (TrackInfo{Title: "Slow Ferry", Artist: "Kite & Tallow", Album: "Low Tide"}) {
+			t.Fatalf("metadata: %+v", meta.Info)
+		}
+		b.Apply(Command{Op: OpSeek, Generation: 2, Position: 400 * time.Millisecond, Epoch: 2})
+		updates = collect(t, b, 2, UpdateSeeked, 5*time.Second)
+		if seeked, _ := find(updates, UpdateSeeked); seeked.Epoch != 2 || seeked.Position != 400*time.Millisecond {
+			t.Fatalf("the seek's report: %+v", seeked)
+		}
+		updates = collect(t, b, 2, UpdatePosition, 5*time.Second)
+		if at := updates[len(updates)-1]; at.Position < 400*time.Millisecond {
+			t.Fatalf("after a seek to 400 ms: %+v", at)
+		}
+		if u, ok := find(updates, UpdateError); ok {
+			t.Fatalf("an error: %+v", u)
+		}
+	})
+}

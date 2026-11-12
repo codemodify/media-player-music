@@ -9,6 +9,10 @@ framework):
 - ffmpeg-mono22.aac: goframework.io/codecs-audio-aac testdata at bd85214,
   made by its testdata/make.sh: ffmpeg's AAC LC encoder at 32 kbit/s, ADTS,
   from the same kind of signal at 22.05 kHz mono.
+- stereo-c1000.ape to stereo-c5000.ape: goframework.io/codecs-audio-ape
+  testdata at d58266c, made by its testdata/make.sh: Monkey's Audio 13.46's
+  encoder at each level (fast, normal, high, extra high, insane) from 0.6 s
+  of the same kind of signal at 44.1 kHz stereo (R101).
 
 The tagged MP3s (ID3v2.2, 2.3, 2.4, ID3v1, a PNG cover) are made by the
 tests themselves from lame-mono22.mp3's frames.

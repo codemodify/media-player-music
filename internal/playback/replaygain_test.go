@@ -262,10 +262,13 @@ func TestUnsupportedFormatsSayWhatPlays(t *testing.T) {
 	if !strings.Contains(UnsupportedMessage("/music/odd.xyz"), "odd.xyz: this format is not supported") {
 		t.Fatal("an unknown extension's message")
 	}
-	if !Playable("a/b/Song.FLAC") || Playable("a/b/song.wma") || Playable("cover.jpg") {
+	if !Playable("a/b/Song.FLAC") || !Playable("a/b/Album.APE") || Playable("a/b/song.wma") || Playable("cover.jpg") {
 		t.Fatal("Playable")
 	}
-	if format, ok := UnsupportedFormat("x.APE"); !ok || format != "Monkey's Audio (APE)" {
+	if format, ok := UnsupportedFormat("x.WV"); !ok || format != "WavPack" {
 		t.Fatal("UnsupportedFormat")
+	}
+	if _, ok := UnsupportedFormat("x.ape"); ok {
+		t.Fatal("Monkey's Audio is played (R101)")
 	}
 }

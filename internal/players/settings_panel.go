@@ -91,7 +91,7 @@ func (p *SettingsPanel) State() SettingsState { return p.state }
 func (p *SettingsPanel) SetState(state SettingsState) {
 	state.ReplayGain = state.ReplayGain.Normal()
 	p.state = state
-	p.formats.SetText("Plays " + state.Formats + ". WMA, APE (Monkey's Audio), Musepack and WavPack files are not supported.")
+	p.formats.SetText("Plays " + state.Formats + ". WMA, Musepack and WavPack files are not supported.")
 	for i, mode := range replayGainModes {
 		if mode == state.ReplayGain.Mode && p.modes.Selected() != i {
 			p.modes.Select(i)

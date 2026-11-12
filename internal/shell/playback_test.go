@@ -370,8 +370,8 @@ func TestPlaylistValidationAppendRemoveAndShutdown(t *testing.T) {
 func TestUnsupportedFormatsAreRefusedWithAClearMessage(t *testing.T) {
 	_, s, e := liveShell(t, players.DefaultSkin)
 	dir := t.TempDir()
-	wma, ape, mp3 := filepath.Join(dir, "song.wma"), filepath.Join(dir, "album.ape"), filepath.Join(dir, "song.mp3")
-	for _, path := range []string{wma, ape, mp3} {
+	wma, wv, mp3 := filepath.Join(dir, "song.wma"), filepath.Join(dir, "album.wv"), filepath.Join(dir, "song.mp3")
+	for _, path := range []string{wma, wv, mp3} {
 		if err := os.WriteFile(path, []byte("fixture"), 0600); err != nil {
 			t.Fatal(err)
 		}
@@ -386,7 +386,7 @@ func TestUnsupportedFormatsAreRefusedWithAClearMessage(t *testing.T) {
 	if list := s.Host.Model.Transport.List; list.Len() != 1 || list.At(0).Path != mp3 {
 		t.Fatal("a folder's unsupported files were queued")
 	}
-	if !strings.Contains(s.Host.Model.Error, "2 files in formats the player does not play") || !strings.Contains(s.Host.Model.Error, "Monkey's Audio") || !strings.Contains(s.Host.Model.Error, "WMA") {
+	if !strings.Contains(s.Host.Model.Error, "2 files in formats the player does not play") || !strings.Contains(s.Host.Model.Error, "WavPack") || !strings.Contains(s.Host.Model.Error, "WMA") {
 		t.Fatalf("the skipped files were not reported: %q", s.Host.Model.Error)
 	}
 	// A file that turns out not to play says so when the engine fails it.

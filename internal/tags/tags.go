@@ -3,8 +3,9 @@
 // through goframework's demuxers (codecs-container-spec's Open): ID3v1 and
 // ID3v2 and APE tags of MP3 and ADTS files (codecs-container-id3,
 // codecs-container-apetag), FLAC's and Ogg's Vorbis comments, MP4's and
-// M4A's iTunes items, Matroska's tags, WAV's and AIFF's. Nothing is
-// decoded: a file's first bytes and its headers are read.
+// M4A's iTunes items, Matroska's tags, WAV's and AIFF's, Monkey's Audio's
+// APE tags. Nothing is decoded: a file's first bytes and its headers are
+// read.
 package tags
 
 import (
@@ -16,6 +17,7 @@ import (
 
 	// every container audio-playback plays, each registering itself
 	_ "goframework.io/audio-playback/all"
+	_ "goframework.io/codecs-audio-ape" // .ape: its APE tag, and its length
 	_ "goframework.io/codecs-container-apetag"
 	id3 "goframework.io/codecs-container-id3"
 	container "goframework.io/codecs-container-spec"
