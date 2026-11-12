@@ -2,6 +2,8 @@ package tags
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -11,6 +13,8 @@ import (
 	"github.com/codemodify/media-player-music/internal/tags/tagstest"
 	"goframework.io/codecs-audio-flac"
 	aspec "goframework.io/codecs-audio-spec"
+	"goframework.io/codecs-container-ogg"
+	container "goframework.io/codecs-container-spec"
 )
 
 // frames stands for an MP3's audio: tags are read without decoding it.
@@ -117,6 +121,71 @@ func TestReadsVorbisCommentsAndTheLength(t *testing.T) {
 	if !ok || info != want {
 		t.Fatalf("FLAC: %+v, %v", info, ok)
 	}
+}
+
+// The names other taggers write (TRACKNUMBER, ALBUM ARTIST, YEAR) are read
+// as the framework names them for every container (R114): in FLAC, and in
+// Ogg, where the stream is remuxed with its comments.
+func TestReadsOtherTaggersVorbisNames(t *testing.T) {
+	tagged := map[string]string{"TITLE": "Salt Road", "ALBUM ARTIST": "Various Artists",
+		"YEAR": "1998", "TRACKNUMBER": "4/11", "DISCNUMBER": "2/2"}
+	want := Info{Title: "Salt Road", AlbumArtist: "Various Artists", Year: 1998, Number: 4, Disc: 2, Length: time.Second}
+	path := flacTone(t, tagged)
+	if info, ok := Read(path); !ok || info != want {
+		t.Fatalf("FLAC: %+v, %v", info, ok)
+	}
+	if info, ok := Read(oggOf(t, path, map[string]string{"TITLE": "Salt Road", "ALBUMARTIST": "Various Artists",
+		"YEAR": "1998", "TRACKNUMBER": "4", "DISCNUMBER": "2"})); !ok || info != want {
+		t.Fatalf("Ogg: %+v, %v", info, ok)
+	}
+}
+
+// oggOf remuxes a FLAC file's stream into an Ogg file with tags as its
+// comments.
+func oggOf(t *testing.T, path string, tags map[string]string) string {
+	t.Helper()
+	in, err := os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer in.Close()
+	demuxer, err := container.Open(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer demuxer.Close()
+	out := filepath.Join(t.TempDir(), "tone.oga")
+	file, err := os.Create(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	w, err := ogg.Create(file, ogg.Settings{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream := demuxer.Streams()[0]
+	stream.Tags = tags
+	index, err := w.Add(stream)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var packet container.Packet
+	for {
+		if err := demuxer.Read(&packet); errors.Is(err, io.EOF) {
+			break
+		} else if err != nil {
+			t.Fatal(err)
+		}
+		packet.Stream = index
+		if err := w.Write(packet); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return out
 }
 
 func TestWhatIsNotMusicGivesNothing(t *testing.T) {

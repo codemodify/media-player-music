@@ -73,20 +73,14 @@ func Read(path string) (Info, bool) {
 }
 
 func info(stream container.Stream) Info {
-	text := stream.Tags
-	// R114: Vorbis comments (FLAC, Ogg) come by their own names
-	named := func(names ...string) string {
-		for _, name := range names {
-			if value := clean(text[name]); value != "" {
-				return value
-			}
-		}
-		return ""
-	}
+	// Every container names its tags alike (Stream.Tags: a Vorbis comment's
+	// TRACKNUMBER, ALBUMARTIST and YEAR come as "track", "album_artist" and
+	// "date", as ID3's, APE's and MP4's do).
+	named := func(name string) string { return clean(stream.Tags[name]) }
 	got := Info{Title: named("title"), Artist: named("artist"), Album: named("album"),
-		AlbumArtist: named("album_artist", "albumartist", "album artist"), Genre: named("genre"),
-		Year:   leading(named("date", "year")),
-		Number: leading(named("track", "tracknumber")), Disc: leading(named("disc", "discnumber"))}
+		AlbumArtist: named("album_artist"), Genre: named("genre"),
+		Year:   leading(named("date")),
+		Number: leading(named("track")), Disc: leading(named("disc"))}
 	if got.Year < 1000 || got.Year > 9999 {
 		got.Year = 0
 	}
