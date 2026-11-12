@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; see the last three sections)
+# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; then R102, R114, R121-R123 adopted and the face packages renamed; see the last four sections)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -6,7 +6,7 @@ stands, and what comes next. Read this first, then
 [README.md](README.md) (what the player does, the skins, the keys),
 [docs/faces.md](docs/faces.md) (the layout, the app/framework boundary,
 how it was verified), then this app's rows in
-`~/go/src/goframework.io/app-requests.md` (R21, R101, R102, R114, R121-R123).
+`~/go/src/goframework.io/app-requests.md` (R21; R101, R102, R114, R121-R123 closed).
 
 > **Since 2026-11-09 goframework-gaps.md is retired** (its last version is at
 > 1da0430). What media-player-music needs from the framework is in the
@@ -87,7 +87,7 @@ for p in $($E go list ./... | grep -v /tools/); do $C $E go test -race -count=1 
 ```
 
 internal/shell takes about 25 minutes under -race (the popup matrix:
-352 subtests), internal/players/winamp 10, internal/skins 8; the rest
+352 subtests), internal/players/panel 10, internal/skins 8; the rest
 seconds to a minute. A script that runs every package one at a time is
 in the 2026-11-13 session's scratchpad (racesuite.sh); the loop above is
 the same. No test reaches a sound device: the engine plays into
@@ -113,13 +113,12 @@ process on a fake engine.
 | `internal/link` | the Go renderers' connection: link.Start with the four states, the token for ws://, `Ensure` and `Daemon` (R115's ensure: starting media-player-musicd, with Retry) |
 | `internal/model` | the model with no UI: Track, Playlist, Transport, commands, Equalizer; `internal/players` aliases its names for the faces |
 | `internal/playback` | the one engine, `Builtin`, on audio-playback, with ReplayGain; `Engine` is its contract, which tests fake |
-| `internal/players` | the faces' shared pieces (host, queue view, settings, skins list) and one package per face; `playertest` the test helpers |
+| `internal/players` | the faces' shared pieces (host, queue view, settings, skins list) and one package per face, named for its skins (panel: slate, silver, dossier and the compact panels; pod, gauge, wingspan, aluminium, cobalt, utility, console, sidebar, fandom, fancy; standard is Default); `playertest` the test helpers |
 | `internal/shell` | the desktop UI: face switcher, the model kept in step with the daemon (playback.go: ShowState/ShowQueue/ShowNow, syncPlayback), files and drops, Ctrl+S save playlist, settings window, tray |
 | `internal/tui`, `cmd/media-player-music-tui` | the terminal UI |
 | `cmd/media-player-music-wui` | the web UI: main, internal/server, internal/frontend (the built page), web/ (TypeScript sources, build.sh) |
 | `internal/skins` | skin registration (embeds only the redrawn packs), plans (every skin drawn in Go; geometry_*.go tables), packs, fandomart (Fandom's own raster), sources (the originals and, in sources/oldplans, the old plans that cut them; built into nothing; await the owner's history rewrite) |
 | `e2e` | the daemon as a program (apptest), two renderers |
-| `internal/testenv` | tests kept off the owner's environment (R102) |
 
 `media-player-music` (a binary at the root) and `out/` are build and shot
 output, ignored by git.
@@ -160,7 +159,7 @@ vfs-trash (F3) for deleting from the library, logging in the UIs.
    service path; a browser run of the WUI's Retry.
 3. MPRIS and media keys (F5), gapless (F14), WMA (R101: stopped on its
    sources, the owner's).
-4. The adopted gaps: R114, R121, R122, R123 when the framework answers.
+4. R21 (the ledger's last open row of this app).
 5. Re-shoot the pictures (the library window too); a user guide; start
    time and RSS; VMs on the six systems.
 
@@ -692,3 +691,67 @@ old ID falls back to Default; old per-skin window placements are ignored).
   package names (internal/players/xbox, ...) and constants (XboxSkin) still
   carry the old names: renaming them is a mechanical follow-up, left so
   this change stays reviewable.
+
+## R102, R114, R121-R123 adopted; the face packages renamed, 2026-11-12 (overnight)
+Commits on dev (local, not pushed), one per step:
+- **676fa93 R102**: tests isolated by desktop-ui's `platformtest.Main`/`Isolate`
+  (playertest.Main and the TestMains of internal/players, players/utility
+  (was vlc), players/sidebar (was amarok), internal/skins, skins/plans);
+  internal/testenv deleted. Proof as f9e1f15's: `go test -count=1 -v` of
+  internal/players/..., internal/skins/... and internal/shell with HOME at
+  the scratchpad's home-weird (look.json naming hangar, every look variable
+  set) and at an empty home: identical PASS/FAIL lists (1835 lines, exit 0
+  both), "hangar" nowhere (script lookproof.sh in the session's scratchpad).
+  platformtest also sets links and files to open nothing; no app test opens one.
+- **e17cc29 R114**: internal/tags reads "track", "disc", "album_artist",
+  "date" only; TestReadsOtherTaggersVorbisNames (FLAC tagged TRACKNUMBER,
+  ALBUM ARTIST, YEAR, DISCNUMBER; the same stream remuxed into Ogg).
+- **04bf547 R121**: the TUI's views are the Tabs' pages; Left/Right switch
+  only while the bar has the focus (Tab can reach it), Ctrl+Page Up/Down from
+  anywhere; `View.Show` just selects the tab. TestArrowsSeekInEveryView.
+- **08cd5b8 R122**: the progress bar's label is the times (`SetLabel`); the
+  times label beside it gone. TestTransport checks no percent is drawn.
+- **83fe17c R123**: `stub -typescript ... -constants -values Presets,Bands`;
+  the page imports the equaliser's presets, bands and range, the commands,
+  StatusPlaying, RepeatOne/Off and ReplayGainOff from musicapi.ts; the copies
+  in app.ts and TestThePageKnowsTheEqualiser dropped. Before rebuilding: the
+  old source rebuilt the committed app.js byte for byte with esbuild 0.28.2
+  against app-client-typescript fed14c0 (the version it was built with; the
+  map equal but for its sources' folder). The new bundle also carries
+  app-client-typescript 9f36d67 (R129: the page waits for plugin.ready when
+  the daemon offers it). Not run: the page in a browser (a VM round).
+- **ec2d66d the rename**: internal/players/winamp → panel, xbox → pod,
+  halflife2 → gauge, headspace → wingspan, itunes → aluminium, series9 →
+  cobalt, vlc → utility, realplayer → console, amarok → sidebar; the skin
+  constants players.WinampSkin → SlateSkin, WinampSilverSkin → SilverSkin,
+  WinampClassifiedSkin → DossierSkin, DOSampSkin → TextModeSkin,
+  Windows98Skin → BevelSkin, WinampAmberSkin → AmberSkin, CalculatorSkin →
+  TallySkin, SonyCDXMP3Skin → HeadUnitSkin, TI82Skin → GraphingSkin,
+  RadarAmpSkin → RadarSkin, Quake3ArenaSkin → ForgeSkin, HeadspaceSkin →
+  WingspanSkin, XboxSkin → PodSkin, HalfLife2Skin → GaugeSkin, ITunesSkin →
+  AluminiumSkin, Series9Skin → CobaltSkin, VLCSkin → UtilitySkin,
+  RealPlayerSkin → ConsoleSkin, AmarokSkin → SidebarSkin; package docs made
+  neutral; panel/winamp.go → panel.go, shell's halflife2/itunes/series9/xbox
+  tests → gauge/aluminium/cobalt/pod; the probes' imports (ignore-tagged)
+  follow. The skin IDs, labels and layouts are unchanged (no behaviour
+  change). By a script (scratchpad rename.py); internal/skins/sources (and
+  oldplans) left as they are, for the owner's history rewrite. **Left**:
+  unexported identifiers and test names inside the packages still carry the
+  old products (xboxTransparent, series9Layer, TestVLC..., TestXbox...,
+  plans/winamp.go), and so do the skins' layout packages
+  (internal/skins/amarok, halflife2, headspace, itunes, realplayer, series9,
+  vlc, xbox: not faces, so outside this round); a further mechanical pass
+  if wanted.
+- Checked: gofmt; vet on linux, windows, darwin, freebsd; `go test -race`
+  of every package one at a time (internal/shell with -timeout 60m: 1189 s,
+  internal/players/panel 516 s, internal/skins 151 s): every package passes
+  but internal/shell's TestTheLibraryWindowsButtonsAndChanges, which is
+  **flaky before this round too** (12 of 30 runs fail at c5d0a02, 3 of 30
+  after): the "3 tracks added to the queue" status is overwritten by the
+  library summary. Not a test timing: waiting 10 s for it still fails (14 of
+  50), so the window's status is rewritten after the add: Shell.ShowLibrary
+  calls showStatus on every library state the daemon sends, and one comes
+  after the add. A fix to weigh (511aa6b's work, not this round's):
+  ShowLibrary rewrites the status only when the library's version,
+  scanning or error changed, or the add's message stays until the next
+  action. goframework's footprint.py --check passes (no program changed).
