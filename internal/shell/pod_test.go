@@ -14,7 +14,7 @@ import (
 
 // A user override with only the main artwork must fail before changing the
 // existing windows or the last working appearance.
-func TestXboxRequiresPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
+func TestPodRequiresPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
 	a, s := open(t, players.WingspanSkin)
 	w, model := s.MainWindow(), s.Host.Model
 	dir := skins.UserSkinDir(players.PodSkin)
@@ -43,7 +43,7 @@ func TestXboxRequiresPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
 	}
 }
 
-func TestXboxSkinKeysCycleFromHeadspaceAndRememberChoice(t *testing.T) {
+func TestPodSkinKeysCycleFromWingspanAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.WingspanSkin)
 	model := s.Host.Model
 	key := func(w *ui.Window, mods platform.Modifiers) {

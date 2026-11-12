@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	amarokskin "github.com/codemodify/media-player-music/internal/skins/amarok"
+	aluminiumskin "github.com/codemodify/media-player-music/internal/skins/aluminium"
+	cobaltskin "github.com/codemodify/media-player-music/internal/skins/cobalt"
+	consoleskin "github.com/codemodify/media-player-music/internal/skins/console"
 	fancyskin "github.com/codemodify/media-player-music/internal/skins/fancy"
 	fandomskin "github.com/codemodify/media-player-music/internal/skins/fandom"
-	halflife2skin "github.com/codemodify/media-player-music/internal/skins/halflife2"
-	headspaceskin "github.com/codemodify/media-player-music/internal/skins/headspace"
-	itunesskin "github.com/codemodify/media-player-music/internal/skins/itunes"
+	gaugeskin "github.com/codemodify/media-player-music/internal/skins/gauge"
 	"github.com/codemodify/media-player-music/internal/skins/panel"
-	realplayerskin "github.com/codemodify/media-player-music/internal/skins/realplayer"
-	series9skin "github.com/codemodify/media-player-music/internal/skins/series9"
-	vlcskin "github.com/codemodify/media-player-music/internal/skins/vlc"
-	xboxskin "github.com/codemodify/media-player-music/internal/skins/xbox"
+	podskin "github.com/codemodify/media-player-music/internal/skins/pod"
+	sidebarskin "github.com/codemodify/media-player-music/internal/skins/sidebar"
+	utilityskin "github.com/codemodify/media-player-music/internal/skins/utility"
+	wingspanskin "github.com/codemodify/media-player-music/internal/skins/wingspan"
 	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
@@ -196,25 +196,25 @@ func (s *Shell) SetSkin(id string) error {
 		if !ok {
 			return fmt.Errorf("skin %q is unavailable", skin)
 		}
-		layouts := []string{headspaceskin.LayoutMain}
+		layouts := []string{wingspanskin.LayoutMain}
 		if players.IsPanelSkin(skin) {
 			layouts = []string{panel.LayoutStrip, panel.LayoutEqualiser, panel.LayoutPlaylist}
 		} else if skin == players.PodSkin {
-			layouts = []string{xboxskin.LayoutMain, xboxskin.LayoutPlaylist}
+			layouts = []string{podskin.LayoutMain, podskin.LayoutPlaylist}
 		} else if skin == players.GaugeSkin {
-			layouts = []string{halflife2skin.LayoutMain, halflife2skin.LayoutEqualizer, halflife2skin.LayoutPlaylist}
+			layouts = []string{gaugeskin.LayoutMain, gaugeskin.LayoutEqualizer, gaugeskin.LayoutPlaylist}
 		} else if skin == players.FandomSkin {
 			layouts = []string{fandomskin.LayoutMain, fandomskin.LayoutPlaylist}
 		} else if skin == players.AluminiumSkin {
-			layouts = []string{itunesskin.LayoutMain, itunesskin.LayoutMini, itunesskin.LayoutEqualizer}
+			layouts = []string{aluminiumskin.LayoutMain, aluminiumskin.LayoutMini, aluminiumskin.LayoutEqualizer}
 		} else if skin == players.CobaltSkin {
-			layouts = []string{series9skin.LayoutMain, series9skin.LayoutTransport, series9skin.LayoutEqualizer, series9skin.LayoutPlaylist, series9skin.LayoutCompact}
+			layouts = []string{cobaltskin.LayoutMain, cobaltskin.LayoutTransport, cobaltskin.LayoutEqualizer, cobaltskin.LayoutPlaylist, cobaltskin.LayoutCompact}
 		} else if skin == players.UtilitySkin {
-			layouts = []string{vlcskin.LayoutMain}
+			layouts = []string{utilityskin.LayoutMain}
 		} else if skin == players.ConsoleSkin {
-			layouts = []string{realplayerskin.LayoutMain, realplayerskin.LayoutPlaylist, realplayerskin.LayoutEqualizer}
+			layouts = []string{consoleskin.LayoutMain, consoleskin.LayoutPlaylist, consoleskin.LayoutEqualizer}
 		} else if skin == players.SidebarSkin {
-			layouts = []string{amarokskin.LayoutMain}
+			layouts = []string{sidebarskin.LayoutMain}
 		} else if skin == players.FancySkin {
 			layouts = []string{fancyskin.LayoutMain, fancyskin.LayoutCompact, fancyskin.LayoutEqualizer, fancyskin.LayoutPlaylist}
 		}

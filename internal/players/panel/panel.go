@@ -26,7 +26,7 @@ const (
 	ListH  = 232
 )
 
-// Skin is the classic Winamp panel pack.
+// Skin is the Slate panel pack.
 const Skin = players.SlateSkin
 
 // Player is the three panels and the one model under them. The model is

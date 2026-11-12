@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	vlclayout "github.com/codemodify/media-player-music/internal/skins/vlc"
+	utilitylayout "github.com/codemodify/media-player-music/internal/skins/utility"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
 )
 
 const (
-	LayoutMain = vlclayout.LayoutMain
+	LayoutMain = utilitylayout.LayoutMain
 	MainW      = 500
 	MainH      = 430
 	MinW       = 440

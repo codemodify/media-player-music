@@ -111,7 +111,7 @@ func TestResponsiveLayoutControlsAndAccessibility(t *testing.T) {
 		})
 	}
 }
-func TestRealPlayerActionsUseHostAndModel(t *testing.T) {
+func TestConsoleActionsUseHostAndModel(t *testing.T) {
 	a, p := open(t, 1.75)
 	var commands []players.Command
 	p.Host.Run = func(c players.Command) { commands = append(commands, c); p.Transport.Do(c) }
@@ -177,7 +177,7 @@ func TestRealPlayerActionsUseHostAndModel(t *testing.T) {
 	}
 }
 
-func TestRealPlayerFocusedControlsKeepTransportShortcutRouting(t *testing.T) {
+func TestConsoleFocusedControlsKeepTransportShortcutRouting(t *testing.T) {
 	a, p := open(t, 1.75)
 	var commands []players.Command
 	p.Host.Run = func(c players.Command) { commands = append(commands, c); p.Transport.Do(c) }
@@ -240,7 +240,7 @@ func TestSavedPlacementAndVisiblePanels(t *testing.T) {
 		t.Fatalf("min%d×%d", w, h)
 	}
 }
-func TestRealPlayerReferenceCaptures(t *testing.T) {
+func TestConsoleReferenceCaptures(t *testing.T) {
 	out := os.Getenv("MUSIC_PLAYER_REALPLAYER_CAPTURES")
 	if out == "" {
 		t.Skip("opt-in appearance captures")

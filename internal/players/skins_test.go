@@ -87,7 +87,7 @@ func TestSkinLabelUsesTheUserOverride(t *testing.T) {
 	}
 }
 
-func TestWMPCatalogueKeepsTheWinampFamilySeparate(t *testing.T) {
+func TestSkinnedCatalogueKeepsThePanelFamilySeparate(t *testing.T) {
 	for _, id := range []string{WingspanSkin, PodSkin, GaugeSkin, FandomSkin, AluminiumSkin, CobaltSkin, UtilitySkin, ConsoleSkin, SidebarSkin, FancySkin} {
 		if IsPanelSkin(id) || !IsSkinned(id) {
 			t.Fatalf("%s was not recognized as its own optional family", id)

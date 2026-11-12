@@ -1,5 +1,5 @@
-// Package realplayer names the layouts of the console skin (internal/skins/plans).
-package realplayer
+// Package console names the layouts of the console skin (internal/skins/plans).
+package console
 
 const (
 	LayoutMain      = "console.main"

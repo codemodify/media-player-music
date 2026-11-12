@@ -7,7 +7,7 @@ import (
 	"goframework.io/graphics-paint2d"
 )
 
-// Winamp is the compact player's base-skin look of the era: slate-blue
+// Slate is the compact player's base-skin look of the era: slate-blue
 // bevelled chrome, title bands with a gold groove either side of the words,
 // a black display with thin green segments, grey keys, an orange volume bar
 // and a green balance bar.
@@ -66,14 +66,14 @@ const (
 	clDB     = "#d9ac2a"
 )
 
-// Winamp builds the skin's plan.
-func Winamp() *Plan {
-	p := winamp()
+// Slate builds the skin's plan.
+func Slate() *Plan {
+	p := slatePlan()
 	polish(p)
 	return p
 }
 
-func winamp() *Plan {
+func slatePlan() *Plan {
 	f := panel.Classic
 	sh := &Sheet{Name: "chrome", Pixelated: true}
 	l := &lay{sh: sh, gap: 2}
@@ -363,7 +363,7 @@ func winamp() *Plan {
 		Caption: f.Caption,
 		Layout:  ":minimize,close",
 	}
-	p.Layouts = winampLayouts(f, sh)
+	p.Layouts = panelLayouts(f, sh)
 	mainCaptionRole(p)
 	return p
 }

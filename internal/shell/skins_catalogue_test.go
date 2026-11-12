@@ -57,7 +57,7 @@ func TestImportedSkinsPreserveThePlayingQueueAndWindowGroup(t *testing.T) {
 	}
 }
 
-func TestWMPSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
+func TestSkinnedSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a, s, backend := rememberedShell(t, players.SlateSkin)
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {

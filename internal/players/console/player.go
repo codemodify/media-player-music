@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	rplayout "github.com/codemodify/media-player-music/internal/skins/realplayer"
+	consolelayout "github.com/codemodify/media-player-music/internal/skins/console"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	LayoutMain      = rplayout.LayoutMain
-	LayoutPlaylist  = rplayout.LayoutPlaylist
-	LayoutEqualizer = rplayout.LayoutEqualizer
+	LayoutMain      = consolelayout.LayoutMain
+	LayoutPlaylist  = consolelayout.LayoutPlaylist
+	LayoutEqualizer = consolelayout.LayoutEqualizer
 	MainW           = 720
 	MainH           = 520
 	MinW            = 606

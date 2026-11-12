@@ -1,5 +1,5 @@
-// Package itunes names the layouts of the aluminium skin (internal/skins/plans).
-package itunes
+// Package aluminium names the layouts of the aluminium skin (internal/skins/plans).
+package aluminium
 
 const (
 	LayoutMain      = "aluminium.main"

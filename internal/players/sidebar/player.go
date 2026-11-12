@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	amlayout "github.com/codemodify/media-player-music/internal/skins/amarok"
+	sidebarlayout "github.com/codemodify/media-player-music/internal/skins/sidebar"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	LayoutMain = amlayout.LayoutMain
+	LayoutMain = sidebarlayout.LayoutMain
 	MainW      = 920
 	MainH      = 620
 	MinW       = 740

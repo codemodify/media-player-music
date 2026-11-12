@@ -1,5 +1,5 @@
-// Package halflife2 names the layouts of the gauge skin (internal/skins/plans).
-package halflife2
+// Package gauge names the layouts of the gauge skin (internal/skins/plans).
+package gauge
 
 const (
 	LayoutMain      = "gauge.main"

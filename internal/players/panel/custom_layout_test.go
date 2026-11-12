@@ -31,7 +31,7 @@ func TestAnExternalSkinCanRearrangeThePlayer(t *testing.T) {
 			playID, nextID := s.play.ID(), s.next.ID()
 			ringBefore := skinKeyless(playertest.RingNames(p.Main(), playertest.FocusRing(t, a, p.Main())))
 
-			const custom = "winamp-third-party-layout"
+			const custom = "panel-third-party-layout"
 			installExternalPanel(t, custom)
 			p.SetSkin(custom)
 			a.PumpOnce()
@@ -111,7 +111,7 @@ func checkFlexibleExternalSlots(t *testing.T, p *Player, scale float32) {
 func installExternalPanel(t *testing.T, id string) {
 	t.Helper()
 	sourceRoot := t.TempDir()
-	if err := plans.Write(sourceRoot, plans.Winamp()); err != nil {
+	if err := plans.Write(sourceRoot, plans.Slate()); err != nil {
 		t.Fatal(err)
 	}
 	sourceDir := filepath.Join(sourceRoot, Skin)

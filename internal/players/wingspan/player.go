@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	hslayout "github.com/codemodify/media-player-music/internal/skins/headspace"
+	wingspanlayout "github.com/codemodify/media-player-music/internal/skins/wingspan"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	LayoutMain = hslayout.LayoutMain
+	LayoutMain = wingspanlayout.LayoutMain
 	MainW      = 760
 	MainH      = 394
 )

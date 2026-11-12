@@ -134,6 +134,133 @@ func TestNoProductNamesInAnySkin(t *testing.T) {
 	}
 }
 
+// goProductNames are the products the skins were once named for, as they
+// show in Go names: the long ones anywhere in a name (its words run
+// together, lower case), the short ones only at the start of one of its
+// words (so FlexBox or svLCD are not taken for one).
+var (
+	goProductNamesAnywhere = regexp.MustCompile(`winamp|halflife|itunes|realplayer|amarok|series9|headspace|quake|windows98`)
+	goProductNamesAtAWord  = regexp.MustCompile(`(^|_)(xbox|vlc|sony|ti_?82|wmp)`)
+)
+
+// goNameNamesAProduct says whether a Go name (an identifier, a package
+// path's folder, a file's name) names one of goProductNames.
+func goNameNamesAProduct(name string) bool {
+	var words []string
+	runes := []rune(name)
+	start := 0
+	kind := func(r rune) int {
+		switch {
+		case r >= 'A' && r <= 'Z':
+			return 1
+		case r >= '0' && r <= '9':
+			return 2
+		case r == '_' || r == '-' || r == '.' || r == '/':
+			return 3
+		}
+		return 0
+	}
+	for i := 1; i <= len(runes); i++ {
+		cut := i == len(runes)
+		if !cut {
+			was, now := kind(runes[i-1]), kind(runes[i])
+			next := -1
+			if i+1 < len(runes) {
+				next = kind(runes[i+1])
+			}
+			// lower to upper, letter to digit and back, a separator, and
+			// the last capital of a run before a lower-case letter (LCDWell)
+			cut = was == 0 && now == 1 || (was == 2) != (now == 2) || was == 3 || now == 3 ||
+				was == 1 && now == 1 && next == 0
+		}
+		if cut {
+			if w := strings.Trim(string(runes[start:i]), "_-./"); w != "" {
+				words = append(words, strings.ToLower(w))
+			}
+			start = i
+		}
+	}
+	return goProductNamesAnywhere.MatchString(strings.Join(words, "")) || goProductNamesAtAWord.MatchString(strings.Join(words, "_"))
+}
+
+func TestGoNameNamesAProduct(t *testing.T) {
+	for name, want := range map[string]bool{
+		"xboxTransparent": true, "TestVLCActions": true, "TestHalfLife2Skin": true, "halflife2": true, "iTunesModes": true,
+		"TestITunesSkin": true, "series9skin": true, "RealPlayerSkin": true, "TI82Skin": true, "Windows98Skin": true,
+		"winamp_silver.go": true, "TestWMPCatalogue": true, "SonyCDXMP3Skin": true, "Quake3ArenaSkin": true,
+		"FlexBox": false, "example.com/skins/vlc": true, "svLCDWell": false, "LCD": false, "PodSkin": false, "slate.go": false, "utility": false, "Timeline82": false,
+	} {
+		if got := goNameNamesAProduct(name); got != want {
+			t.Errorf("%s: %v, want %v", name, got, want)
+		}
+	}
+}
+
+// No Go name of the app's names a product the skins were once named for:
+// no package path or file name, no identifier (a package, a type, a
+// function, a test, a variable, an import's name). The originals and the
+// old plans that cut them (internal/skins/sources) await the owner's
+// history rewrite and are left out.
+func TestNoGoNameNamesAProduct(t *testing.T) {
+	root, err := filepath.Abs("../../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := 0
+	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		name := rel(root, path)
+		if entry.IsDir() {
+			switch {
+			case path == root:
+				return nil
+			case strings.HasPrefix(entry.Name(), "."), name == filepath.Join("internal", "skins", "sources"),
+				entry.Name() == "node_modules", name == "out", name == "shots", name == "bin":
+				return filepath.SkipDir
+			}
+			if goNameNamesAProduct(entry.Name()) {
+				// a folder of Go files is a package path
+				if gos, _ := filepath.Glob(filepath.Join(path, "*.go")); len(gos) > 0 {
+					t.Errorf("the package %s names a product", name)
+				}
+			}
+			return nil
+		}
+		if !strings.HasSuffix(name, ".go") {
+			return nil
+		}
+		files++
+		if goNameNamesAProduct(entry.Name()) {
+			t.Errorf("the file %s names a product", name)
+		}
+		fset := token.NewFileSet()
+		file, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+		if err != nil {
+			return err
+		}
+		for _, spec := range file.Imports {
+			if p, _ := strconv.Unquote(spec.Path.Value); goNameNamesAProduct(p) {
+				t.Errorf("%s imports %s", fset.Position(spec.Pos()), p)
+			}
+		}
+		ast.Inspect(file, func(n ast.Node) bool {
+			if id, ok := n.(*ast.Ident); ok && goNameNamesAProduct(id.Name) {
+				t.Errorf("%s: %s", fset.Position(id.Pos()), id.Name)
+			}
+			return true
+		})
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if files < 100 {
+		t.Fatalf("only %d Go files read from %s", files, root)
+	}
+}
+
 // Every sprite of every redrawn skin is drawn: something lands in its cell
 // (but for the space in a glyph set).
 func TestEveryRedrawnSpriteIsDrawn(t *testing.T) {

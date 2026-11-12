@@ -246,13 +246,13 @@ func blank(img *paint2d.Image) bool {
 
 // A default desktop theme has its own presentation in the shell, and must
 // never construct the removed compact widget layout.
-func TestWinampRequiresAPanelLayout(t *testing.T) {
+func TestPanelRequiresAPanelLayout(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	t.Setenv(style.ThemeEnv, Themed)
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
 	p, err := New(players.NewHost(a), Options{Headless: true})
 	if err == nil || p != nil {
-		t.Fatal("an unskinned theme constructed Winamp windows")
+		t.Fatal("an unskinned theme constructed panel windows")
 	}
 }
 

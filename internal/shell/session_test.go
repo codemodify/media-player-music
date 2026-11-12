@@ -137,7 +137,7 @@ func TestSessionRetainsSeparateDefaultAndSkinArrangements(t *testing.T) {
 	}
 }
 
-func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) {
+func TestSkinnedSessionKeepsEachPlacementSeparateFromPanelAndDefault(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a, s, backend := rememberedShell(t, players.DefaultSkin)
 	settle := func() {

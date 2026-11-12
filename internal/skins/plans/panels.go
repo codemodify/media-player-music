@@ -6,7 +6,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/skins/panel"
 )
 
-// The layouts the Winamp panel skins state, including the playlist's
+// The layouts the panel skins state, including the playlist's
 // responsive anchors for resizing.
 //
 // The rects are panel's (internal/skins/panel), the same numbers
@@ -15,9 +15,9 @@ import (
 // manifest: it binds its controls to the slot names and asks the skin where
 // each one is.
 
-// winampLayouts are a panel face's three layouts, with every key's art bound
+// panelLayouts are a panel face's three layouts, with every key's art bound
 // from the sprites the sheet actually has.
-func winampLayouts(f *panel.Face, sh *Sheet, playlistHeight ...int) []LayoutSpec {
+func panelLayouts(f *panel.Face, sh *Sheet, playlistHeight ...int) []LayoutSpec {
 	have := map[string]bool{}
 	for _, c := range sh.Cells {
 		have[c.Name] = true

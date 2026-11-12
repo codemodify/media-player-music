@@ -22,7 +22,7 @@ type compactPresentation interface {
 	StatefulPresentation
 }
 
-func series9Modes(t *testing.T, s *Shell) compactPresentation {
+func cobaltModes(t *testing.T, s *Shell) compactPresentation {
 	t.Helper()
 	p, ok := s.Presentation().(compactPresentation)
 	if !ok {
@@ -31,7 +31,7 @@ func series9Modes(t *testing.T, s *Shell) compactPresentation {
 	return p
 }
 
-func TestSeries9RequiresAllFiveLayoutsBeforeReplacingPresentation(t *testing.T) {
+func TestCobaltRequiresAllFiveLayoutsBeforeReplacingPresentation(t *testing.T) {
 	names := []string{"cobalt.main", "cobalt.transport", "cobalt.equalizer", "cobalt.playlist", "cobalt.compact"}
 	for _, missing := range names {
 		t.Run(missing, func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestSeries9RequiresAllFiveLayoutsBeforeReplacingPresentation(t *testing.T) 
 	}
 }
 
-func TestSeries9SkinKeysCycleFromITunesAndRememberChoice(t *testing.T) {
+func TestCobaltSkinKeysCycleFromAluminiumAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.AluminiumSkin)
 	model := s.Host.Model
 	for _, tc := range []struct {
@@ -99,12 +99,12 @@ func TestSeries9SkinKeysCycleFromITunesAndRememberChoice(t *testing.T) {
 	if err := s.SetSkin(players.CobaltSkin); err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Windows()) != 1 || s.Windows()[0].Name != "main" || series9Modes(t, s).Compact() {
+	if len(s.Windows()) != 1 || s.Windows()[0].Name != "main" || cobaltModes(t, s).Compact() {
 		t.Fatal("Series 9 should initially embed its full player and drawers in one main window")
 	}
 }
 
-func TestSeries9ModesKeepNativeMainPlaybackDrawerPreferencesAndTray(t *testing.T) {
+func TestCobaltModesKeepNativeMainPlaybackDrawerPreferencesAndTray(t *testing.T) {
 	a, s, tray, backend := openFakeTray(t, players.CobaltSkin)
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
@@ -117,7 +117,7 @@ func TestSeries9ModesKeepNativeMainPlaybackDrawerPreferencesAndTray(t *testing.T
 	s.presentation.ShowEqualiser(true)
 	s.presentation.ShowPlaylist(true)
 	s.Start()
-	p := series9Modes(t, s)
+	p := cobaltModes(t, s)
 	main, native, pulse := s.MainWindow(), s.MainWindow().Surface(), s.Pulse()
 	loads, stops := countCommand(backend, playback.OpLoad), countCommand(backend, playback.OpStop)
 	settle := func() { a.PumpOnce(); s.presentation.Advance(0) }
@@ -164,7 +164,7 @@ func TestSeries9ModesKeepNativeMainPlaybackDrawerPreferencesAndTray(t *testing.T
 	}
 }
 
-func TestSeries9SessionRestoresCompactBeforePlacementAndKeepsOtherFamiliesSeparate(t *testing.T) {
+func TestCobaltSessionRestoresCompactBeforePlacementAndKeepsOtherFamiliesSeparate(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a, s, backend := rememberedShell(t, players.DefaultSkin)
 	s.MainWindow().Move(720, 80)
@@ -175,7 +175,7 @@ func TestSeries9SessionRestoresCompactBeforePlacementAndKeepsOtherFamiliesSepara
 	s.Pulse().Stop()
 	a.PumpOnce()
 	s.presentation.Advance(0)
-	p := series9Modes(t, s)
+	p := cobaltModes(t, s)
 	main := s.MainWindow()
 	main.Move(420, 210)
 	s.presentation.ShowEqualiser(true)
@@ -202,12 +202,12 @@ func TestSeries9SessionRestoresCompactBeforePlacementAndKeepsOtherFamiliesSepara
 			}
 		}
 	}
-	if got := series9Modes(t, s).CaptureState(); !reflect.DeepEqual(got, want) || countCommand(backend, playback.OpLoad) != 0 {
+	if got := cobaltModes(t, s).CaptureState(); !reflect.DeepEqual(got, want) || countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatalf("family switch lost Series 9 state or started playback: %+v", got)
 	}
 	s.Close()
 	_, reopened, nextBackend := rememberedShell(t, "")
-	if reopened.Skin() != players.CobaltSkin || !series9Modes(t, reopened).Compact() || !reflect.DeepEqual(series9Modes(t, reopened).CaptureState(), want) {
+	if reopened.Skin() != players.CobaltSkin || !cobaltModes(t, reopened).Compact() || !reflect.DeepEqual(cobaltModes(t, reopened).CaptureState(), want) {
 		t.Fatal("Series 9 session lost its compact mode or remembered full base size")
 	}
 	x, y, known := reopened.MainWindow().Position()
@@ -215,7 +215,7 @@ func TestSeries9SessionRestoresCompactBeforePlacementAndKeepsOtherFamiliesSepara
 	if !known || x != 420 || y != 210 || w != 346 || h != 103 || countCommand(nextBackend, playback.OpLoad) != 0 || reopened.Host.Model.EqualizerVisible || reopened.Host.Model.PlaylistVisible {
 		t.Fatalf("restored compact player lost position, geometry or drawer preferences: %d,%d,%t %dx%d", x, y, known, w, h)
 	}
-	series9Modes(t, reopened).SetCompact(false)
+	cobaltModes(t, reopened).SetCompact(false)
 	reopened.App.PumpOnce()
 	reopened.Presentation().Advance(0)
 	if w, h := reopened.MainWindow().Size(); w != 490 || h != 450 {

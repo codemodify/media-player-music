@@ -7,7 +7,7 @@ import (
 	"goframework.io/graphics-paint2d"
 )
 
-// The two Winamp panel skins print their displays in an alphabet of their
+// The two panel skins (Slate, Silver) print their displays in an alphabet of their
 // own: a small capital face six pixels tall, and a set of segmented digits
 // for the clock.
 //

@@ -1,5 +1,5 @@
-// Package series9 names the layouts of the cobalt skin (internal/skins/plans).
-package series9
+// Package cobalt names the layouts of the cobalt skin (internal/skins/plans).
+package cobalt
 
 const (
 	LayoutMain      = "cobalt.main"

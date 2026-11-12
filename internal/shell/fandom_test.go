@@ -43,7 +43,7 @@ func TestFandomRequiresItsPlaylistLayoutBeforeReplacingPresentation(t *testing.T
 	}
 }
 
-func TestFandomSkinKeysCycleFromHalfLife2AndRememberChoice(t *testing.T) {
+func TestFandomSkinKeysCycleFromGaugeAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.GaugeSkin)
 	model := s.Host.Model
 	key := func(w *ui.Window, mods platform.Modifiers) {

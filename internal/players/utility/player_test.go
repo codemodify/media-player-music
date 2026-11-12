@@ -62,7 +62,7 @@ func key(a *ui.Application, w *ui.Window, k platform.Key, mods platform.Modifier
 	a.PumpOnce()
 }
 
-func TestVLCOneWindowPanelsGeometryStateAndPlacement(t *testing.T) {
+func TestUtilityOneWindowPanelsGeometryStateAndPlacement(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
@@ -120,7 +120,7 @@ func TestVLCOneWindowPanelsGeometryStateAndPlacement(t *testing.T) {
 	}
 }
 
-func TestVLCRealPointerKeyboardAndAccessibleQueueActivation(t *testing.T) {
+func TestUtilityRealPointerKeyboardAndAccessibleQueueActivation(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
@@ -171,7 +171,7 @@ func TestVLCRealPointerKeyboardAndAccessibleQueueActivation(t *testing.T) {
 	}
 }
 
-func TestVLCActionsDropAndEqualizer(t *testing.T) {
+func TestUtilityActionsDropAndEqualizer(t *testing.T) {
 	a, p := open(t, 1.75)
 	var opened []bool
 	p.Host.LoadFiles = func(_ widget.Component, appendToList bool) { opened = append(opened, appendToList) }
@@ -215,7 +215,7 @@ func TestVLCActionsDropAndEqualizer(t *testing.T) {
 	}
 }
 
-func TestVLCActualClassicToolbarPaletteAndCaptures(t *testing.T) {
+func TestUtilityActualClassicToolbarPaletteAndCaptures(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)
@@ -285,7 +285,7 @@ func TestVLCActualClassicToolbarPaletteAndCaptures(t *testing.T) {
 	}
 }
 
-func TestVLCSecondarySliderPressOpensContextWithoutEditing(t *testing.T) {
+func TestUtilitySecondarySliderPressOpensContextWithoutEditing(t *testing.T) {
 	for _, scale := range []float32{1, 1.75, 2} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
 			a, p := open(t, scale)

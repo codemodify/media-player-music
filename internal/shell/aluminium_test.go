@@ -22,7 +22,7 @@ type miniPresentation interface {
 	StatefulPresentation
 }
 
-func iTunesModes(t *testing.T, s *Shell) miniPresentation {
+func aluminiumModes(t *testing.T, s *Shell) miniPresentation {
 	t.Helper()
 	p, ok := s.Presentation().(miniPresentation)
 	if !ok {
@@ -31,7 +31,7 @@ func iTunesModes(t *testing.T, s *Shell) miniPresentation {
 	return p
 }
 
-func TestITunesRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) {
+func TestAluminiumRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) {
 	for _, missing := range []string{"aluminium.main", "aluminium.mini", "aluminium.equalizer"} {
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.FandomSkin)
@@ -73,7 +73,7 @@ func TestITunesRequiresAllThreeLayoutsBeforeReplacingPresentation(t *testing.T) 
 	}
 }
 
-func TestITunesSkinKeysCycleFromFandomAndRememberChoice(t *testing.T) {
+func TestAluminiumSkinKeysCycleFromFandomAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.FandomSkin)
 	model := s.Host.Model
 	for _, tc := range []struct {
@@ -91,7 +91,7 @@ func TestITunesSkinKeysCycleFromFandomAndRememberChoice(t *testing.T) {
 			t.Fatalf("skin keys chose %s, want %s around the shared model", s.Skin(), tc.want)
 		}
 	}
-	if len(s.Windows()) != 2 || iTunesModes(t, s).MiniPlayer() {
+	if len(s.Windows()) != 2 || aluminiumModes(t, s).MiniPlayer() {
 		t.Fatal("iTunes should initially open the full player and owned EQ")
 	}
 	for _, named := range s.Windows() {
@@ -104,7 +104,7 @@ func TestITunesSkinKeysCycleFromFandomAndRememberChoice(t *testing.T) {
 	}
 }
 
-func TestITunesModesKeepNativeMainPlaybackAndTray(t *testing.T) {
+func TestAluminiumModesKeepNativeMainPlaybackAndTray(t *testing.T) {
 	a, s, tray, backend := openFakeTray(t, players.AluminiumSkin)
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
@@ -117,7 +117,7 @@ func TestITunesModesKeepNativeMainPlaybackAndTray(t *testing.T) {
 	s.presentation.ShowEqualiser(true)
 	s.presentation.ShowPlaylist(true)
 	s.Start()
-	p := iTunesModes(t, s)
+	p := aluminiumModes(t, s)
 	main, native, pulse := s.MainWindow(), s.MainWindow().Surface(), s.Pulse()
 	loads, stops := countCommand(backend, playback.OpLoad), countCommand(backend, playback.OpStop)
 	settle := func() { a.PumpOnce(); s.presentation.Advance(0) }
@@ -172,7 +172,7 @@ func TestITunesModesKeepNativeMainPlaybackAndTray(t *testing.T) {
 	}
 }
 
-func TestITunesSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t *testing.T) {
+func TestAluminiumSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a, s, backend := rememberedShell(t, players.DefaultSkin)
 	s.MainWindow().Move(720, 80)
@@ -183,7 +183,7 @@ func TestITunesSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t
 	s.Pulse().Stop()
 	a.PumpOnce()
 	s.presentation.Advance(0)
-	p := iTunesModes(t, s)
+	p := aluminiumModes(t, s)
 	main := s.MainWindow()
 	main.Move(420, 210)
 	main.SetSize(940, 650)
@@ -210,12 +210,12 @@ func TestITunesSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t
 			}
 		}
 	}
-	if got := iTunesModes(t, s).CaptureState(); !reflect.DeepEqual(got, want) || countCommand(backend, playback.OpLoad) != 0 {
+	if got := aluminiumModes(t, s).CaptureState(); !reflect.DeepEqual(got, want) || countCommand(backend, playback.OpLoad) != 0 {
 		t.Fatalf("family switch lost iTunes modes or started playback: %+v", got)
 	}
 	s.Close()
 	_, reopened, nextBackend := rememberedShell(t, "")
-	if reopened.Skin() != players.AluminiumSkin || !iTunesModes(t, reopened).MiniPlayer() || !reflect.DeepEqual(iTunesModes(t, reopened).CaptureState(), want) {
+	if reopened.Skin() != players.AluminiumSkin || !aluminiumModes(t, reopened).MiniPlayer() || !reflect.DeepEqual(aluminiumModes(t, reopened).CaptureState(), want) {
 		t.Fatal("iTunes session lost its mode or independent full/mini sizes")
 	}
 	x, y, known := reopened.MainWindow().Position()
@@ -223,7 +223,7 @@ func TestITunesSessionRestoresModeBeforePlacementAndKeepsOtherFamiliesSeparate(t
 	if !known || x != 420 || y != 210 || w != 430 || h != 62 || countCommand(nextBackend, playback.OpLoad) != 0 || reopened.Host.Model.EqualizerVisible || reopened.Host.Model.PlaylistVisible {
 		t.Fatalf("restored MiniPlayer lost position, geometry or area preferences: %d,%d,%t %dx%d", x, y, known, w, h)
 	}
-	iTunesModes(t, reopened).SetMiniPlayer(false)
+	aluminiumModes(t, reopened).SetMiniPlayer(false)
 	reopened.App.PumpOnce()
 	if w, h := reopened.MainWindow().Size(); w != 940 || h != 650 {
 		t.Fatalf("restored full view lost its inactive saved size: %dx%d", w, h)

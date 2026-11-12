@@ -14,7 +14,7 @@ import (
 	"goframework.io/desktop-ui/platform"
 )
 
-func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *testing.T) {
+func TestGaugeRequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *testing.T) {
 	for _, missing := range []string{"gauge.equalizer", "gauge.playlist"} {
 		t.Run(missing, func(t *testing.T) {
 			a, s := open(t, players.PodSkin)
@@ -51,7 +51,7 @@ func TestHalfLife2RequiresBothSatelliteLayoutsBeforeReplacingPresentation(t *tes
 	}
 }
 
-func TestHalfLife2SkinKeysCycleFromXboxAndRememberChoice(t *testing.T) {
+func TestGaugeSkinKeysCycleFromPodAndRememberChoice(t *testing.T) {
 	a, s := open(t, players.PodSkin)
 	model := s.Host.Model
 	key := func(w *ui.Window, mods platform.Modifiers) {
@@ -85,7 +85,7 @@ func TestHalfLife2SkinKeysCycleFromXboxAndRememberChoice(t *testing.T) {
 	}
 }
 
-func TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies(t *testing.T) {
+func TestGaugeSessionKeepsAllWindowsSeparateFromOtherFamilies(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a, s, backend := rememberedShell(t, players.DefaultSkin)
 	settle := func() {

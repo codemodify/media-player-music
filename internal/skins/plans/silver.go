@@ -15,7 +15,7 @@ import (
 //
 // It is drawn from paths and gradients, so its 2×
 // sheet is a second rasterisation rather than a doubling and it is exact at
-// 1.25, 1.5 and 1.75 as well as 1 and 2. Like Winamp it is a panel:
+// 1.25, 1.5 and 1.75 as well as 1 and 2. Like Slate it is a panel:
 // the faces are pictures with the display, the grooves and the printed
 // labels in them, and the keys are loose sprites the player lays out on
 // internal/skins/panel's rects.
@@ -57,8 +57,8 @@ const (
 	svCapOn = "#4f73c0"
 )
 
-// WinampSilver builds the skin's plan.
-func WinampSilver() *Plan {
+// Silver builds the skin's plan.
+func Silver() *Plan {
 	f := panel.Silver
 	sh := &Sheet{Name: "chrome"}
 	l := &lay{sh: sh, gap: 2}
@@ -367,7 +367,7 @@ func WinampSilver() *Plan {
 			},
 		},
 	}
-	p.Layouts = winampLayouts(f, sh)
+	p.Layouts = panelLayouts(f, sh)
 	mainCaptionRole(p)
 	return p
 }
