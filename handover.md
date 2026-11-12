@@ -91,7 +91,7 @@ $C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XD
 # the engine, the tags, the shell and winamp: since 2026-11-12 they play only into
 # audiotest's sound system or drive a fake engine, so they run on the host too:
 $C $E XDG_CONFIG_HOME=$T/config XDG_CACHE_HOME=$T/cache XDG_DATA_HOME=$T/data XDG_RUNTIME_DIR=$T/run \
-  go test -race ./internal/playback ./internal/tags/... ./internal/shell ./internal/players/winamp
+  go test -race -timeout 60m ./internal/playback ./internal/tags/... ./internal/shell ./internal/players/winamp
 $E go generate ./internal/skins                              # after changing a skin plan: rewrites internal/skins/packs
 $E go run . -skin default -shot "$(mktemp -d)" -at 1m37s     # headless pictures, nothing played
 ```
@@ -573,3 +573,6 @@ test." What changed:
 - This file's lines on uitoolkit ("the uncommitted work"), `HeldSize` (gone with R45) and the external engines corrected.
 - Checked: vet on linux, windows, darwin, freebsd; `go test -race` of internal/players, internal/players/fandom and internal/shell (370 s), one at a time, all pass but one.
 - **Not this change's: TestSkinMenuOffersTheSameChoicesOnEveryPopupBackend hangs** (killed at 4 and 40 minutes) at HEAD f9e1f15 too, with this change stashed. Its goroutine is runnable in graphics-paint2d's raster (RectCoverage under CPUDevice.fillAxisAlignedRect, from openAtScale at shell_test.go:36, the itunes subtest at 1x); paint2d's fills changed on 2026-11-11 evening (7ce99e6 "a run at a time", f179ea8 "an upright rectangle's..."). For the framework session to look at; the rest of internal/shell passes with `-skip` of it.
+
+## The popup test's "hang", 2026-11-13 (goframework session)
+- TestSkinMenuOffersTheSameChoicesOnEveryPopupBackend does not hang: it is 352 subtests (22 skins x 2 starting skins x 4 popup modes x 2 scales), each a whole shell opened and painted, and passes alone under -race in 1195 s (1073 s after graphics-paint2d 7437f2b), past go test's default 10-minute timeout; beside other packages it went past 40 minutes. The goroutine dump only ever caught it painting. paint2d's fills (7ce99e6, f179ea8) are faster than before them, not the cause. Hence `-timeout 60m` on internal/shell above. Whether to trim the matrix (1.75x for a few skins only) is the app's call; the test is not wrong.
