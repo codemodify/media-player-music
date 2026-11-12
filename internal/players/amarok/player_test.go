@@ -15,21 +15,21 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
-	"github.com/codemodify/media-player-music/internal/testenv"
 	"goframework.io/desktop-ui"
 	uiskins "goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/a11y"
 	"goframework.io/desktop-ui/platform"
+	"goframework.io/desktop-ui/platform/platformtest"
 	"goframework.io/desktop-ui/style"
 	"goframework.io/desktop-ui/widget"
 	"goframework.io/graphics-paint2d"
 )
 
 func TestMain(m *testing.M) {
-	// No look, folder or session of the person's (testenv, R102).
+	// No look, folder or session of the person's (desktop-ui's platformtest, R102).
 	isolated, err := os.MkdirTemp("", "media-player-test-")
 	if err == nil {
-		err = testenv.Isolate(isolated)
+		err = platformtest.Isolate(isolated)
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

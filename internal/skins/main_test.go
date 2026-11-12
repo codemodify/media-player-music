@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/codemodify/media-player-music/internal/testenv"
+	"goframework.io/desktop-ui/platform/platformtest"
 )
 
 // TestMain keeps the tests off the person's look, folders and session
-// (testenv, R102).
-func TestMain(m *testing.M) { os.Exit(testenv.Main(m)) }
+// (desktop-ui's platformtest, R102).
+func TestMain(m *testing.M) { os.Exit(platformtest.Main(m)) }
