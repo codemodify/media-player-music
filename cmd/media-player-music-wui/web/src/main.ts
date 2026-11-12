@@ -158,12 +158,39 @@ function statusText(status: Status): { text: string; problem: boolean } {
 	return { text: "", problem: false };
 }
 
+// daemonStatus shows, while the daemon is away, what the web UI says of
+// it: "Starting media-player-musicd…", or why it could not be started,
+// with Retry (GET /daemon; the web UI starts it, goframework R115), in
+// place of the connection's words; nothing when it has nothing to say.
+let daemonProblem = false;
+async function daemonStatus(): Promise<void> {
+	try {
+		const response = await fetch("/daemon", { cache: "no-store" });
+		if (!response.ok) return;
+		const daemon = (await response.json()) as { text: string; problem: boolean };
+		daemonProblem = daemon.problem && link.text !== "";
+		if (daemon.text && link.text !== "") link = { text: daemon.text, problem: daemon.problem };
+		renderLink();
+	} catch {
+		// the web UI itself is away: the connection's words stay
+	}
+}
+$("daemon-retry").addEventListener("click", () => {
+	daemonProblem = false;
+	link = { text: "Starting media-player-musicd…", problem: false };
+	renderLink();
+	void fetch("/daemon", { method: "POST" })
+		.then(() => setTimeout(() => void daemonStatus(), 1000))
+		.catch(() => undefined);
+});
+
 function renderLink(): void {
 	const chip = $("link");
 	chip.classList.toggle("problem", link.problem);
 	chip.classList.toggle("ok", !link.text);
 	const others = state && state.clients > 1 ? ` · ${state.clients} players' UIs` : "";
 	chip.textContent = link.text || "connected" + others;
+	$("daemon-retry").hidden = !daemonProblem || !link.text;
 }
 
 // --- the keys -------------------------------------------------------------------
@@ -232,6 +259,7 @@ function start(): void {
 		onStatus: (status) => {
 			link = statusText(status);
 			renderLink();
+			if (status.phase !== "connected") void daemonStatus();
 		},
 		// the newest of each state at each connection, then each newer one,
 		// never an older one after a newer one

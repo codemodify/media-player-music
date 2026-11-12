@@ -46,8 +46,8 @@ func screen(t *testing.T) (*uitest.Driver, *tui.View) {
 // the states, how the connection stands, why it failed.
 func TestTheConnectionTellsTheView(t *testing.T) {
 	driver, view := screen(t)
-	given := options(driver.App, view, "unix:///nowhere", "")
-	if given.Name != "terminal" || given.Version != Version || given.Ensure != nil {
+	given := options(driver.App, view, "unix:///nowhere", "", false)
+	if given.Name != "terminal" || given.Version != Version || given.Ensure {
 		t.Fatalf("options: %+v", given)
 	}
 	driver.Wait(func() bool { return strings.Contains(driver.Screen(), "connecting to the music daemon…") })
@@ -79,10 +79,29 @@ func TestNoDaemon(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	address := "unix://" + filepath.ToSlash(filepath.Join(t.TempDir(), "none.sock"))
-	view.SetPlayer(link.Start(ctx, options(driver.App, view, address, "")))
+	view.SetPlayer(link.Start(ctx, options(driver.App, view, address, "", false)))
 	driver.Wait(func() bool { return strings.Contains(driver.Screen(), "can't reach the music daemon") })
 	driver.Press("c", "2", "enter", "4", "enter", "o")
 	driver.Type("/nowhere")
 	driver.Press("enter")
 	driver.Wait(func() bool { return strings.Contains(driver.Screen(), "can't reach the music daemon") })
+}
+
+// TestTheDaemonStartingTellsTheView: with the default address the daemon
+// is started (Ensure; link's tests replace ensure, none is started here),
+// and how that goes reaches the screen: "Starting…", then why not, with
+// Ctrl+R calling Retry.
+func TestTheDaemonStartingTellsTheView(t *testing.T) {
+	driver, view := screen(t)
+	given := options(driver.App, view, "unix:///nowhere", "", true)
+	if !given.Ensure || given.Daemon == nil {
+		t.Fatalf("options: %+v", given)
+	}
+	given.Daemon(link.Daemon{Starting: true})
+	driver.Wait(func() bool { return strings.Contains(driver.Screen(), "Starting media-player-musicd…") })
+	retried := make(chan struct{}, 1)
+	given.Daemon(link.Daemon{Err: errors.New("media-player-musicd not found"), Retry: func() { retried <- struct{}{} }})
+	driver.Wait(func() bool { return strings.Contains(driver.Screen(), "media-player-musicd not found · Ctrl+R retry") })
+	driver.Press("ctrl+r")
+	driver.Wait(func() bool { return len(retried) == 1 })
 }

@@ -46,6 +46,7 @@ func (thisRef *View) bindings() []binding {
 		{"prompt.add", "Add a file, folder or playlist (:add)", []string{"o"}, func() { thisRef.openPrompt("add ") }},
 		{"prompt.save", "Save the queue as a playlist (:save)", []string{"ctrl+s"}, func() { thisRef.openPrompt("save ") }},
 		{"prompt.open", "Type a command", []string{":"}, func() { thisRef.openPrompt("") }},
+		{"daemon.retry", "Retry starting the music daemon", []string{"ctrl+r"}, thisRef.retryDaemon},
 		{"app.askQuit", "Quit", []string{"q"}, thisRef.askQuit},
 	}
 }

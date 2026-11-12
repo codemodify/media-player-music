@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -779,4 +780,29 @@ func TestDialogsTakeTheKeys(t *testing.T) {
 	if h.view.Shown() != ViewQueue {
 		t.Fatal("the keys stayed taken after the dialog")
 	}
+}
+
+// Starting media-player-musicd (R115, link's Daemon): the line under the
+// views says "Starting…", then why it could not be with Ctrl+R to retry,
+// which starts it again; nothing once it runs.
+func TestTheScreenSaysTheDaemonIsStartingOrWhyNot(t *testing.T) {
+	h := start(t, 100, 30, false)
+	app := h.driver.App
+	app.Do(func() { h.view.ShowDaemon("Starting media-player-musicd…", false, nil) })
+	h.shows("Starting media-player-musicd…")
+	var retried atomic.Int32
+	app.Do(func() {
+		h.view.ShowDaemon("media-player-musicd not found next to this program or on PATH", true, func() { retried.Add(1) })
+	})
+	h.shows("media-player-musicd not found", "Ctrl+R retry")
+	h.driver.Press("ctrl+r")
+	h.wait("the retry", func() bool { return retried.Load() == 1 })
+	h.driver.Press("ctrl+r") // once: the next comes with the next failure
+	h.driver.Settle()
+	if retried.Load() != 1 {
+		t.Fatalf("retried %d times", retried.Load())
+	}
+	app.Do(func() { h.view.ShowDaemon("", false, nil) })
+	h.shows("5 help")
+	h.hides("media-player-musicd not found")
 }

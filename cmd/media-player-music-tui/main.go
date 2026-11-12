@@ -79,15 +79,19 @@ func run(given *flags) error {
 
 	app := ui.New(ui.Options{Mouse: ui.MouseClicks, Title: "media-player-music"})
 	view := tui.New(app)
-	view.SetPlayer(link.Start(ctx, options(app, view, address, token)))
+	// media-player-musicd started when it does not answer at the default
+	// address (goframework R115): the screen says "Starting
+	// media-player-musicd…", or why it could not be, with Ctrl+R to retry
+	view.SetPlayer(link.Start(ctx, options(app, view, address, token, given.Daemon == "")))
 	return app.Run(view.Build())
 }
 
 // options are the connection's: each state the daemon tells, and how the
-// connection stands, posted to the screen.
-func options(app *ui.App, view *tui.View, address, token string) link.Options {
+// connection stands, posted to the screen; with starts, the daemon is
+// started when it does not answer, and how that goes is posted too.
+func options(app *ui.App, view *tui.View, address, token string, starts bool) link.Options {
 	return link.Options{
-		Address: address, Name: "terminal", Version: Version, Token: token,
+		Address: address, Name: "terminal", Version: Version, Token: token, Ensure: starts,
 		State:     func(state musicapi.State) { app.Do(func() { view.ShowState(state) }) },
 		Queue:     func(queue musicapi.Queue) { app.Do(func() { view.ShowQueue(queue) }) },
 		Now:       func(now musicapi.Now) { app.Do(func() { view.ShowNow(now) }) },
@@ -100,8 +104,8 @@ func options(app *ui.App, view *tui.View, address, token string) link.Options {
 				widgets.Notify(app, err.Error(), widgets.Failure)
 			})
 		},
-		// F1: goframework's ensure-daemon facility starts media-player-musicd
-		// here when none answers, once it lands (release-gaps.md)
-		Ensure: nil,
+		Daemon: func(daemon link.Daemon) {
+			app.Do(func() { view.ShowDaemon(daemon.Text(), daemon.Problem(), daemon.Retry) })
+		},
 	}
 }

@@ -53,6 +53,11 @@ type View struct {
 	libraryKnown bool // a library state came
 	link         string
 	linkProblem  bool
+	// starting media-player-musicd (link.Daemon): "Starting…", or why it
+	// could not be started, with retry (Ctrl+R)
+	daemon        string
+	daemonProblem bool
+	daemonRetry   func()
 
 	tabs  *widgets.Tabs
 	pages []page
@@ -206,6 +211,25 @@ func (thisRef *View) ShowLink(text string, problem bool) {
 	thisRef.showStatus()
 }
 
+// ShowDaemon shows how starting media-player-musicd stands (link.Daemon's
+// Text and Problem): text while it starts, why it could not be started
+// with retry, which Ctrl+R calls, and "" once it runs.
+func (thisRef *View) ShowDaemon(text string, problem bool, retry func()) {
+	thisRef.daemon, thisRef.daemonProblem, thisRef.daemonRetry = text, problem, retry
+	if problem {
+		thisRef.daemon += " · Ctrl+R retry"
+	}
+	thisRef.showStatus()
+}
+
+// retryDaemon starts the daemon again after it could not be started.
+func (thisRef *View) retryDaemon() {
+	if retry := thisRef.daemonRetry; retry != nil {
+		thisRef.daemonRetry = nil
+		retry()
+	}
+}
+
 // Connected hears that a connection was made (true) or ended (false):
 // the daemon met next may be another, whose states count from 1 again and
 // whose library is listed anew.
@@ -259,6 +283,12 @@ func (thisRef *View) showStatus() {
 		thisRef.showTimes()
 	}
 	switch {
+	case thisRef.daemon != "":
+		thisRef.message.SetText(thisRef.daemon)
+		thisRef.message.SetTone(widgets.ToneMuted)
+		if thisRef.daemonProblem {
+			thisRef.message.SetTone(widgets.ToneDanger)
+		}
 	case thisRef.link != "":
 		thisRef.message.SetText(thisRef.link)
 		thisRef.message.SetTone(widgets.ToneMuted)

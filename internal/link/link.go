@@ -3,9 +3,10 @@
 // whether the daemon is up yet or comes and goes.
 //
 // Starting the daemon when none answers is goframework's "ensure daemon"
-// facility's (release-gaps.md F1), which this package adopts once it
-// lands: Options.Ensure is where it goes. Until then a renderer says it
-// cannot reach the daemon and keeps dialling.
+// facility's (release-gaps.md F1, ledger R115: app-plugin's client/ensure):
+// with Options.Ensure, Start starts media-player-musicd first when it does
+// not answer, says so (Options.Daemon), and says why when it cannot, with
+// a Retry.
 package link
 
 import (
@@ -14,10 +15,13 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/codemodify/media-player-music/musicapi"
 	client "goframework.io/app-plugin/client"
+	"goframework.io/app-plugin/client/ensure"
+	"goframework.io/app-plugin/client/ensure/userservice"
 	"goframework.io/app-spec/protocol/transport"
 	disk "goframework.io/vfs-source-disk"
 
@@ -71,10 +75,110 @@ type Options struct {
 	// Status is told how the connection stands, in words for the person
 	// (StatusText's), each time that changes, and "" once connected.
 	Status func(text string, problem bool)
-	// Ensure, when set, is called before the first dial: it is where
-	// goframework's ensure-daemon facility (F1) starts media-player-musicd
-	// when none answers. Nil until that lands.
-	Ensure func(ctx context.Context) error
+	// Ensure starts media-player-musicd before the first dial when it does
+	// not answer (goframework R115's ensure: the user's service, else the
+	// program next to this one or on PATH, detached, its output in the
+	// log folder's media-player-musicd.log), telling Daemon how that goes;
+	// the connection is dialled once it runs. Only for the default
+	// address, where the daemon listens when started with no arguments.
+	Ensure bool
+	// Daemon is told, with Ensure, how starting the daemon stands:
+	// starting, why it could not be started (with Retry), or nothing to
+	// say (the zero Daemon).
+	Daemon func(Daemon)
+}
+
+// DaemonName is the daemon's program, which a renderer starts when it does
+// not answer at the default address (Options.Ensure).
+const DaemonName = musicapi.DaemonName
+
+// Daemon is how starting media-player-musicd stands, for a renderer to
+// show in its window: the zero Daemon when there is nothing to say.
+type Daemon struct {
+	// Starting: ensure is starting it ("Starting media-player-musicd…").
+	Starting bool
+	// Err is why it could not be started, in words to show as they are
+	// ("media-player-musicd not found next to this program or on PATH").
+	Err error
+	// Retry, with Err, starts it again (then dials).
+	Retry func()
+}
+
+// Text is what a renderer says of it: "Starting media-player-musicd…",
+// why it could not be started, or "".
+func (thisRef Daemon) Text() string {
+	switch {
+	case thisRef.Err != nil:
+		return thisRef.Err.Error()
+	case thisRef.Starting:
+		return "Starting " + DaemonName + "…"
+	}
+	return ""
+}
+
+// Problem tells whether it could not be started.
+func (thisRef Daemon) Problem() bool { return thisRef.Err != nil }
+
+// ensureDaemon is ensure.Daemon; the tests replace it, so that none starts
+// a daemon of the user's or reaches a service manager.
+var ensureDaemon = ensure.Daemon
+
+// EnsureOptions are ensure's options for the daemon at address: the
+// user's service first, else the program; its output in the log folder.
+// The lock is ensure's default, by the daemon's name: every renderer's,
+// the web UI's too.
+func EnsureOptions(address string) ensure.Options {
+	options := ensure.Options{Name: DaemonName, Address: address, Service: userservice.Starter(DaemonName)}
+	if places, err := disk.UserPlaces(musicapi.Name); err == nil {
+		options.Logs = places.Logs
+	}
+	return options
+}
+
+// starter starts the daemon for Start (Options.Ensure), one attempt at a
+// time, then dials once: dial is the connection's Start.
+type starter struct {
+	ctx     context.Context
+	options Options
+	dial    func()
+	once    sync.Once
+	lock    sync.Mutex
+	busy    bool
+}
+
+func (thisRef *starter) tell(daemon Daemon) {
+	if thisRef.options.Daemon != nil {
+		thisRef.options.Daemon(daemon)
+	}
+}
+
+// attempt starts the daemon, unless an attempt is under way, and dials
+// once it runs; when it cannot be started, says why with Retry.
+func (thisRef *starter) attempt() {
+	thisRef.lock.Lock()
+	if thisRef.busy {
+		thisRef.lock.Unlock()
+		return
+	}
+	thisRef.busy = true
+	thisRef.lock.Unlock()
+	go func() {
+		settings := EnsureOptions(thisRef.options.Address)
+		settings.Starting = func(ensure.How) { thisRef.tell(Daemon{Starting: true}) }
+		_, err := ensureDaemon(thisRef.ctx, settings)
+		thisRef.lock.Lock()
+		thisRef.busy = false
+		thisRef.lock.Unlock()
+		if thisRef.ctx.Err() != nil {
+			return
+		}
+		if err != nil {
+			thisRef.tell(Daemon{Err: err, Retry: thisRef.attempt})
+			return
+		}
+		thisRef.tell(Daemon{})
+		thisRef.once.Do(thisRef.dial)
+	}()
 }
 
 // StatusText is a connection's status in words for the person, and
@@ -102,11 +206,6 @@ func StatusText(status client.Status) (string, bool) {
 // returns the player's API at once: its calls fail with
 // client.ErrNotConnected while there is no connection.
 func Start(ctx context.Context, options Options) musicapi.Player {
-	if options.Ensure != nil {
-		if err := options.Ensure(ctx); err != nil && options.Failed != nil {
-			options.Failed(err)
-		}
-	}
 	// the newest state at each connection, then each newer one, never an
 	// older one after a newer one (app-spec's states, R13)
 	parts := []client.Part{}
@@ -146,7 +245,14 @@ func Start(ctx context.Context, options Options) musicapi.Player {
 		return musicapi.NewPlayer(failing{err})
 	}
 	player := musicapi.NewPlayer(connection)
-	connection.Start()
+	if options.Ensure {
+		// the daemon started first, if it must be, then dialled; the
+		// renderer says "Starting media-player-musicd…" meanwhile, or why
+		// it could not be, with Retry
+		(&starter{ctx: ctx, options: options, dial: connection.Start}).attempt()
+	} else {
+		connection.Start()
+	}
 	go func() {
 		select {
 		case <-ctx.Done():

@@ -59,6 +59,7 @@ type Shell struct {
 	workers        sync.WaitGroup // cover reads, file loads
 	settingsWindow *ui.Window
 	settingsPanel  *players.SettingsPanel
+	note           daemonNote // starting the daemon (daemon.go)
 	closed         bool
 	fileWindow     *ui.Window
 	fileLoader     *fileLoader
@@ -167,6 +168,7 @@ func (s *Shell) Close() {
 		s.settingsWindow.Close()
 		s.settingsWindow = nil
 	}
+	s.closeDaemonNote()
 	if s.presentation != nil {
 		s.presentation.Close()
 	}
@@ -276,6 +278,9 @@ func (s *Shell) SetSkin(id string) error {
 	}
 	if s.settingsWindow != nil && !s.settingsWindow.Closed() {
 		s.settingsWindow.SetOwner(next.MainWindow())
+	}
+	if s.note.window != nil && !s.note.window.Closed() {
+		s.note.window.SetOwner(next.MainWindow())
 	}
 	s.Host.RememberSkin(skin)
 	if old != nil {

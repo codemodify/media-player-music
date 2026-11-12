@@ -107,6 +107,11 @@ func run() error {
 			Now:    func(now musicapi.Now) { post(func(s *shell.Shell) { s.ShowNow(now) }) },
 			Status: func(text string, problem bool) { post(func(s *shell.Shell) { s.ShowLink(text, problem) }) },
 			Failed: func(err error) { post(func(s *shell.Shell) { s.ShowLink(err.Error(), true) }) },
+			// media-player-musicd started when it does not answer at the
+			// default address (goframework R115): the faces say "Starting
+			// media-player-musicd…", or why it could not be, with Retry
+			Ensure: *daemon == "",
+			Daemon: func(d link.Daemon) { post(func(s *shell.Shell) { s.ShowDaemon(d.Text(), d.Problem(), d.Retry) }) },
 			// the files named on the command line, once the daemon answers
 			Connected: func(connected bool) {
 				post(func(s *shell.Shell) {
@@ -118,9 +123,6 @@ func run() error {
 					}
 				})
 			},
-			// F1: goframework's ensure-daemon facility starts media-player-musicd
-			// here when none answers, once it lands (release-gaps.md)
-			Ensure: nil,
 		})
 	}
 	s, err = shell.New(a, opts)

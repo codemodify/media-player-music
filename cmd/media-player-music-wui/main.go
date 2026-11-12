@@ -111,6 +111,8 @@ func main() {
 		return
 	}
 
+	daemonContext, stopDaemonStarts := context.WithCancel(context.Background())
+	defer stopDaemonStarts()
 	var listener net.Listener
 	var web *httpserver.Server
 	app.Run(app.App[Config]{
@@ -124,8 +126,19 @@ func main() {
 			if err != nil {
 				return err
 			}
-			handler, err := server.New(server.Config{Daemon: settings.Daemon, Page: frontend.Files, Log: a.Log.Warningf,
-				Listen: settings.Listen, Hosts: settings.Hosts, Key: key, Token: token})
+			serverConfig := server.Config{Daemon: settings.Daemon, Page: frontend.Files, Log: a.Log.Warningf,
+				Listen: settings.Listen, Hosts: settings.Hosts, Key: key, Token: token}
+			// media-player-musicd started when it does not answer at the
+			// default address, where it listens when started with no
+			// arguments (goframework R115): now, again when a page cannot
+			// reach it, and when the page's Retry asks; the page shows why
+			// it could not be
+			if settings.Daemon == DefaultDaemon {
+				daemons := &starter{ctx: daemonContext, address: settings.Daemon, logs: places.Logs, log: a.Log.Warningf, again: 30 * time.Second}
+				serverConfig.Starter = daemons
+				daemons.Start()
+			}
+			handler, err := server.New(serverConfig)
 			if err != nil {
 				return err
 			}
@@ -151,6 +164,7 @@ func main() {
 			return web.Serve(listener) // nil once Stop began
 		},
 		Stop: func(ctx context.Context, a *app.Context[Config]) error {
+			stopDaemonStarts()
 			return web.Shutdown(ctx)
 		},
 	})

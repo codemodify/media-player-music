@@ -40,6 +40,10 @@ const Version = "1.2.0"
 // (goframework.io/vfs-source-disk's UserPlaces).
 const Name = "media-player-music"
 
+// DaemonName is the daemon's program, which the renderers start when it
+// does not answer (goframework R115's ensure).
+const DaemonName = "media-player-musicd"
+
 // SocketName is the daemon's Unix socket's name in the user's runtime
 // folder, where the renderers on this machine dial it.
 const SocketName = "media-player-musicd.sock"

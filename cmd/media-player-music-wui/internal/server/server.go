@@ -25,6 +25,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net"
@@ -59,6 +60,26 @@ type Config struct {
 	// (media-player-musicd.token), read at each connection passed on; nil:
 	// none presented.
 	Token func() (string, error)
+	// Daemon, when given, starts media-player-musicd when it does not
+	// answer (goframework R115's ensure; the web UI's starter): the page
+	// shows its Status while the daemon is away (GET /daemon, JSON
+	// {"text", "problem"}) and asks Start again with its Retry (POST
+	// /daemon); Unreachable is told each time a page's connection cannot
+	// reach the daemon.
+	Starter Starter
+}
+
+// Starter starts media-player-musicd for the web UI.
+type Starter interface {
+	// Status is what the page shows while the daemon is away:
+	// "Starting media-player-musicd…", or why it could not be started
+	// (problem); "" when there is nothing to say.
+	Status() (text string, problem bool)
+	// Start starts it now, unless a start is under way.
+	Start()
+	// Unreachable hears that a page's connection could not reach it: it
+	// starts it again, at most so often.
+	Unreachable()
 }
 
 // Server is the web UI's handler.
@@ -117,7 +138,31 @@ func New(config Config) (server *Server, err error) {
 		w.Header().Set("Content-Type", "image/svg+xml")
 		w.Write([]byte(favicon))
 	})
-	mux.Handle("GET /clients", origins(proxy(target, config.Token, config.Log)))
+	var unreachable func()
+	if config.Starter != nil {
+		unreachable = config.Starter.Unreachable
+	}
+	mux.Handle("GET /clients", origins(proxy(target, config.Token, config.Log, unreachable)))
+	mux.HandleFunc("GET /daemon", func(w http.ResponseWriter, _ *http.Request) {
+		var status struct {
+			Text    string `json:"text"`
+			Problem bool   `json:"problem"`
+		}
+		if config.Starter != nil {
+			status.Text, status.Problem = config.Starter.Status()
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		json.NewEncoder(w).Encode(status)
+	})
+	mux.Handle("POST /daemon", origins(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if config.Starter == nil {
+			http.Error(w, "this web UI starts no daemon", http.StatusNotFound)
+			return
+		}
+		config.Starter.Start()
+		w.WriteHeader(http.StatusAccepted)
+	})))
 	mux.Handle("POST /logout", origins(launch.Logout()))
 	return &Server{handler: mux, launch: launch}, nil
 }
@@ -129,7 +174,7 @@ func New(config Config) (server *Server, err error) {
 // address in Forwarded; and with the daemon's token (token) in
 // Authorization, in place of anything the browser sent there, the session
 // cookie staying here (R112).
-func proxy(target *url.URL, token func() (string, error), log func(string, ...any)) http.Handler {
+func proxy(target *url.URL, token func() (string, error), log func(string, ...any), unreachable func()) http.Handler {
 	upstream := *target
 	upstream.Scheme = map[string]string{"ws": "http", "wss": "https"}[target.Scheme]
 	forward := httpserver.Forward(httpserver.Proxies{})
@@ -151,6 +196,9 @@ func proxy(target *url.URL, token func() (string, error), log func(string, ...an
 		ErrorHandler: func(w http.ResponseWriter, _ *http.Request, err error) {
 			log("passing a page's connection on to media-player-musicd: %v", err)
 			http.Error(w, "media-player-musicd cannot be reached", http.StatusBadGateway)
+			if unreachable != nil {
+				unreachable()
+			}
 		},
 	}
 }
