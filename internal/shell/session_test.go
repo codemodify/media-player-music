@@ -7,8 +7,8 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/panel"
 	"github.com/codemodify/media-player-music/internal/players/standard"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"github.com/codemodify/media-player-music/internal/service"
 	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui"
@@ -100,7 +100,7 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 
 func TestSessionRetainsSeparateDefaultAndSkinArrangements(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	a, s, _ := rememberedShell(t, winamp.Skin)
+	a, s, _ := rememberedShell(t, panel.Skin)
 	desktopMove(t, a, s, s.MainWindow(), 380, 230)
 	s.presentation.Advance(0)
 	if err := s.SetSkin(players.DefaultSkin); err != nil {
@@ -148,19 +148,19 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 	s.MainWindow().Move(720, 80)
 	s.MainWindow().SetSize(1000, 650)
 	a.PumpOnce()
-	if err := s.SetSkin(players.WinampSkin); err != nil {
+	if err := s.SetSkin(players.SlateSkin); err != nil {
 		t.Fatal(err)
 	}
 	settle()
 	desktopMove(t, a, s, s.MainWindow(), 380, 230)
 	s.presentation.Advance(0)
-	if err := s.SetSkin(players.HeadspaceSkin); err != nil {
+	if err := s.SetSkin(players.WingspanSkin); err != nil {
 		t.Fatal(err)
 	}
 	settle()
 	s.MainWindow().Move(510, 340)
 	s.presentation.Advance(0)
-	if err := s.SetSkin(players.XboxSkin); err != nil {
+	if err := s.SetSkin(players.PodSkin); err != nil {
 		t.Fatal(err)
 	}
 	settle()
@@ -177,10 +177,10 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 		skin string
 		x, y int
 	}{
-		{players.WinampSilverSkin, 380, 230},
+		{players.SilverSkin, 380, 230},
 		{players.DefaultSkin, 720, 80},
-		{players.HeadspaceSkin, 510, 340},
-		{players.XboxSkin, 850, 400},
+		{players.WingspanSkin, 510, 340},
+		{players.PodSkin, 850, 400},
 	} {
 		if err := s.SetSkin(tc.skin); err != nil {
 			t.Fatal(err)
@@ -195,7 +195,7 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 			}
 		}
 	}
-	if len(s.Windows()) != 2 || s.settings.Windows[players.HeadspaceSkin]["main"].X != 510 || s.settings.Windows[players.XboxSkin]["main"].X != 850 || s.settings.Windows[players.WinampSkin]["main"].X != 380 || s.settings.Windows[players.DefaultSkin]["main"].X != 720 {
+	if len(s.Windows()) != 2 || s.settings.Windows[players.WingspanSkin]["main"].X != 510 || s.settings.Windows[players.PodSkin]["main"].X != 850 || s.settings.Windows[players.SlateSkin]["main"].X != 380 || s.settings.Windows[players.DefaultSkin]["main"].X != 720 {
 		t.Fatalf("presentation families overwrote each other: %v", s.settings.Windows)
 	}
 	if countCommand(backend, playback.OpLoad) != 0 {
@@ -203,7 +203,7 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 	}
 	s.Close()
 	_, reopened, nextBackend := rememberedShell(t, "")
-	if reopened.Skin() != players.XboxSkin || len(reopened.Windows()) != 2 {
+	if reopened.Skin() != players.PodSkin || len(reopened.Windows()) != 2 {
 		t.Fatal("saved Xbox selection did not reopen its own presentation")
 	}
 	if x, y, ok := reopened.MainWindow().Position(); !ok || x != 850 || y != 400 || countCommand(nextBackend, playback.OpLoad) != 0 {
@@ -265,9 +265,9 @@ func TestSessionAutosaveAndScreenshotIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Setenv(style.ThemeEnv, LookFor(winamp.Skin))
+	t.Setenv(style.ThemeEnv, LookFor(panel.Skin))
 	a := ui.New(ui.Options{Headless: true, DisableLookWatch: true})
-	shot, err := New(a, Options{Headless: true, Skin: winamp.Skin})
+	shot, err := New(a, Options{Headless: true, Skin: panel.Skin})
 	if err != nil {
 		t.Fatal(err)
 	}

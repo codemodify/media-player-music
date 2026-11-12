@@ -199,21 +199,21 @@ func (s *Shell) SetSkin(id string) error {
 		layouts := []string{headspaceskin.LayoutMain}
 		if players.IsPanelSkin(skin) {
 			layouts = []string{panel.LayoutStrip, panel.LayoutEqualiser, panel.LayoutPlaylist}
-		} else if skin == players.XboxSkin {
+		} else if skin == players.PodSkin {
 			layouts = []string{xboxskin.LayoutMain, xboxskin.LayoutPlaylist}
-		} else if skin == players.HalfLife2Skin {
+		} else if skin == players.GaugeSkin {
 			layouts = []string{halflife2skin.LayoutMain, halflife2skin.LayoutEqualizer, halflife2skin.LayoutPlaylist}
 		} else if skin == players.FandomSkin {
 			layouts = []string{fandomskin.LayoutMain, fandomskin.LayoutPlaylist}
-		} else if skin == players.ITunesSkin {
+		} else if skin == players.AluminiumSkin {
 			layouts = []string{itunesskin.LayoutMain, itunesskin.LayoutMini, itunesskin.LayoutEqualizer}
-		} else if skin == players.Series9Skin {
+		} else if skin == players.CobaltSkin {
 			layouts = []string{series9skin.LayoutMain, series9skin.LayoutTransport, series9skin.LayoutEqualizer, series9skin.LayoutPlaylist, series9skin.LayoutCompact}
-		} else if skin == players.VLCSkin {
+		} else if skin == players.UtilitySkin {
 			layouts = []string{vlcskin.LayoutMain}
-		} else if skin == players.RealPlayerSkin {
+		} else if skin == players.ConsoleSkin {
 			layouts = []string{realplayerskin.LayoutMain, realplayerskin.LayoutPlaylist, realplayerskin.LayoutEqualizer}
-		} else if skin == players.AmarokSkin {
+		} else if skin == players.SidebarSkin {
 			layouts = []string{amarokskin.LayoutMain}
 		} else if skin == players.FancySkin {
 			layouts = []string{fancyskin.LayoutMain, fancyskin.LayoutCompact, fancyskin.LayoutEqualizer, fancyskin.LayoutPlaylist}

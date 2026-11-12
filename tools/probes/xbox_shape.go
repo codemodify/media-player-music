@@ -91,7 +91,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/xbox"
+	"github.com/codemodify/media-player-music/internal/players/pod"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
@@ -105,7 +105,7 @@ func main() {
 	if err := skins.Register(); err != nil {
 		panic(err)
 	}
-	if err := os.Setenv(style.ThemeEnv, players.XboxSkin); err != nil {
+	if err := os.Setenv(style.ThemeEnv, players.PodSkin); err != nil {
 		panic(err)
 	}
 	for _, scale := range []float32{1, 1.75} {
@@ -115,7 +115,7 @@ func main() {
 
 func probe(scale float32) {
 	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
-	p, err := xbox.New(players.NewHost(a), xbox.Options{Scale: scale})
+	p, err := pod.New(players.NewHost(a), pod.Options{Scale: scale})
 	if err != nil {
 		panic(err)
 	}

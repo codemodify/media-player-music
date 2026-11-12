@@ -96,7 +96,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/series9"
+	"github.com/codemodify/media-player-music/internal/players/cobalt"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
@@ -110,7 +110,7 @@ func main() {
 	if err := skins.Register(); err != nil {
 		panic(err)
 	}
-	if err := os.Setenv(style.ThemeEnv, players.Series9Skin); err != nil {
+	if err := os.Setenv(style.ThemeEnv, players.CobaltSkin); err != nil {
 		panic(err)
 	}
 	for _, scale := range []float32{1, 1.75} {
@@ -121,7 +121,7 @@ func main() {
 }
 func probe(scale float32) {
 	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
-	p, err := series9.New(players.NewHost(a), series9.Options{Scale: scale})
+	p, err := cobalt.New(players.NewHost(a), cobalt.Options{Scale: scale})
 	if err != nil {
 		panic(err)
 	}
@@ -211,7 +211,7 @@ func probe(scale float32) {
 
 func probeStartup(scale float32, compact bool) {
 	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
-	p, err := series9.New(players.NewHost(a), series9.Options{Scale: scale})
+	p, err := cobalt.New(players.NewHost(a), cobalt.Options{Scale: scale})
 	if err != nil {
 		panic(err)
 	}

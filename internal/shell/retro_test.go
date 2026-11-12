@@ -19,9 +19,9 @@ func TestClassicDesktopSkinsValidateLayoutsBeforeReplacingCurrentPlayer(t *testi
 		id    string
 		roles []string
 	}{
-		{players.VLCSkin, []string{"utility.main"}},
-		{players.RealPlayerSkin, []string{"console.main", "console.playlist", "console.equalizer"}},
-		{players.AmarokSkin, []string{"sidebar.main"}},
+		{players.UtilitySkin, []string{"utility.main"}},
+		{players.ConsoleSkin, []string{"console.main", "console.playlist", "console.equalizer"}},
+		{players.SidebarSkin, []string{"sidebar.main"}},
 	} {
 		for _, missing := range skin.roles {
 			t.Run(skin.id+"/"+missing, func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestClassicDesktopFamiliesPreservePlaybackAndOwnTheirWindowPlacement(t *tes
 	model, transport, queue, pulse := s.Host.Model, s.Host.Model.Transport, s.Host.Model.Transport.List, s.Pulse()
 	loads := countCommand(backend, playback.OpLoad)
 	placements := map[string]map[string]players.WindowPlacement{}
-	for i, skin := range []string{players.VLCSkin, players.RealPlayerSkin, players.AmarokSkin} {
+	for i, skin := range []string{players.UtilitySkin, players.ConsoleSkin, players.SidebarSkin} {
 		if err := s.SetSkin(skin); err != nil {
 			t.Fatal(err)
 		}
@@ -86,7 +86,7 @@ func TestClassicDesktopFamiliesPreservePlaybackAndOwnTheirWindowPlacement(t *tes
 			t.Fatalf("%s changed shared playback, tray or its placement family", skin)
 		}
 	}
-	for _, skin := range []string{players.VLCSkin, players.RealPlayerSkin, players.AmarokSkin, players.DefaultSkin} {
+	for _, skin := range []string{players.UtilitySkin, players.ConsoleSkin, players.SidebarSkin, players.DefaultSkin} {
 		if err := s.SetSkin(skin); err != nil {
 			t.Fatal(err)
 		}

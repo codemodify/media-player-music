@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/panel"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/players/standard"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -42,9 +42,9 @@ func TestDefaultAndEverySkinOpenTheirCompleteUI(t *testing.T) {
 		t.Run(id, func(t *testing.T) {
 			_, s := open(t, id)
 			count := 1
-			if players.IsPanelSkin(id) || id == players.HalfLife2Skin || id == players.FancySkin {
+			if players.IsPanelSkin(id) || id == players.GaugeSkin || id == players.FancySkin {
 				count = 3
-			} else if id == players.XboxSkin || id == players.FandomSkin || id == players.ITunesSkin {
+			} else if id == players.PodSkin || id == players.FandomSkin || id == players.AluminiumSkin {
 				count = 2
 			}
 			if id == players.DefaultSkin {
@@ -118,7 +118,7 @@ func TestSkinChangesKeepTheModelAndEveryPlayerSetting(t *testing.T) {
 func TestDefaultSwitchReplacesWindowsAndPanelSwitchKeepsControls(t *testing.T) {
 	a, s := open(t, players.DefaultSkin)
 	initial := s.MainWindow()
-	if err := s.SetSkin(winamp.Skin); err != nil {
+	if err := s.SetSkin(panel.Skin); err != nil {
 		t.Fatal(err)
 	}
 	a.PumpOnce()
@@ -257,7 +257,7 @@ func TestSkinKeysCycleEveryChoiceAndReturnToLastSkin(t *testing.T) {
 	if s.Skin() != players.FancySkin {
 		t.Fatal("Ctrl+Shift+K did not restore the last skin")
 	}
-	for _, last := range []string{players.FancySkin, players.AmarokSkin, players.RealPlayerSkin, players.VLCSkin, players.Series9Skin, players.ITunesSkin, players.FandomSkin, players.HalfLife2Skin, players.XboxSkin, players.HeadspaceSkin, players.WinampSilverSkin} {
+	for _, last := range []string{players.FancySkin, players.SidebarSkin, players.ConsoleSkin, players.UtilitySkin, players.CobaltSkin, players.AluminiumSkin, players.FandomSkin, players.GaugeSkin, players.PodSkin, players.WingspanSkin, players.SilverSkin} {
 		if err := s.SetSkin(last); err != nil {
 			t.Fatal(err)
 		}
@@ -291,13 +291,13 @@ func TestSinglePreferenceAndScreenshotIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(s.Close)
-	if err := s.SetSkin(winamp.SkinSilver); err != nil {
+	if err := s.SetSkin(panel.SkinSilver); err != nil {
 		t.Fatal(err)
 	}
-	if got := SkinFor(Options{Remember: true}); got != winamp.SkinSilver {
+	if got := SkinFor(Options{Remember: true}); got != panel.SkinSilver {
 		t.Fatalf("next run opens %s, want silver", got)
 	}
-	if got := SkinFor(Options{Skin: winamp.Skin, Remember: true}); got != winamp.Skin {
+	if got := SkinFor(Options{Skin: panel.Skin, Remember: true}); got != panel.Skin {
 		t.Fatal("explicit skin did not override the preference")
 	}
 	if got := SkinFor(Options{}); got != players.DefaultSkin {
@@ -321,10 +321,10 @@ func TestUnknownChoiceLeavesTheExistingPlayerOpen(t *testing.T) {
 }
 
 func TestAnIncompleteOverrideKeepsTheDefaultAndLastWorkingSkin(t *testing.T) {
-	for _, failedSkin := range []string{winamp.Skin, players.HeadspaceSkin, players.XboxSkin, players.HalfLife2Skin, players.FandomSkin, players.ITunesSkin, players.Series9Skin} {
+	for _, failedSkin := range []string{panel.Skin, players.WingspanSkin, players.PodSkin, players.GaugeSkin, players.FandomSkin, players.AluminiumSkin, players.CobaltSkin} {
 		t.Run(failedSkin, func(t *testing.T) {
 			a, s := open(t, players.DefaultSkin)
-			if err := s.SetSkin(winamp.SkinSilver); err != nil {
+			if err := s.SetSkin(panel.SkinSilver); err != nil {
 				t.Fatal(err)
 			}
 			if err := s.SetSkin(players.DefaultSkin); err != nil {
@@ -349,7 +349,7 @@ func TestAnIncompleteOverrideKeepsTheDefaultAndLastWorkingSkin(t *testing.T) {
 			}
 			s.Host.DropSkin()
 			a.PumpOnce()
-			if s.Skin() != winamp.SkinSilver {
+			if s.Skin() != panel.SkinSilver {
 				t.Fatal("failed choice replaced the last working skin")
 			}
 		})

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/halflife2"
+	"github.com/codemodify/media-player-music/internal/players/gauge"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/a11y"
@@ -31,9 +31,9 @@ func main() {
 	if err := os.MkdirAll(*dir, 0755); err != nil {
 		panic(err)
 	}
-	os.Setenv(style.ThemeEnv, players.HalfLife2Skin)
+	os.Setenv(style.ThemeEnv, players.GaugeSkin)
 	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
-	p, err := halflife2.New(players.NewHost(a), halflife2.Options{Headless: true, Scale: float32(*scale)})
+	p, err := gauge.New(players.NewHost(a), gauge.Options{Headless: true, Scale: float32(*scale)})
 	if err != nil {
 		panic(err)
 	}

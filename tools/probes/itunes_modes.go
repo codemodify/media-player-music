@@ -96,7 +96,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/itunes"
+	"github.com/codemodify/media-player-music/internal/players/aluminium"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	uiskins "goframework.io/desktop-ui-skins"
@@ -113,7 +113,7 @@ func main() {
 	if err := skins.Register(); err != nil {
 		panic(err)
 	}
-	if err := os.Setenv(style.ThemeEnv, players.ITunesSkin); err != nil {
+	if err := os.Setenv(style.ThemeEnv, players.AluminiumSkin); err != nil {
 		panic(err)
 	}
 	for _, scale := range []float32{1, 1.75} {
@@ -123,7 +123,7 @@ func main() {
 
 func probe(scale float32) {
 	a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
-	p, err := itunes.New(players.NewHost(a), itunes.Options{Scale: scale})
+	p, err := aluminium.New(players.NewHost(a), aluminium.Options{Scale: scale})
 	if err != nil {
 		panic(err)
 	}
@@ -146,7 +146,7 @@ func probe(scale float32) {
 	verify(p.Eq, p.Main, scale, 430, 230, 210, 120, 350, 180, true)
 	verifyLimits(p.Main, scale, 640, 400, 0, 0)
 	verifyLimits(p.Eq, scale, 430, 230, 430, 230)
-	verifySoftAlpha(p.Main, p.Main.CaptureSurface(), itunes.LayoutMain, "shape.main")
+	verifySoftAlpha(p.Main, p.Main.CaptureSurface(), aluminium.LayoutMain, "shape.main")
 	for cycle := 0; cycle < 2; cycle++ {
 		p.SetMiniPlayer(true)
 		pump()
@@ -161,7 +161,7 @@ func probe(scale float32) {
 			p.Main.SetSize(width, 62)
 			pump()
 			verify(p.Main, nil, scale, width, 62, 70, 40, 25, 40, true)
-			verifySoftAlpha(p.Main, p.Main.CaptureSurface(), itunes.LayoutMini, "shape.mini")
+			verifySoftAlpha(p.Main, p.Main.CaptureSurface(), aluminium.LayoutMini, "shape.mini")
 		}
 		verify(p.Eq, p.Main, scale, 430, 230, 210, 120, 350, 180, true)
 		p.SetMiniPlayer(false)

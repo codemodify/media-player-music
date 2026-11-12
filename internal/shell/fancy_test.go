@@ -64,7 +64,7 @@ func TestFancyRequiresEveryLayoutBeforeReplacingPresentation(t *testing.T) {
 }
 
 func TestFancySkinKeysAndCompactMenuUseExactLabel(t *testing.T) {
-	a, s := open(t, players.AmarokSkin)
+	a, s := open(t, players.SidebarSkin)
 	model := s.Host.Model
 	for _, tc := range []struct {
 		mods platform.Modifiers
@@ -87,7 +87,7 @@ func TestFancySkinKeysAndCompactMenuUseExactLabel(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("menu@%g", scale), func(t *testing.T) {
 			t.Setenv(platform.EnvPopups, "layer")
-			a, s := openAtScale(t, players.WinampSkin, scale)
+			a, s := openAtScale(t, players.SlateSkin, scale)
 			w := s.MainWindow()
 			w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyMenu})
 			a.PumpOnce()

@@ -4,18 +4,18 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/amarok"
+	"github.com/codemodify/media-player-music/internal/players/aluminium"
+	"github.com/codemodify/media-player-music/internal/players/cobalt"
+	"github.com/codemodify/media-player-music/internal/players/console"
 	"github.com/codemodify/media-player-music/internal/players/fancy"
 	"github.com/codemodify/media-player-music/internal/players/fandom"
-	"github.com/codemodify/media-player-music/internal/players/halflife2"
-	"github.com/codemodify/media-player-music/internal/players/headspace"
-	"github.com/codemodify/media-player-music/internal/players/itunes"
-	"github.com/codemodify/media-player-music/internal/players/realplayer"
-	"github.com/codemodify/media-player-music/internal/players/series9"
+	"github.com/codemodify/media-player-music/internal/players/gauge"
+	"github.com/codemodify/media-player-music/internal/players/panel"
+	"github.com/codemodify/media-player-music/internal/players/pod"
+	"github.com/codemodify/media-player-music/internal/players/sidebar"
 	"github.com/codemodify/media-player-music/internal/players/standard"
-	"github.com/codemodify/media-player-music/internal/players/vlc"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
-	"github.com/codemodify/media-player-music/internal/players/xbox"
+	"github.com/codemodify/media-player-music/internal/players/utility"
+	"github.com/codemodify/media-player-music/internal/players/wingspan"
 	"goframework.io/desktop-ui"
 )
 
@@ -58,35 +58,35 @@ func openPresentation(h *players.Host, opts Options, skin string) (Presentation,
 	if skin == players.DefaultSkin {
 		return standard.New(h, standard.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.HeadspaceSkin {
-		return headspace.New(h, headspace.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.WingspanSkin {
+		return wingspan.New(h, wingspan.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.XboxSkin {
-		return xbox.New(h, xbox.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.PodSkin {
+		return pod.New(h, pod.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.HalfLife2Skin {
-		return halflife2.New(h, halflife2.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.GaugeSkin {
+		return gauge.New(h, gauge.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
 	if skin == players.FandomSkin {
 		return fandom.New(h, fandom.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.ITunesSkin {
-		return itunes.New(h, itunes.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.AluminiumSkin {
+		return aluminium.New(h, aluminium.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.Series9Skin {
-		return series9.New(h, series9.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.CobaltSkin {
+		return cobalt.New(h, cobalt.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.VLCSkin {
-		return vlc.New(h, vlc.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.UtilitySkin {
+		return utility.New(h, utility.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.RealPlayerSkin {
-		return realplayer.New(h, realplayer.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.ConsoleSkin {
+		return console.New(h, console.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	if skin == players.AmarokSkin {
-		return amarok.New(h, amarok.Options{Headless: opts.Headless, Scale: opts.Scale})
+	if skin == players.SidebarSkin {
+		return sidebar.New(h, sidebar.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
 	if skin == players.FancySkin {
 		return fancy.New(h, fancy.Options{Headless: opts.Headless, Scale: opts.Scale})
 	}
-	return winamp.New(h, winamp.Options{Headless: opts.Headless, Scale: opts.Scale})
+	return panel.New(h, panel.Options{Headless: opts.Headless, Scale: opts.Scale})
 }

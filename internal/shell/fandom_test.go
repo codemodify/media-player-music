@@ -15,7 +15,7 @@ import (
 )
 
 func TestFandomRequiresItsPlaylistLayoutBeforeReplacingPresentation(t *testing.T) {
-	a, s := open(t, players.HalfLife2Skin)
+	a, s := open(t, players.GaugeSkin)
 	w, model := s.MainWindow(), s.Host.Model
 	dir := skins.UserSkinDir(players.FandomSkin)
 	if err := os.MkdirAll(dir, 0700); err != nil {
@@ -30,7 +30,7 @@ func TestFandomRequiresItsPlaylistLayoutBeforeReplacingPresentation(t *testing.T
 	if err := s.SetSkin(players.FandomSkin); err == nil || !strings.Contains(err.Error(), `missing layout "fandom.playlist"`) {
 		t.Fatalf("incomplete Fandom override: %v", err)
 	}
-	if s.MainWindow() != w || w.Closed() || s.Skin() != players.HalfLife2Skin || s.Host.Model != model {
+	if s.MainWindow() != w || w.Closed() || s.Skin() != players.GaugeSkin || s.Host.Model != model {
 		t.Fatal("invalid Fandom choice damaged the active presentation")
 	}
 	if err := s.SetSkin(players.DefaultSkin); err != nil {
@@ -38,13 +38,13 @@ func TestFandomRequiresItsPlaylistLayoutBeforeReplacingPresentation(t *testing.T
 	}
 	s.Host.DropSkin()
 	a.PumpOnce()
-	if s.Skin() != players.HalfLife2Skin {
+	if s.Skin() != players.GaugeSkin {
 		t.Fatal("invalid Fandom choice replaced the last working skin")
 	}
 }
 
 func TestFandomSkinKeysCycleFromHalfLife2AndRememberChoice(t *testing.T) {
-	a, s := open(t, players.HalfLife2Skin)
+	a, s := open(t, players.GaugeSkin)
 	model := s.Host.Model
 	key := func(w *ui.Window, mods platform.Modifiers) {
 		w.Inject(platform.Event{Kind: platform.EventKeyDown, Key: platform.KeyK, Mods: mods})
@@ -91,10 +91,10 @@ func TestFandomSessionKeepsItsMainAndPlaylistSeparateFromEveryFamily(t *testing.
 		x, y int
 	}{
 		{players.DefaultSkin, 720, 80},
-		{players.WinampSkin, 380, 230},
-		{players.HeadspaceSkin, 510, 340},
-		{players.XboxSkin, 850, 400},
-		{players.HalfLife2Skin, 620, 230},
+		{players.SlateSkin, 380, 230},
+		{players.WingspanSkin, 510, 340},
+		{players.PodSkin, 850, 400},
+		{players.GaugeSkin, 620, 230},
 		{players.FandomSkin, 600, 200},
 	}
 	for _, pos := range positions {

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/xbox"
+	"github.com/codemodify/media-player-music/internal/players/pod"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/style"
@@ -28,9 +28,9 @@ func main() {
 	if err := os.MkdirAll(*dir, 0755); err != nil {
 		panic(err)
 	}
-	os.Setenv(style.ThemeEnv, players.XboxSkin)
+	os.Setenv(style.ThemeEnv, players.PodSkin)
 	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
-	p, err := xbox.New(players.NewHost(a), xbox.Options{Headless: true, Scale: float32(*scale)})
+	p, err := pod.New(players.NewHost(a), pod.Options{Headless: true, Scale: float32(*scale)})
 	if err != nil {
 		panic(err)
 	}

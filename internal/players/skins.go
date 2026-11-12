@@ -7,54 +7,53 @@ import (
 )
 
 // The skins' IDs. Every skin's art is the app's own, drawn in Go
-// (internal/skins/plans); the names are neutral. The Go names are the
-// presentations' (the face packages they wear), not the skins'.
+// (internal/skins/plans); the names are neutral, in Go as in the packs.
 const (
-	WinampSkin           = "slate"
-	WinampSilverSkin     = "silver"
-	WinampClassifiedSkin = "dossier"
-	DOSampSkin           = "textmode"
-	Windows98Skin        = "bevel"
-	WinampAmberSkin      = "amber"
-	CalculatorSkin       = "tally"
-	SonyCDXMP3Skin       = "headunit"
-	TI82Skin             = "graphing"
-	RadarAmpSkin         = "radar"
-	Quake3ArenaSkin      = "forge"
-	HeadspaceSkin        = "wingspan"
-	XboxSkin             = "pod"
-	HalfLife2Skin        = "gauge"
-	FandomSkin           = "fandom"
-	ITunesSkin           = "aluminium"
-	Series9Skin          = "cobalt"
-	VLCSkin              = "utility"
-	RealPlayerSkin       = "console"
-	AmarokSkin           = "sidebar"
-	FancySkin            = "fancy"
+	SlateSkin     = "slate"
+	SilverSkin    = "silver"
+	DossierSkin   = "dossier"
+	TextModeSkin  = "textmode"
+	BevelSkin     = "bevel"
+	AmberSkin     = "amber"
+	TallySkin     = "tally"
+	HeadUnitSkin  = "headunit"
+	GraphingSkin  = "graphing"
+	RadarSkin     = "radar"
+	ForgeSkin     = "forge"
+	WingspanSkin  = "wingspan"
+	PodSkin       = "pod"
+	GaugeSkin     = "gauge"
+	FandomSkin    = "fandom"
+	AluminiumSkin = "aluminium"
+	CobaltSkin    = "cobalt"
+	UtilitySkin   = "utility"
+	ConsoleSkin   = "console"
+	SidebarSkin   = "sidebar"
+	FancySkin     = "fancy"
 )
 
 // panelSkins is the compact panel's skin catalogue. Every entry uses the
 // same panel controls and window family, with its own artwork and layout.
 var panelSkins = []struct{ id, label string }{
-	{WinampSkin, "Slate"},
-	{WinampSilverSkin, "Silver"},
-	{WinampClassifiedSkin, "Dossier"},
-	{DOSampSkin, "Text Mode"},
-	{Windows98Skin, "Bevel"},
-	{WinampAmberSkin, "Amber"},
-	{CalculatorSkin, "Tally"},
-	{SonyCDXMP3Skin, "Head Unit"},
-	{TI82Skin, "Graphing"},
-	{RadarAmpSkin, "Radar"},
-	{Quake3ArenaSkin, "Forge"},
+	{SlateSkin, "Slate"},
+	{SilverSkin, "Silver"},
+	{DossierSkin, "Dossier"},
+	{TextModeSkin, "Text Mode"},
+	{BevelSkin, "Bevel"},
+	{AmberSkin, "Amber"},
+	{TallySkin, "Tally"},
+	{HeadUnitSkin, "Head Unit"},
+	{GraphingSkin, "Graphing"},
+	{RadarSkin, "Radar"},
+	{ForgeSkin, "Forge"},
 }
 
 // familyLabels names the other presentations' skins before their packs are
 // registered.
 var familyLabels = map[string]string{
-	HeadspaceSkin: "Wingspan", XboxSkin: "Pod", HalfLife2Skin: "Gauge", FandomSkin: "Fandom",
-	ITunesSkin: "Aluminium", Series9Skin: "Cobalt", VLCSkin: "Utility", RealPlayerSkin: "Console",
-	AmarokSkin: "Sidebar", FancySkin: "Fancy",
+	WingspanSkin: "Wingspan", PodSkin: "Pod", GaugeSkin: "Gauge", FandomSkin: "Fandom",
+	AluminiumSkin: "Aluminium", CobaltSkin: "Cobalt", UtilitySkin: "Utility", ConsoleSkin: "Console",
+	SidebarSkin: "Sidebar", FancySkin: "Fancy",
 }
 
 // PanelSkins returns the compact panel's skins in menu and keyboard order.
@@ -68,7 +67,7 @@ func PanelSkins() []string {
 
 // SkinnedIDs returns all optional skins, including separate window families.
 func SkinnedIDs() []string {
-	return append(PanelSkins(), HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin, FancySkin)
+	return append(PanelSkins(), WingspanSkin, PodSkin, GaugeSkin, FandomSkin, AluminiumSkin, CobaltSkin, UtilitySkin, ConsoleSkin, SidebarSkin, FancySkin)
 }
 
 // AppearanceIDs includes the ordinary UI followed by the optional skins.
@@ -86,7 +85,7 @@ func IsPanelSkin(id string) bool {
 
 // IsSkinned identifies an optional appearance in any presentation family.
 func IsSkinned(id string) bool {
-	return IsPanelSkin(id) || id == HeadspaceSkin || id == XboxSkin || id == HalfLife2Skin || id == FandomSkin || id == ITunesSkin || id == Series9Skin || id == VLCSkin || id == RealPlayerSkin || id == AmarokSkin || id == FancySkin
+	return IsPanelSkin(id) || id == WingspanSkin || id == PodSkin || id == GaugeSkin || id == FandomSkin || id == AluminiumSkin || id == CobaltSkin || id == UtilitySkin || id == ConsoleSkin || id == SidebarSkin || id == FancySkin
 }
 
 // SkinChoices is the same catalogue expressed as command-line choices.

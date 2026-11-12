@@ -11,7 +11,7 @@ import (
 // Winamp skins share their arrangement. Other presentations keep their own.
 func presentationFamily(skin string) string {
 	if players.IsPanelSkin(skin) {
-		return players.WinampSkin
+		return players.SlateSkin
 	}
 	return skin
 }

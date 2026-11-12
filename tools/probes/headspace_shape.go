@@ -19,7 +19,7 @@ import "C"
 import (
 	"fmt"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/headspace"
+	"github.com/codemodify/media-player-music/internal/players/wingspan"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
@@ -34,10 +34,10 @@ func main() {
 	if err := skins.Register(); err != nil {
 		panic(err)
 	}
-	os.Setenv(style.ThemeEnv, players.HeadspaceSkin)
+	os.Setenv(style.ThemeEnv, players.WingspanSkin)
 	for _, scale := range []float32{1, 1.75} {
 		a := ui.New(ui.Options{Backend: "x11", Scale: scale, DisableLookWatch: true})
-		p, err := headspace.New(players.NewHost(a), headspace.Options{Scale: scale})
+		p, err := wingspan.New(players.NewHost(a), wingspan.Options{Scale: scale})
 		if err != nil {
 			panic(err)
 		}

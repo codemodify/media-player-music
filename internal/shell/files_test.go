@@ -28,7 +28,7 @@ func writeMusicEntry(t *testing.T, root, relative string) string {
 }
 
 func TestTrackedChooserOwnerAndCancelSurviveSkinReplacement(t *testing.T) {
-	for _, skin := range []string{players.DefaultSkin, players.WinampSkin, players.WinampSilverSkin} {
+	for _, skin := range []string{players.DefaultSkin, players.SlateSkin, players.SilverSkin} {
 		t.Run(skin, func(t *testing.T) {
 			a, s, b := liveShell(t, skin)
 			main := s.MainWindow()
@@ -43,7 +43,7 @@ func TestTrackedChooserOwnerAndCancelSurviveSkinReplacement(t *testing.T) {
 			if s.fileWindow != chooser {
 				t.Fatal("a second Open replaced the active chooser")
 			}
-			next := players.WinampSkin
+			next := players.SlateSkin
 			if skin != players.DefaultSkin {
 				next = players.DefaultSkin
 			}

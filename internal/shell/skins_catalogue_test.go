@@ -13,7 +13,7 @@ import (
 func TestImportedSkinsPreserveThePlayingQueueAndWindowGroup(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		t.Run(fmt.Sprintf("%gx", scale), func(t *testing.T) {
-			a, s := openAtScale(t, players.WinampSkin, scale)
+			a, s := openAtScale(t, players.SlateSkin, scale)
 			model := s.Host.Model
 			tr := model.Transport
 			tr.List.Select(2)
@@ -59,7 +59,7 @@ func TestImportedSkinsPreserveThePlayingQueueAndWindowGroup(t *testing.T) {
 
 func TestWMPSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	a, s, backend := rememberedShell(t, players.WinampSkin)
+	a, s, backend := rememberedShell(t, players.SlateSkin)
 	if err := s.LoadFiles(mediaPaths(t, 1), false); err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +72,7 @@ func TestWMPSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
 	model.EqualizerVisible, model.PlaylistVisible = false, true
 	s.refresh()
 	loads := countCommand(backend, playback.OpLoad)
-	for _, id := range []string{players.HeadspaceSkin, players.XboxSkin, players.HalfLife2Skin, players.FandomSkin, players.ITunesSkin, players.Series9Skin, players.VLCSkin, players.RealPlayerSkin, players.AmarokSkin, players.WinampSilverSkin, players.DefaultSkin, players.Series9Skin, players.ITunesSkin, players.HeadspaceSkin, players.FandomSkin, players.HalfLife2Skin, players.XboxSkin} {
+	for _, id := range []string{players.WingspanSkin, players.PodSkin, players.GaugeSkin, players.FandomSkin, players.AluminiumSkin, players.CobaltSkin, players.UtilitySkin, players.ConsoleSkin, players.SidebarSkin, players.SilverSkin, players.DefaultSkin, players.CobaltSkin, players.AluminiumSkin, players.WingspanSkin, players.FandomSkin, players.GaugeSkin, players.PodSkin} {
 		old := s.Windows()
 		before := s.presentation
 		if err := s.SetSkin(id); err != nil {
@@ -95,9 +95,9 @@ func TestWMPSwitchReplacesPresentationFamiliesAroundLivePlayback(t *testing.T) {
 			t.Fatalf("%s interrupted the active backend/application", id)
 		}
 		count := 1
-		if players.IsPanelSkin(id) || id == players.HalfLife2Skin {
+		if players.IsPanelSkin(id) || id == players.GaugeSkin {
 			count = 3
-		} else if id == players.XboxSkin || id == players.FandomSkin || id == players.ITunesSkin {
+		} else if id == players.PodSkin || id == players.FandomSkin || id == players.AluminiumSkin {
 			count = 2
 		}
 		if len(s.Windows()) != count || s.MainWindow().Closed() || !s.MainWindow().Visible() {

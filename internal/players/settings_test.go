@@ -12,15 +12,15 @@ func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 		json string
 		want Settings
 	}{
-		{`{"skin":"slate"}`, Settings{Skin: WinampSkin}},
-		{`{"skin":"dossier"}`, Settings{Skin: WinampClassifiedSkin}},
+		{`{"skin":"slate"}`, Settings{Skin: SlateSkin}},
+		{`{"skin":"dossier"}`, Settings{Skin: DossierSkin}},
 		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin}},
 		// What earlier builds saved is not carried over: an old skin name,
 		// an engine, the queue and ReplayGain (the daemon's now) are simply
 		// not the desktop UI's.
 		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin}},
 		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin}},
-		{`{"skin":"slate","replaygain":{"mode":"album"},"playlist":{"tracks":[{"Path":"/a.mp3"}]}}`, Settings{Skin: WinampSkin}},
+		{`{"skin":"slate","replaygain":{"mode":"album"},"playlist":{"tracks":[{"Path":"/a.mp3"}]}}`, Settings{Skin: SlateSkin}},
 		{`not json`, Settings{Skin: DefaultSkin}},
 	} {
 		t.Run(test.json, func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestReplayGainNormal(t *testing.T) {
 func TestSessionSettingsRoundTripAndPermissions(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	want := Settings{
-		Skin:   WinampClassifiedSkin,
+		Skin:   DossierSkin,
 		Panels: &SavedPanels{Equaliser: false, Playlist: true},
 		Windows: map[string]map[string]WindowPlacement{"slate": {
 			"main":     {X: 0, Y: -20, Positioned: true},

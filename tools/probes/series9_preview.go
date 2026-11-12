@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/series9"
+	"github.com/codemodify/media-player-music/internal/players/cobalt"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/style"
@@ -27,11 +27,11 @@ func main() {
 	if err := os.MkdirAll(*dir, 0755); err != nil {
 		panic(err)
 	}
-	os.Setenv(style.ThemeEnv, players.Series9Skin)
+	os.Setenv(style.ThemeEnv, players.CobaltSkin)
 	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.ShowSettings = func() {}
-	p, err := series9.New(h, series9.Options{Headless: true, Scale: float32(*scale)})
+	p, err := cobalt.New(h, cobalt.Options{Headless: true, Scale: float32(*scale)})
 	if err != nil {
 		panic(err)
 	}

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/panel"
 	"github.com/codemodify/media-player-music/internal/players/playertest"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
 )
@@ -74,7 +74,7 @@ func desktopMove(t *testing.T, a *ui.Application, s *Shell, w *ui.Window, x, y i
 }
 
 func TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped(t *testing.T) {
-	for _, skin := range []string{winamp.Skin, winamp.SkinSilver} {
+	for _, skin := range []string{panel.Skin, panel.SkinSilver} {
 		for _, state := range []players.State{players.Stopped, players.Paused} {
 			t.Run(skin+"/"+state.String(), func(t *testing.T) {
 				a, s := open(t, players.DefaultSkin)

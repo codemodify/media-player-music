@@ -57,12 +57,12 @@ func TestFormatSkinLabelTidiesWhiteSpaceAndIsIdempotent(t *testing.T) {
 
 func TestSkinLabelUsesTheUserOverride(t *testing.T) {
 	for _, tc := range []struct{ id, label, want string }{
-		{WinampSilverSkin, "  My   Silver ", "My Silver"},
-		{HeadspaceSkin, "My Wings", "My Wings"},
-		{XboxSkin, " ", "Pod"},
-		{ITunesSkin, "Brushed", "Brushed"},
-		{VLCSkin, "Custom", "Custom"},
-		{AmarokSkin, "", "Sidebar"},
+		{SilverSkin, "  My   Silver ", "My Silver"},
+		{WingspanSkin, "My Wings", "My Wings"},
+		{PodSkin, " ", "Pod"},
+		{AluminiumSkin, "Brushed", "Brushed"},
+		{UtilitySkin, "Custom", "Custom"},
+		{SidebarSkin, "", "Sidebar"},
 		{FancySkin, "Custom Fancy", "Fancy"},
 	} {
 		t.Run(tc.id+"/"+tc.label, func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestSkinLabelUsesTheUserOverride(t *testing.T) {
 }
 
 func TestWMPCatalogueKeepsTheWinampFamilySeparate(t *testing.T) {
-	for _, id := range []string{HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin, FancySkin} {
+	for _, id := range []string{WingspanSkin, PodSkin, GaugeSkin, FandomSkin, AluminiumSkin, CobaltSkin, UtilitySkin, ConsoleSkin, SidebarSkin, FancySkin} {
 		if IsPanelSkin(id) || !IsSkinned(id) {
 			t.Fatalf("%s was not recognized as its own optional family", id)
 		}
@@ -104,7 +104,7 @@ func TestWMPCatalogueKeepsTheWinampFamilySeparate(t *testing.T) {
 	// Callers may reorder choices without changing the shared catalogue.
 	ids := SkinnedIDs()
 	ids[0] = "changed"
-	if next := SkinnedIDs(); next[0] != WinampSkin || !reflect.DeepEqual(next[len(next)-10:], []string{HeadspaceSkin, XboxSkin, HalfLife2Skin, FandomSkin, ITunesSkin, Series9Skin, VLCSkin, RealPlayerSkin, AmarokSkin, FancySkin}) {
+	if next := SkinnedIDs(); next[0] != SlateSkin || !reflect.DeepEqual(next[len(next)-10:], []string{WingspanSkin, PodSkin, GaugeSkin, FandomSkin, AluminiumSkin, CobaltSkin, UtilitySkin, ConsoleSkin, SidebarSkin, FancySkin}) {
 		t.Fatalf("mutable choice list changed catalogue order: %v", next)
 	}
 }
@@ -119,8 +119,8 @@ func TestEveryImportedAppearanceRetainsItsSavedSession(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 			saved := Settings{Skin: id,
 				Panels:        &SavedPanels{Equaliser: false, Playlist: true},
-				Windows:       map[string]map[string]WindowPlacement{WinampSkin: {"playlist": {X: -120, Y: 230, Positioned: true, Dock: &WindowDock{Parent: "main", Side: "bottom", Along: 7}}}},
-				Presentations: map[string]PresentationState{ITunesSkin: {Mode: "mini", Sizes: map[string]PresentationSize{"full": {Width: 900, Height: 600}, "mini": {Width: 380, Height: 68}}}},
+				Windows:       map[string]map[string]WindowPlacement{SlateSkin: {"playlist": {X: -120, Y: 230, Positioned: true, Dock: &WindowDock{Parent: "main", Side: "bottom", Along: 7}}}},
+				Presentations: map[string]PresentationState{AluminiumSkin: {Mode: "mini", Sizes: map[string]PresentationSize{"full": {Width: 900, Height: 600}, "mini": {Width: 380, Height: 68}}}},
 			}
 			if err := saved.Save(); err != nil {
 				t.Fatal(err)

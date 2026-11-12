@@ -15,7 +15,7 @@ import (
 // Retry (focused: Enter or Space retries) and Close (Escape); once it runs
 // nothing is said.
 func TestTheWindowSaysTheDaemonIsStartingOrWhyNot(t *testing.T) {
-	for _, skin := range []string{players.DefaultSkin, players.WinampSkin} {
+	for _, skin := range []string{players.DefaultSkin, players.SlateSkin} {
 		t.Run(skin, func(t *testing.T) {
 			a, s, _ := liveShell(t, skin)
 			s.ShowDaemon("Starting media-player-musicd…", false, nil)

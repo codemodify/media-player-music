@@ -11,7 +11,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/players/panel"
 	"github.com/codemodify/media-player-music/internal/service"
 	"github.com/codemodify/media-player-music/musicapi"
 	"goframework.io/desktop-ui"
@@ -438,7 +438,7 @@ func TestReplayGainSettingsReachTheEngineAndAreSaved(t *testing.T) {
 }
 
 func TestFileChooserFitsAllPresentationsAndLoadsPickedFile(t *testing.T) {
-	for _, skin := range []string{players.DefaultSkin, winamp.Skin, winamp.SkinSilver} {
+	for _, skin := range []string{players.DefaultSkin, panel.Skin, panel.SkinSilver} {
 		t.Run(skin, func(t *testing.T) {
 			a, s, _ := liveShell(t, skin)
 			path := mediaPaths(t, 1)[0]

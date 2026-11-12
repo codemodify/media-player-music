@@ -116,8 +116,10 @@ winamp-amber → amber, calculator → tally, sony-cdx-mp3 → headunit,
 ti-82 → graphing, radar-amp → radar, quake-3-arena → forge, headspace →
 wingspan, xbox → pod, half-life-2 → gauge, itunes → aluminium, series-9 →
 cobalt, vlc → utility, realplayer → console, amarok → sidebar. The faces'
-packages (internal/players/winamp, xbox, ...) keep their Go names; the
-prose below, older than the rename, may use the old names.
+packages and Go constants carry the new names too (internal/players/panel,
+pod, gauge, wingspan, aluminium, cobalt, utility, console, sidebar;
+players.SlateSkin, PodSkin, ...); the prose below, older than the rename,
+may use the old names.
 
 | Choice | Layout | Windows |
 | --- | --- | --- |

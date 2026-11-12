@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/amarok"
+	"github.com/codemodify/media-player-music/internal/players/sidebar"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
 	"goframework.io/desktop-ui"
@@ -40,7 +40,7 @@ func main() {
 		h := players.NewHost(a)
 		h.ShowSettings = func() {}
 		h.Packs = players.SkinnedIDs
-		p, err := amarok.New(h, amarok.Options{Headless: true, Scale: scale})
+		p, err := sidebar.New(h, sidebar.Options{Headless: true, Scale: scale})
 		if err != nil {
 			panic(err)
 		}

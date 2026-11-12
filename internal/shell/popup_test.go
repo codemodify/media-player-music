@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/players/panel"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-widgets"
 	"goframework.io/desktop-ui/a11y"
@@ -19,7 +19,7 @@ import (
 func TestSkinMenuOffersTheSameChoicesOnEveryPopupBackend(t *testing.T) {
 	for _, scale := range []float32{1, 1.75} {
 		for _, mode := range []string{"surface", "layer", "headless", "refused"} {
-			for _, initial := range []string{players.DefaultSkin, winamp.Skin} {
+			for _, initial := range []string{players.DefaultSkin, panel.Skin} {
 				for choice, id := range Appearances {
 					t.Run(fmt.Sprintf("%s/%s@%gx/%s", initial, mode, scale, id), func(t *testing.T) {
 						t.Setenv(platform.EnvPopups, mode)
@@ -54,7 +54,7 @@ func TestSkinMenuOffersTheSameChoicesOnEveryPopupBackend(t *testing.T) {
 							if len(surface.Popups()) != 0 || pop.Bounds().Dy() > w.WindowRect().Dy() {
 								t.Fatal("compact fallback clipped choices or opened a native surface")
 							}
-							if initial == winamp.Skin && pop.MaxOffset() <= 0 {
+							if initial == panel.Skin && pop.MaxOffset() <= 0 {
 								t.Fatal("compact fallback did not provide a scrollable choice list")
 							}
 						} else if len(surface.Popups()) != 1 || surface.Popups()[0].Buffer() == nil {

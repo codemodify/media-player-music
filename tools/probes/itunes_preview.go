@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/itunes"
+	"github.com/codemodify/media-player-music/internal/players/aluminium"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/style"
@@ -28,11 +28,11 @@ func main() {
 	if err := os.MkdirAll(*dir, 0755); err != nil {
 		panic(err)
 	}
-	os.Setenv(style.ThemeEnv, players.ITunesSkin)
+	os.Setenv(style.ThemeEnv, players.AluminiumSkin)
 	a := ui.New(ui.Options{Headless: true, Scale: float32(*scale), DisableLookWatch: true})
 	h := players.NewHost(a)
 	h.ShowSettings = func() {}
-	p, err := itunes.New(h, itunes.Options{Headless: true, Scale: float32(*scale)})
+	p, err := aluminium.New(h, aluminium.Options{Headless: true, Scale: float32(*scale)})
 	if err != nil {
 		panic(err)
 	}
@@ -65,12 +65,12 @@ func main() {
 	a.PumpOnce()
 	p.Advance(0)
 	write("mini", p.Main.CaptureSurface())
-	p.Main.SetSize(150, itunes.MiniH)
+	p.Main.SetSize(150, aluminium.MiniH)
 	a.PumpOnce()
 	p.Advance(0)
 	write("mini-compact", p.Main.CaptureSurface())
 	p.SetMiniPlayer(false)
-	p.Main.SetSize(itunes.MinW, itunes.MinH)
+	p.Main.SetSize(aluminium.MinW, aluminium.MinH)
 	a.PumpOnce()
 	p.Advance(0)
 	write("main-minimum", p.Main.CaptureSurface())

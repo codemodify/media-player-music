@@ -6,7 +6,7 @@ import (
 
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/players/winamp"
+	"github.com/codemodify/media-player-music/internal/players/panel"
 	"github.com/codemodify/media-player-music/internal/service"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
@@ -216,7 +216,7 @@ func TestTrayHiddenPlayerSwitchesSkinAndRecoversAfterHostLoss(t *testing.T) {
 	if chooser.Visible() || chooser.Closed() {
 		t.Fatal("closing to the tray left an isolated file chooser or destroyed it")
 	}
-	for _, skin := range []string{winamp.Skin, winamp.SkinSilver, players.DefaultSkin, winamp.Skin} {
+	for _, skin := range []string{panel.Skin, panel.SkinSilver, players.DefaultSkin, panel.Skin} {
 		if err := s.SetSkin(skin); err != nil {
 			t.Fatal(err)
 		}
@@ -256,7 +256,7 @@ func TestTrayHiddenPlayerSwitchesSkinAndRecoversAfterHostLoss(t *testing.T) {
 }
 
 func TestExplicitKeyboardQuitWhileHiddenExits(t *testing.T) {
-	a, s, tray, backend := openFakeTray(t, winamp.Skin)
+	a, s, tray, backend := openFakeTray(t, panel.Skin)
 	s.Start()
 	s.MainWindow().Inject(platform.Event{Kind: platform.EventClose})
 	a.PumpOnce()
@@ -272,7 +272,7 @@ func TestExplicitKeyboardQuitWhileHiddenExits(t *testing.T) {
 }
 
 func TestQueuedTrayActivationAfterShutdownDoesNotReopenPlayer(t *testing.T) {
-	a, s, tray, _ := openFakeTray(t, winamp.Skin)
+	a, s, tray, _ := openFakeTray(t, panel.Skin)
 	window := s.MainWindow()
 	offscreen := window.Surface().(*platform.Offscreen)
 	before := offscreen.Activations()
