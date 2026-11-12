@@ -80,7 +80,7 @@ func (thisRef *Service) sync() {
 		p.generation++
 		p.path, p.list, p.index, p.state, p.position = path, t.List, t.List.Index(), t.State, t.Pos
 		p.loading, p.seeking, p.seekOnLoad, p.loadPosition = true, t.Pos > 0, t.Pos, t.Pos
-		thisRef.apply(playback.Command{Op: playback.OpLoad, Generation: p.generation, Path: path, Position: t.Pos, Paused: t.State == model.Paused, Epoch: p.spectrumEpoch})
+		thisRef.apply(playback.Command{Op: playback.OpLoad, Generation: p.generation, Path: path, Position: t.Track().Start + t.Pos, Paused: t.State == model.Paused, Epoch: p.spectrumEpoch})
 		return
 	}
 	if p.state != t.State {
@@ -95,7 +95,7 @@ func (thisRef *Service) sync() {
 			p.seekOnLoad, p.position = t.Pos, t.Pos
 			return
 		}
-		if !thisRef.apply(playback.Command{Op: playback.OpSeek, Generation: p.generation, Position: t.Pos, Epoch: p.spectrumEpoch}) {
+		if !thisRef.apply(playback.Command{Op: playback.OpSeek, Generation: p.generation, Position: t.Track().Start + t.Pos, Epoch: p.spectrumEpoch}) {
 			return
 		}
 		p.position, p.seeking = t.Pos, true
@@ -153,12 +153,15 @@ func (thisRef *Service) engineEvent(event playback.Update) {
 		return
 	}
 	track := &t.List.Tracks[i]
+	// a CUE sheet's track is a part of its file: the engine's times are
+	// the file's, the transport's the track's
+	at := event.Position - track.Start
 	switch event.Kind {
 	case playback.UpdateLoaded:
 		p.loading = false
 		if p.seekOnLoad != p.loadPosition {
 			thisRef.resetSpectrum()
-			if thisRef.apply(playback.Command{Op: playback.OpSeek, Generation: p.generation, Position: p.seekOnLoad, Epoch: p.spectrumEpoch}) {
+			if thisRef.apply(playback.Command{Op: playback.OpSeek, Generation: p.generation, Position: track.Start + p.seekOnLoad, Epoch: p.spectrumEpoch}) {
 				p.seeking = true
 			}
 		}
@@ -169,14 +172,18 @@ func (thisRef *Service) engineEvent(event playback.Update) {
 		}
 		return
 	case playback.UpdatePosition:
-		if !p.loading && !p.seeking && (event.Epoch == 0 || event.Epoch == p.spectrumEpoch) && event.Position >= 0 {
-			t.Pos, p.position = event.Position, event.Position
+		if !p.loading && !p.seeking && (event.Epoch == 0 || event.Epoch == p.spectrumEpoch) && at >= 0 {
+			if track.End > 0 && event.Position >= track.End {
+				thisRef.ended() // the CUE track's end: the next one
+				break
+			}
+			t.Pos, p.position = at, at
 			thisRef.publishNowLocked()
 			thisRef.keepPosition()
 		}
 		return
 	case playback.UpdateSpectrum:
-		if t.State == model.Playing && !p.loading && !p.seeking && event.Epoch == p.spectrumEpoch && len(event.Bands) > 0 && math.Abs((event.Position-t.Pos).Seconds()) <= 1.5 {
+		if t.State == model.Playing && !p.loading && !p.seeking && event.Epoch == p.spectrumEpoch && len(event.Bands) > 0 && math.Abs((at-t.Pos).Seconds()) <= 1.5 {
 			bands := make([]float64, len(event.Bands))
 			for i, band := range event.Bands {
 				bands[i] = float64(band)
@@ -189,8 +196,16 @@ func (thisRef *Service) engineEvent(event playback.Update) {
 		if event.Duration < 0 {
 			return
 		}
-		track.Length = event.Duration
+		switch {
+		case track.End > 0:
+			track.Length = track.End - track.Start
+		default:
+			track.Length = max(event.Duration-track.Start, 0)
+		}
 	case playback.UpdateMetadata:
+		if track.Start > 0 || track.End > 0 {
+			return // the file's tags are the disc's, the CUE sheet's the track's
+		}
 		if event.Info.Title != "" {
 			track.Title = event.Info.Title
 		}
@@ -208,24 +223,32 @@ func (thisRef *Service) engineEvent(event playback.Update) {
 			track.Bitrate = event.Info.Bitrate
 		}
 	case playback.UpdateEnded:
-		t.Pos = 0
-		if t.State != model.Playing {
-			t.State = model.Stopped
-		} else if t.Repeat != model.RepeatOne {
-			if t.List.Advance(1) && t.Repeat == model.RepeatOff {
-				t.State = model.Stopped
-			}
-		}
-		p.path = ""
-		thisRef.sync()
-		thisRef.savedAt = -1
-		if thisRef.changed != nil {
-			go thisRef.changed() // never under the lock
-		}
+		thisRef.ended()
 	default:
 		return
 	}
 	thisRef.publishLocked()
+}
+
+// ended plays what follows the track that ended: the next in the play
+// order, the same again (repeat one), or nothing at the queue's end
+// (repeat off).
+func (thisRef *Service) ended() {
+	p, t := &thisRef.playback, thisRef.transport
+	t.Pos = 0
+	if t.State != model.Playing {
+		t.State = model.Stopped
+	} else if t.Repeat != model.RepeatOne {
+		if t.List.Advance(1) && t.Repeat == model.RepeatOff {
+			t.State = model.Stopped
+		}
+	}
+	p.path = ""
+	thisRef.sync()
+	thisRef.savedAt = -1
+	if thisRef.changed != nil {
+		go thisRef.changed() // never under the lock
+	}
 }
 
 // keepPosition says what is kept changed when the track has moved five

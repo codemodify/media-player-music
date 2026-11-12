@@ -8,14 +8,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"math"
+	"path/filepath"
 	"slices"
 	"sync"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/library"
 	"github.com/codemodify/media-player-music/internal/model"
 	"github.com/codemodify/media-player-music/internal/playback"
+	"github.com/codemodify/media-player-music/internal/playlist"
 	"github.com/codemodify/media-player-music/musicapi"
+	"goframework.io/vfs"
+	disk "goframework.io/vfs-source-disk"
 )
 
 // Options make a Service.
@@ -34,6 +40,9 @@ type Options struct {
 	// Changed hears that what is kept changed, for the daemon to save it
 	// (Saved); nil for none.
 	Changed func()
+	// Library is the music library the service offers; nil for none (the
+	// library's calls then fail). The service does not close it.
+	Library *library.Library
 }
 
 // Service is the player every renderer shares.
@@ -57,6 +66,9 @@ type Service struct {
 	done      chan struct{}
 
 	adding sync.Mutex // one Add at a time, in the order they came
+
+	library        *library.Library
+	libraryPending bool // a library state is to be told
 }
 
 // New makes the service as saved, and starts hearing its engine.
@@ -65,7 +77,7 @@ func New(options Options) *Service {
 	if publish == nil {
 		publish = func(string, any) {}
 	}
-	s := &Service{engine: options.Engine, publish: publish, changed: options.Changed, done: make(chan struct{})}
+	s := &Service{engine: options.Engine, publish: publish, changed: options.Changed, done: make(chan struct{}), library: options.Library}
 	s.restore(options.Saved)
 	go s.hear()
 	s.lock.Lock()
@@ -130,6 +142,32 @@ func (thisRef *Service) Publish() {
 	defer thisRef.lock.Unlock()
 	thisRef.published = 0
 	thisRef.publishLocked()
+	if thisRef.library != nil {
+		thisRef.publish(musicapi.LibraryEvent, thisRef.library.State())
+	}
+}
+
+// libraryEvery is how often the library's state is told while it changes
+// (a scan tells its progress).
+const libraryEvery = 250 * time.Millisecond
+
+// LibraryChanged tells the renderers the library's state, at most every
+// libraryEvery: the library's Changed.
+func (thisRef *Service) LibraryChanged() {
+	thisRef.lock.Lock()
+	defer thisRef.lock.Unlock()
+	if thisRef.libraryPending || thisRef.library == nil || thisRef.closed {
+		return
+	}
+	thisRef.libraryPending = true
+	time.AfterFunc(libraryEvery, func() {
+		thisRef.lock.Lock()
+		defer thisRef.lock.Unlock()
+		thisRef.libraryPending = false
+		if !thisRef.closed {
+			thisRef.publish(musicapi.LibraryEvent, thisRef.library.State())
+		}
+	})
 }
 
 // Connected counts a renderer coming (+1) or going (−1), and tells them
@@ -355,6 +393,39 @@ func (thisRef *Service) Add(ctx context.Context, add musicapi.Add) (musicapi.Add
 	return musicapi.Added{Tracks: len(result.Tracks), Skipped: result.Skipped(), State: state}, nil
 }
 
+func (thisRef *Service) SavePlaylist(_ context.Context, path string) (musicapi.State, error) {
+	var err error
+	format := playlist.FormatOf(path)
+	switch {
+	case format == "":
+		err = fmt.Errorf("%s: save a playlist as .m3u8, .m3u or .pls", path)
+	case !filepath.IsAbs(path):
+		err = fmt.Errorf("%s: the playlist's path is not absolute", path)
+	}
+	if err == nil {
+		thisRef.lock.Lock()
+		var items []playlist.Item
+		for _, each := range thisRef.transport.List.Tracks {
+			if each.Start > 0 || each.End > 0 {
+				continue // a CUE sheet's part of a file: no M3U or PLS holds it
+			}
+			items = append(items, playlist.Item{Path: each.Path, Title: each.Title, Artist: each.Artist, Length: each.Length})
+		}
+		thisRef.lock.Unlock()
+		if len(items) == 0 {
+			err = errors.New("the queue has no files to save as a playlist")
+		} else {
+			err = disk.Write(path, func(w io.Writer) error { return playlist.Write(w, format, items) }, vfs.Mode(0o644))
+		}
+	}
+	state := thisRef.change(func() {
+		if err != nil {
+			thisRef.err = "Save playlist: " + err.Error()
+		}
+	})
+	return state, err
+}
+
 func (thisRef *Service) Remove(_ context.Context, indexes []int) (musicapi.State, error) {
 	return thisRef.change(func() {
 		t := thisRef.transport
@@ -463,12 +534,16 @@ func track(t model.Track) musicapi.Track {
 		rate = t.Rate * 1000
 	}
 	return musicapi.Track{Path: t.Path, Title: t.Title, Artist: t.Artist, Album: t.Album, LengthMS: t.Length.Milliseconds(),
-		Rate: rate, Channels: t.Channels, Bitrate: t.Bitrate}
+		Rate: rate, Channels: t.Channels, Bitrate: t.Bitrate,
+		AlbumArtist: t.AlbumArtist, Genre: t.Genre, Year: t.Year, Number: t.Number, Disc: t.Disc,
+		StartMS: t.Start.Milliseconds(), EndMS: t.End.Milliseconds()}
 }
 
 func modelTrack(t musicapi.Track) model.Track {
 	return model.Track{Path: t.Path, Title: t.Title, Artist: t.Artist, Album: t.Album, Length: time.Duration(t.LengthMS) * time.Millisecond,
-		Kind: "audio", Rate: t.Rate / 1000, SampleRate: t.Rate, Channels: t.Channels, Bitrate: t.Bitrate}
+		Kind: "audio", Rate: t.Rate / 1000, SampleRate: t.Rate, Channels: t.Channels, Bitrate: t.Bitrate,
+		AlbumArtist: t.AlbumArtist, Genre: t.Genre, Year: t.Year, Number: t.Number, Disc: t.Disc,
+		Start: time.Duration(t.StartMS) * time.Millisecond, End: time.Duration(t.EndMS) * time.Millisecond}
 }
 
 func equalizer(e *model.Equalizer) musicapi.Equalizer {
@@ -519,4 +594,60 @@ func NormalReplayGain(gain musicapi.ReplayGain) musicapi.ReplayGain {
 	}
 	gain.Preamp = min(gain.Preamp, musicapi.MaxReplayGainPreamp)
 	return gain
+}
+
+// ---- the library ------------------------------------------------------------
+
+// ErrNoLibrary is the library's calls' error in a service without one.
+var ErrNoLibrary = errors.New("this player keeps no library")
+
+func (thisRef *Service) libraryState() (musicapi.Library, error) {
+	if thisRef.library == nil {
+		return musicapi.Library{}, ErrNoLibrary
+	}
+	return thisRef.library.State(), nil
+}
+
+func (thisRef *Service) Library(context.Context) (musicapi.Library, error) {
+	return thisRef.libraryState()
+}
+
+func (thisRef *Service) AddFolder(_ context.Context, path string) (musicapi.Library, error) {
+	if thisRef.library == nil {
+		return musicapi.Library{}, ErrNoLibrary
+	}
+	if err := thisRef.library.AddFolder(path); err != nil {
+		return thisRef.library.State(), err
+	}
+	return thisRef.library.State(), nil
+}
+
+func (thisRef *Service) RemoveFolder(_ context.Context, path string) (musicapi.Library, error) {
+	if thisRef.library == nil {
+		return musicapi.Library{}, ErrNoLibrary
+	}
+	thisRef.library.RemoveFolder(path)
+	return thisRef.library.State(), nil
+}
+
+func (thisRef *Service) Rescan(context.Context) (musicapi.Library, error) {
+	if thisRef.library == nil {
+		return musicapi.Library{}, ErrNoLibrary
+	}
+	thisRef.library.Rescan()
+	return thisRef.library.State(), nil
+}
+
+func (thisRef *Service) Browse(_ context.Context, browse musicapi.Browse) (musicapi.Browsed, error) {
+	if thisRef.library == nil {
+		return musicapi.Browsed{}, ErrNoLibrary
+	}
+	return thisRef.library.Browse(browse)
+}
+
+func (thisRef *Service) Search(_ context.Context, search musicapi.Search) (musicapi.Found, error) {
+	if thisRef.library == nil {
+		return musicapi.Found{}, ErrNoLibrary
+	}
+	return thisRef.library.Search(search)
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
-	"github.com/codemodify/media-player-music/internal/tags"
 	"github.com/codemodify/media-player-music/internal/tags/cover"
 	"github.com/codemodify/media-player-music/musicapi"
 )
@@ -278,7 +277,8 @@ func command(c players.Command) string {
 
 func modelTrack(t musicapi.Track) players.Track {
 	return players.Track{Path: t.Path, Title: t.Title, Artist: t.Artist, Album: t.Album, Length: time.Duration(t.LengthMS) * time.Millisecond,
-		Kind: "audio", Rate: t.Rate / 1000, SampleRate: t.Rate, Channels: t.Channels, Bitrate: t.Bitrate}
+		Kind: "audio", Rate: t.Rate / 1000, SampleRate: t.Rate, Channels: t.Channels, Bitrate: t.Bitrate,
+		AlbumArtist: t.AlbumArtist, Genre: t.Genre, Year: t.Year, Number: t.Number, Disc: t.Disc}
 }
 
 func equalizerOf(e *players.Equalizer) musicapi.Equalizer {
@@ -310,7 +310,7 @@ func (s *Shell) loadCover(path string) {
 		return
 	}
 	m.CoverPath, m.Cover = path, nil
-	if !tags.Tagged(path) {
+	if !cover.Tagged(path) {
 		return
 	}
 	s.workers.Add(1)

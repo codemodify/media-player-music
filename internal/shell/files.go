@@ -138,6 +138,55 @@ func (s *Shell) removeTrack() {
 }
 
 func (s *Shell) openFiles(_ widget.Component, appendToList bool) {
+	title := "Open music file"
+	if appendToList {
+		title = "Add music file"
+	}
+	s.chooseFile(widgets.FileDialogOptions{Title: title, Mode: widgets.FileOpen}, func(path string) {
+		s.queueFileLoad([]string{path}, appendToList)
+	})
+}
+
+// savePlaylistAs asks where to save the queue as a playlist, in every
+// look (Ctrl+S).
+func (s *Shell) savePlaylistAs() {
+	if s.player == nil {
+		return
+	}
+	s.chooseFile(widgets.FileDialogOptions{Title: "Save playlist", Mode: widgets.FileSave, Filter: "*.m3u8;*.m3u;*.pls", Name: "playlist.m3u8"}, func(path string) {
+		if err := s.savePlaylist(path); err != nil {
+			s.fileError(err)
+		}
+	})
+}
+
+// savePlaylist has the daemon write the queue as a playlist at path.
+func (s *Shell) savePlaylist(path string) error {
+	if s.player == nil {
+		return errors.New("the player is not connected to media-player-musicd")
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
+	defer cancel()
+	state, err := s.player.SavePlaylist(ctx, absolute)
+	s.ShowState(state)
+	return err
+}
+
+// clearQueue empties the daemon's queue.
+func (s *Shell) clearQueue() {
+	if s.player != nil {
+		s.call(func(ctx context.Context) (musicapi.State, error) { return s.player.Clear(ctx) })
+	}
+}
+
+// chooseFile shows a file chooser of options in a window of its own, and
+// gives picked the path chosen.
+func (s *Shell) chooseFile(options widgets.FileDialogOptions, picked func(string)) {
+	title := options.Title
 	s.App.Post(func() {
 		if s.closed {
 			return
@@ -145,10 +194,6 @@ func (s *Shell) openFiles(_ widget.Component, appendToList bool) {
 		if s.fileWindow != nil && !s.fileWindow.Closed() {
 			s.fileWindow.Activate()
 			return
-		}
-		title := "Open music file"
-		if appendToList {
-			title = "Add music file"
 		}
 		// Keep one independently tracked chooser across skin replacement and
 		// temporary tray hiding. The toolkit also automatically hosts a stock
@@ -180,16 +225,15 @@ func (s *Shell) openFiles(_ widget.Component, appendToList bool) {
 		if current := s.Host.Model.Transport.Track().Path; current != "" {
 			path = filepath.Dir(current)
 		}
-		fd := widgets.NewFileDialog(widgets.FileDialogOptions{
-			Title: title, Mode: widgets.FileOpen, Path: path,
-			OnPick: func(path string) {
-				finish()
-				if !s.closed {
-					s.queueFileLoad([]string{path}, appendToList)
-				}
-			},
-			OnCancel: finish,
-		})
+		options.Path = path
+		options.OnPick = func(path string) {
+			finish()
+			if !s.closed {
+				picked(path)
+			}
+		}
+		options.OnCancel = finish
+		fd := widgets.NewFileDialog(options)
 		ap := style.LookAppearance(s.App.Look())
 		ap.Name, ap.FollowDesktop = players.Themed, false
 		fd.Overlay().SetLook(style.WithAppearance(s.App.Look(), ap))

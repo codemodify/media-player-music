@@ -1,6 +1,7 @@
 package service
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -9,9 +10,11 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/codemodify/media-player-music/internal/model"
 	"github.com/codemodify/media-player-music/internal/playback"
+	"github.com/codemodify/media-player-music/internal/playlist"
 	"github.com/codemodify/media-player-music/internal/tags"
 )
 
@@ -21,6 +24,7 @@ type Expanded struct {
 	skipped     int
 	firstError  error
 	unsupported map[string]int // files in a format the engine does not play, by format
+	streams     int            // a playlist's entries that are streams
 }
 
 // Skipped says what was left out, in words; "" when nothing was.
@@ -31,6 +35,9 @@ func (thisRef Expanded) Skipped() string {
 	}
 	if len(thisRef.unsupported) > 0 {
 		skipped = append(skipped, unsupportedText(thisRef.unsupported))
+	}
+	if thisRef.streams > 0 {
+		skipped = append(skipped, fmt.Sprintf("left out %d streams (the player plays files)", thisRef.streams))
 	}
 	return strings.Join(skipped, "; ")
 }
@@ -78,6 +85,12 @@ func Expand(ctx context.Context, paths []string) (Expanded, error) {
 		info, err := os.Stat(absolute)
 		if err != nil {
 			return Expanded{}, fmt.Errorf("open music path: %w", err)
+		}
+		if !info.IsDir() && playlist.Is(absolute) {
+			if err := result.playlist(ctx, absolute); err != nil {
+				return Expanded{}, err
+			}
+			continue
 		}
 		if !info.IsDir() {
 			if _, unsupported := playback.UnsupportedFormat(absolute); unsupported {
@@ -152,8 +165,82 @@ func Expand(ctx context.Context, paths []string) (Expanded, error) {
 	return result, nil
 }
 
-// Track is a file as a track of the queue: its tags' title, artist and
-// album, else its name.
+// FromTags is a track of the queue as a file's tags say: its title, else
+// the file's name.
+func FromTags(path string, info tags.Info) model.Track {
+	title := info.Title
+	if title == "" {
+		title = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	}
+	return model.Track{Path: path, Title: title, Artist: info.Artist, Album: info.Album, Length: info.Length, Kind: "audio",
+		AlbumArtist: info.AlbumArtist, Genre: info.Genre, Year: info.Year, Number: info.Number, Disc: info.Disc}
+}
+
+// playlist adds a playlist's tracks: its files the player plays, with
+// what their tags say, else what the playlist says; a CUE sheet's tracks
+// as the sheet says, parts of their file. Files missing, those the
+// player does not play and streams are left out, and said.
+func (thisRef *Expanded) playlist(ctx context.Context, path string) error {
+	read, err := playlist.Open(path)
+	if err != nil {
+		return fmt.Errorf("open playlist: %w", err)
+	}
+	if read.Skipped > 0 {
+		thisRef.streams += read.Skipped
+	}
+	lengths := map[string]time.Duration{} // a CUE sheet's files', read once
+	for _, entry := range read.Entries {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if format, unsupported := playback.UnsupportedFormat(entry.Path); unsupported {
+			if thisRef.unsupported == nil {
+				thisRef.unsupported = map[string]int{}
+			}
+			thisRef.unsupported[format]++
+			continue
+		}
+		info, err := os.Stat(entry.Path)
+		if err != nil || !info.Mode().IsRegular() {
+			thisRef.skip(fmt.Errorf("%s: %s is not there", filepath.Base(path), entry.Path))
+			continue
+		}
+		cue := entry.Start > 0 || entry.End > 0 || strings.EqualFold(filepath.Ext(path), ".cue")
+		if !cue {
+			track, err := Track(entry.Path)
+			if err != nil {
+				thisRef.skip(err)
+				continue
+			}
+			if track.Title == strings.TrimSuffix(filepath.Base(entry.Path), filepath.Ext(entry.Path)) && entry.Title != "" {
+				track.Title, track.Artist = entry.Title, cmp.Or(track.Artist, entry.Artist)
+			}
+			if track.Length == 0 {
+				track.Length = entry.Length
+			}
+			thisRef.Tracks = append(thisRef.Tracks, track)
+			continue
+		}
+		length := entry.Length
+		if entry.End == 0 {
+			whole, known := lengths[entry.Path]
+			if !known {
+				if info, ok := tags.Read(entry.Path); ok {
+					whole = info.Length
+				}
+				lengths[entry.Path] = whole
+			}
+			length = max(whole-entry.Start, 0)
+		}
+		title := cmp.Or(entry.Title, fmt.Sprintf("Track %02d", entry.Number))
+		thisRef.Tracks = append(thisRef.Tracks, model.Track{Path: entry.Path, Title: title, Artist: entry.Artist, Album: entry.Album,
+			Number: entry.Number, Length: length, Start: entry.Start, End: entry.End, Kind: "audio"})
+	}
+	return nil
+}
+
+// Track is a file as a track of the queue: what its tags say (every
+// container's), else its name.
 func Track(path string) (model.Track, error) {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -171,10 +258,7 @@ func Track(path string) (model.Track, error) {
 	}
 	track := model.Track{Path: path, Title: strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), Kind: "audio"}
 	if info, ok := tags.Read(path); ok {
-		if info.Title != "" {
-			track.Title = info.Title
-		}
-		track.Artist, track.Album = info.Artist, info.Album
+		track = FromTags(path, info)
 	}
 	return track, nil
 }

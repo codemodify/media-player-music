@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/codemodify/media-player-music/internal/players"
 	"goframework.io/desktop-ui-widgets"
@@ -151,36 +149,6 @@ func (p *Player) saveEqualizer(from widget.Component) {
 		return writeFile(path, append(data, '\n'))
 	})
 }
-func playlistM3U(queue *players.Playlist) ([]byte, error) {
-	var b strings.Builder
-	b.WriteString("#EXTM3U\n")
-	count := 0
-	for _, track := range queue.Tracks {
-		if track.Path == "" {
-			continue
-		}
-		if strings.ContainsAny(track.Path, "\r\n") {
-			return nil, errors.New("a file path contains a newline and cannot be saved in M3U format")
-		}
-		label := strings.NewReplacer("\r", " ", "\n", " ").Replace(track.Label())
-		seconds := int64(-1)
-		if track.Length > 0 {
-			seconds = int64(track.Length.Seconds())
-		}
-		fmt.Fprintf(&b, "#EXTINF:%d,%s\n%s\n", seconds, label, track.Path)
-		count++
-	}
-	if count == 0 {
-		return nil, errors.New("the playlist has no local music files to export")
-	}
-	return []byte(b.String()), nil
-}
 func (p *Player) savePlaylist(from widget.Component) {
-	p.chooseFile(from, widgets.FileDialogOptions{Title: "Save playlist", Filter: "*.m3u;*.m3u8", Name: "playlist.m3u8", Mode: widgets.FileSave}, func(path string) error {
-		data, err := playlistM3U(p.Transport.List)
-		if err != nil {
-			return err
-		}
-		return writeFile(path, data)
-	})
+	p.chooseFile(from, widgets.FileDialogOptions{Title: "Save playlist", Filter: "*.m3u8;*.m3u;*.pls", Name: "playlist.m3u8", Mode: widgets.FileSave}, p.Host.SavePlaylist)
 }

@@ -179,10 +179,6 @@ func (g *resizeGrip) MousePress(e widget.MouseEvent) bool {
 	return g.p.g.StartResize(g.p.iList, platform.EdgeBottom|platform.EdgeRight)
 }
 func (p *Player) clearPlaylist() {
-	queue := p.Transport.List
-	for queue.Len() > 0 {
-		queue.Remove(queue.Len()-1, p.Transport.Random)
-	}
-	p.Host.Command(players.CmdStop)
+	p.Host.ClearQueue()
 	p.Refresh()
 }

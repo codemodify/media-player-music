@@ -56,11 +56,13 @@ type Options struct {
 	Address, Name, Version string
 	// Token is presented to the daemon (Token's): none on its socket.
 	Token string
-	// State, Queue and Now are told the player's states each time they
-	// change, and as each connection is made; nil for one not wanted.
-	State func(musicapi.State)
-	Queue func(musicapi.Queue)
-	Now   func(musicapi.Now)
+	// State, Queue, Now and Library are told the player's states each
+	// time they change, and as each connection is made; nil for one not
+	// wanted.
+	State   func(musicapi.State)
+	Queue   func(musicapi.Queue)
+	Now     func(musicapi.Now)
+	Library func(musicapi.Library)
 	// Connected is told when a connection is made (true) and ends (false).
 	Connected func(bool)
 	// Failed is told why connecting stopped for good (a refusal, an
@@ -116,6 +118,9 @@ func Start(ctx context.Context, options Options) musicapi.Player {
 	}
 	if options.Now != nil {
 		parts = append(parts, client.OnState(musicapi.NowEvent, func(_ context.Context, now musicapi.Now) { options.Now(now) }))
+	}
+	if options.Library != nil {
+		parts = append(parts, client.OnState(musicapi.LibraryEvent, func(_ context.Context, library musicapi.Library) { options.Library(library) }))
 	}
 	connection, err := client.New(client.Options{
 		Address: options.Address, Name: options.Name, Version: options.Version, Token: options.Token, Reconnect: true,

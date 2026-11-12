@@ -16,8 +16,10 @@
 // for "media-player-music"): media-player-musicd.json in the config folder
 // configures it (Config), the environment's MEDIA_PLAYER_MUSICD_* override
 // that; the session (the queue, where it was, the sound's settings) is
-// kept in the state folder's session.json. It runs as a user service too
-// (app-as-service).
+// kept in the state folder's session.json, and the library (its folders
+// and every track's tags) in its library.index. At the first run the
+// library holds the user's music folder (XDG_MUSIC_DIR, ~/Music), when
+// there is one. It runs as a user service too (app-as-service).
 package main
 
 import (
@@ -28,6 +30,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/codemodify/media-player-music/internal/library"
 	"github.com/codemodify/media-player-music/internal/playback"
 	"github.com/codemodify/media-player-music/internal/service"
 	"github.com/codemodify/media-player-music/musicapi"
@@ -135,6 +138,7 @@ func main() {
 	var clients *app.Clients
 	var player *service.Service
 	var keeper *statefile.Saver
+	var music *library.Library
 	app.Run(app.App[Config]{
 		Name:    "media-player-musicd",
 		Version: Version,
@@ -163,6 +167,19 @@ func main() {
 			keeper = statefile.NewSaver(state, "session.json", func() service.Saved { return player.Saved() },
 				statefile.Delay(time.Second), statefile.Indent("\t"),
 				statefile.OnError(func(err error) { a.Log.Errorf("saving: %v", err) }))
+			// the library: its index in the state folder, its folders read
+			// again (what changed) and watched; at the first run, the
+			// user's music folder
+			indexPath := filepath.Join(places.State, "library.index")
+			_, statErr := os.Stat(indexPath)
+			if music, err = library.Open(library.Options{Index: indexPath, Watch: true,
+				Changed: func() {
+					if player != nil {
+						player.LibraryChanged()
+					}
+				}}); err != nil {
+				return err
+			}
 			// each change sets the newest states, under the service's lock
 			// (R13): a renderer never shows an older state after a newer one
 			player = service.New(service.Options{
@@ -176,7 +193,14 @@ func main() {
 					}
 				},
 				Changed: keeper.Changed,
+				Library: music,
 			})
+			if errors.Is(statErr, os.ErrNotExist) && places.Music != "" {
+				if err := music.AddFolder(places.Music); err != nil {
+					a.Log.Infof("the music folder %s: %v", places.Music, err)
+				}
+			}
+			music.Start()
 			config := a.Config()
 			// the socket's clients come in without a token: only the user
 			// reaches it; a WebSocket's present the token the user's programs
@@ -210,7 +234,7 @@ func main() {
 		Stop: func(ctx context.Context, a *app.Context[Config]) error {
 			clients.Stop(ctx)
 			err := keeper.Close(ctx) // what changed last, written
-			return errors.Join(err, player.Close())
+			return errors.Join(err, player.Close(), music.Close())
 		},
 	}, nil)
 }

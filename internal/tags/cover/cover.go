@@ -1,6 +1,8 @@
 // Package cover decodes a music file's front cover for the now-playing
-// display: the picture its tags hold (internal/tags), JPEG or PNG, kept
-// small. It is the desktop UI's: the daemon draws nothing.
+// display: the picture its ID3 tag holds (APIC, ID3v2.2's PIC), through
+// goframework's codecs-container-id3, JPEG or PNG, kept small. It is the
+// desktop UI's: the daemon draws nothing, and reads tags with
+// internal/tags.
 package cover
 
 import (
@@ -8,8 +10,11 @@ import (
 	"image"
 	_ "image/jpeg" // covers are JPEG or PNG
 	_ "image/png"
+	"os"
+	"path/filepath"
+	"strings"
 
-	"github.com/codemodify/media-player-music/internal/tags"
+	id3 "goframework.io/codecs-container-id3"
 	"goframework.io/graphics-paint2d"
 )
 
@@ -19,7 +24,7 @@ const maxCoverPixels = 4096 * 4096
 // and the largest side it is kept at: a cover larger than that is scaled
 // down. nil when there is none or it cannot be decoded.
 func Of(path string, largest int) *paint2d.Image {
-	data, ok := tags.Picture(path)
+	data, ok := Picture(path)
 	if !ok {
 		return nil
 	}
@@ -41,4 +46,43 @@ func Of(path string, largest int) *paint2d.Image {
 		cover = scaled
 	}
 	return cover
+}
+
+// Tagged reports whether a file of this name carries ID3 tags.
+func Tagged(path string) bool {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".mp3", ".mp2", ".mp1", ".mpga", ".aac":
+		return true
+	}
+	return false
+}
+
+// Picture returns a file's front cover (else its first picture) as its
+// tag holds it, JPEG or PNG most often: false when there is none.
+func Picture(path string) ([]byte, bool) {
+	tag, ok := read(path)
+	if !ok {
+		return nil, false
+	}
+	picture, ok := tag.Cover()
+	if !ok || picture.MIME == "-->" || len(picture.Data) == 0 {
+		return nil, false
+	}
+	return picture.Data, true
+}
+
+func read(path string) (*id3.Tag, bool) {
+	if !Tagged(path) {
+		return nil, false
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, false
+	}
+	defer file.Close()
+	tag, err := id3.Read(file)
+	if err != nil {
+		return nil, false
+	}
+	return tag, true
 }

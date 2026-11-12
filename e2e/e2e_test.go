@@ -165,6 +165,30 @@ func TestTwoRenderersOnePlayer(t *testing.T) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+	// the library: a folder added is read, and browsed and searched
+	// (the web connected again above)
+	if _, err := web.player.AddFolder(ctx, filepath.Dir(paths[0])); err != nil {
+		t.Fatal(err)
+	}
+	var library musicapi.Library
+	for deadline := time.Now().Add(20 * time.Second); ; time.Sleep(50 * time.Millisecond) {
+		if library, err = web.player.Library(ctx); err == nil && library.Tracks == 2 && !library.Scanning {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the library: %+v %v", library, err)
+		}
+	}
+	browsed, err := web.player.Browse(ctx, musicapi.Browse{By: musicapi.BrowseTracks})
+	if err != nil || browsed.Total != 2 || browsed.Tracks[0].Title != "01 one" || browsed.Tracks[0].LengthMS < 900 {
+		t.Fatalf("Browse: %+v %v", browsed, err)
+	}
+	if found, err := web.player.Search(ctx, musicapi.Search{Text: "two"}); err != nil || len(found.Tracks) != 1 {
+		t.Fatalf("Search: %+v %v", found, err)
+	}
+	if _, err := web.player.AddFolder(ctx, paths[0]); err == nil {
+		t.Fatal("a file added as a folder")
+	}
 	// a WebSocket without the token is refused
 	stranger := link.Start(ctx, link.Options{Address: websocket, Name: "stranger", Version: "test", Token: "not the token"})
 	time.Sleep(500 * time.Millisecond)

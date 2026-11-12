@@ -105,6 +105,7 @@ func New(a *ui.Application, opts Options) (*Shell, error) {
 	}
 	s.Host.LoadFiles, s.Host.DeleteTrack, s.Host.SyncPlayback = s.openFiles, s.removeTrack, s.syncPlayback
 	s.Host.DropFiles = s.dropFiles
+	s.Host.ClearTracks, s.Host.SavePlaylistTo = s.clearQueue, s.savePlaylist
 	s.Host.ShowSettings = s.openSettings
 	if opts.Player != nil {
 		s.Host.Model.Live = true
@@ -346,6 +347,10 @@ func (s *Shell) Keys(w *ui.Window, e widget.KeyEvent) bool {
 		}
 		if e.Key == platform.KeyO {
 			s.Host.OpenFiles(w.Content(), false)
+			return true
+		}
+		if e.Key == platform.KeyS {
+			s.savePlaylistAs()
 			return true
 		}
 		if e.Key == platform.KeyE {

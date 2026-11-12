@@ -3,12 +3,12 @@ package cover
 import (
 	"bytes"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/codemodify/media-player-music/internal/tags"
 	"github.com/codemodify/media-player-music/internal/tags/tagstest"
 )
 
@@ -37,9 +37,6 @@ func TestCoverIsJPEGOrPNGAndKeptSmall(t *testing.T) {
 	path := write(t, "big.mp3", tagstest.V2(4,
 		tagstest.Frame{ID: "APIC", Data: tagstest.Picture(4, "image/jpeg", data.Bytes())},
 		tagstest.Frame{ID: "TALB", Data: tagstest.Text(4, "Field Notes")}), frames, tagstest.V1("", "Ruth Alder", ""))
-	if info, ok := tags.Read(path); !ok || info != (tags.Info{Artist: "Ruth Alder", Album: "Field Notes"}) {
-		t.Fatalf("the frame after the cover: %+v, %v", info, ok)
-	}
 	cover := Of(path, 256)
 	if cover == nil || cover.Width != 256 || cover.Height != 128 {
 		t.Fatalf("a 600 × 300 cover kept at 256: %+v", cover)
@@ -51,5 +48,26 @@ func TestCoverIsJPEGOrPNGAndKeptSmall(t *testing.T) {
 	path = write(t, "junk.mp3", tagstest.V2(4, tagstest.Frame{ID: "APIC", Data: tagstest.Picture(4, "image/png", []byte("not a picture"))}), frames)
 	if Of(path, 0) != nil {
 		t.Fatal("junk decoded as a cover")
+	}
+}
+
+func TestPicturesOfEveryID3Version(t *testing.T) {
+	red := color.NRGBA{R: 200, A: 255}
+	for _, major := range []int{2, 3, 4} {
+		id := map[int]string{2: "PIC", 3: "APIC", 4: "APIC"}[major]
+		path := write(t, "song.mp3", tagstest.V2(major, tagstest.Frame{ID: id, Data: tagstest.Picture(major, "image/png", tagstest.PNG(4, 2, red))}), frames)
+		picture := Of(path, 0)
+		if picture == nil || picture.Width != 4 || picture.Height != 2 {
+			t.Fatalf("ID3v2.%d: the cover was not read: %+v", major, picture)
+		}
+		if c := picture.NRGBAAt(1, 1); c.R != 200 || c.G != 0 || c.A != 255 {
+			t.Fatalf("ID3v2.%d: the cover's colour: %v", major, c)
+		}
+	}
+	if Tagged("song.flac") || !Tagged("song.AAC") {
+		t.Fatal("Tagged")
+	}
+	if _, ok := Picture(write(t, "plain.mp3", frames)); ok {
+		t.Fatal("a cover from a file without a tag")
 	}
 }

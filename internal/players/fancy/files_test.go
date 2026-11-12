@@ -78,28 +78,6 @@ func TestEqualizerFileRoundTripAtomicValidationAndAudioNotification(t *testing.T
 	}
 }
 
-func TestPlaylistExportLocalPathsAndUnsafeInput(t *testing.T) {
-	q := players.NewPlaylist(
-		players.Track{Path: "/music/one song.mp3", Artist: "An\rArtist", Title: "A\nSong", Length: 61 * time.Second},
-		players.Track{Title: "Synthetic fixture", Length: time.Minute},
-		players.Track{Path: "/music/two.flac", Title: "Two"},
-	)
-	data, err := playlistM3U(q)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(data) != "#EXTM3U\n#EXTINF:61,An Artist - A Song\n/music/one song.mp3\n#EXTINF:-1,Two\n/music/two.flac\n" {
-		t.Fatalf("wrong M3U: %q", data)
-	}
-	if _, err := playlistM3U(players.NewPlaylist(players.Track{Title: "fixture"})); err == nil {
-		t.Fatal("export invented local media paths")
-	}
-	q.Tracks[1].Path = "/music/evil\n#EXTINF:0,Injected.mp3"
-	if _, err := playlistM3U(q); err == nil {
-		t.Fatal("newline path inserted playlist directives")
-	}
-}
-
 func TestChooserFallbackOwnedSizeAndCloseLifetime(t *testing.T) {
 	a, p := open(t, 1.75)
 	p.SetCompact(true)

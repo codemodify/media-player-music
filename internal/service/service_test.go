@@ -333,3 +333,81 @@ func TestUnsupportedFilesAreRefusedAndAFoldersAreSaid(t *testing.T) {
 		t.Fatalf("a folder's: %+v %v", added, err)
 	}
 }
+
+func TestPlaylistsAreOpenedAndSaved(t *testing.T) {
+	s, e, _ := start(t, Saved{})
+	ctx := context.Background()
+	paths := files(t, "a.mp3", "b.flac", "song.wma")
+	dir := filepath.Dir(paths[0])
+	list := filepath.Join(dir, "list.m3u8")
+	text := "#EXTM3U\n#EXTINF:61,Someone - Named In The List\na.mp3\nmissing.mp3\nhttp://radio.example/stream\nb.flac\nsong.wma\n"
+	if err := os.WriteFile(list, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	added, err := s.Add(ctx, musicapi.Add{Paths: []string{list}, Replace: true})
+	if err != nil || added.Tracks != 2 || !strings.Contains(added.Skipped, "1 streams") || !strings.Contains(added.Skipped, "missing.mp3") || !strings.Contains(added.Skipped, "WMA") {
+		t.Fatalf("an M3U: %+v %v", added, err)
+	}
+	queue, _ := s.Queue(ctx)
+	if queue.Tracks[0].Title != "Named In The List" || queue.Tracks[0].Artist != "Someone" || queue.Tracks[0].LengthMS != 61000 || queue.Tracks[1].Path != paths[1] {
+		t.Fatalf("the list's tracks: %+v", queue.Tracks)
+	}
+	// saved, and opened again
+	saved := filepath.Join(t.TempDir(), "saved.pls")
+	if _, err := s.SavePlaylist(ctx, saved); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.SavePlaylist(ctx, "relative.m3u8"); err == nil {
+		t.Fatal("a relative path was saved")
+	}
+	if state, err := s.SavePlaylist(ctx, filepath.Join(dir, "x.txt")); err == nil || !strings.Contains(state.Error, "Save playlist") {
+		t.Fatalf("a .txt playlist: %v", err)
+	}
+	if added, err := s.Add(ctx, musicapi.Add{Paths: []string{saved}}); err != nil || added.Tracks != 2 || added.State.Queue.Length != 4 {
+		t.Fatalf("the saved PLS: %+v %v", added, err)
+	}
+	// a CUE sheet: two tracks of one file, each played from its INDEX 01
+	sheet := filepath.Join(dir, "disc.cue")
+	if err := os.WriteFile(sheet, []byte("PERFORMER \"Ruth Alder\"\nTITLE \"Field Notes\"\nFILE \"b.flac\" WAVE\n  TRACK 01 AUDIO\n    TITLE \"One\"\n    INDEX 01 00:00:00\n  TRACK 02 AUDIO\n    TITLE \"Two\"\n    INDEX 01 01:00:00\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	added, err = s.Add(ctx, musicapi.Add{Paths: []string{sheet}, Replace: true})
+	if err != nil || added.Tracks != 2 {
+		t.Fatalf("a CUE sheet: %+v %v", added, err)
+	}
+	queue, _ = s.Queue(ctx)
+	if one := queue.Tracks[0]; one.Title != "One" || one.Album != "Field Notes" || one.Artist != "Ruth Alder" || one.EndMS != 60000 || one.LengthMS != 60000 {
+		t.Fatalf("track one: %+v", one)
+	}
+	if two := queue.Tracks[1]; two.StartMS != 60000 || two.EndMS != 0 {
+		t.Fatalf("track two: %+v", two)
+	}
+	if _, err := s.Play(ctx, 1); err != nil {
+		t.Fatal(err)
+	}
+	if load := e.last(playback.OpLoad); load.Path != paths[1] || load.Position != time.Minute {
+		t.Fatalf("track two's load: %+v", load)
+	}
+	inject(s, playback.Update{Kind: playback.UpdateLoaded})
+	inject(s, playback.Update{Kind: playback.UpdateDuration, Duration: 3 * time.Minute})
+	inject(s, playback.Update{Kind: playback.UpdatePosition, Position: 90 * time.Second})
+	state, _ := s.State(ctx)
+	if state.PositionMS != 30000 || state.Track.LengthMS != 120000 {
+		t.Fatalf("track two's clock: %+v", state)
+	}
+	if _, err := s.Seek(ctx, 45000); err != nil || e.last(playback.OpSeek).Position != 105*time.Second {
+		t.Fatalf("track two's seek: %+v %v", e.last(playback.OpSeek), err)
+	}
+	inject(s, playback.Update{Kind: playback.UpdateSeeked, Epoch: s.Epoch()})
+	// track one ends where track two starts: the next track follows
+	if _, err := s.Play(ctx, 0); err != nil {
+		t.Fatal(err)
+	}
+	inject(s, playback.Update{Kind: playback.UpdateLoaded})
+	inject(s, playback.Update{Kind: playback.UpdatePosition, Position: 30 * time.Second})
+	loads := e.count(playback.OpLoad)
+	inject(s, playback.Update{Kind: playback.UpdatePosition, Position: 60 * time.Second})
+	if state, _ := s.State(ctx); state.Index != 1 || e.count(playback.OpLoad) != loads+1 || e.last(playback.OpLoad).Position != time.Minute {
+		t.Fatalf("the end of a CUE track: %+v", state)
+	}
+}

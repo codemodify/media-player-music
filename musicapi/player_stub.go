@@ -24,12 +24,19 @@ type playerStub struct{ caller protocol.Caller }
 func init() {
 	protocol.RegisterMethods[Player](
 		protocol.Method{Name: "Add", Func: Player.Add},
+		protocol.Method{Name: "AddFolder", Func: Player.AddFolder},
+		protocol.Method{Name: "Browse", Func: Player.Browse},
 		protocol.Method{Name: "Clear", Func: Player.Clear},
 		protocol.Method{Name: "Command", Func: Player.Command},
+		protocol.Method{Name: "Library", Func: Player.Library},
 		protocol.Method{Name: "Move", Func: Player.Move},
 		protocol.Method{Name: "Play", Func: Player.Play},
 		protocol.Method{Name: "Queue", Func: Player.Queue},
 		protocol.Method{Name: "Remove", Func: Player.Remove},
+		protocol.Method{Name: "RemoveFolder", Func: Player.RemoveFolder},
+		protocol.Method{Name: "Rescan", Func: Player.Rescan},
+		protocol.Method{Name: "SavePlaylist", Func: Player.SavePlaylist},
+		protocol.Method{Name: "Search", Func: Player.Search},
 		protocol.Method{Name: "Seek", Func: Player.Seek},
 		protocol.Method{Name: "SetEqualizer", Func: Player.SetEqualizer},
 		protocol.Method{Name: "SetLevels", Func: Player.SetLevels},
@@ -99,6 +106,12 @@ func (thisRef playerStub) Add(ctx context.Context, in Add) (Added, error) {
 	return out, err
 }
 
+func (thisRef playerStub) SavePlaylist(ctx context.Context, in string) (State, error) {
+	var out State
+	err := thisRef.caller.Invoke(ctx, playerAPI+".SavePlaylist", in, &out)
+	return out, err
+}
+
 func (thisRef playerStub) Remove(ctx context.Context, in []int) (State, error) {
 	var out State
 	err := thisRef.caller.Invoke(ctx, playerAPI+".Remove", in, &out)
@@ -114,5 +127,41 @@ func (thisRef playerStub) Move(ctx context.Context, in Move) (State, error) {
 func (thisRef playerStub) Clear(ctx context.Context) (State, error) {
 	var out State
 	err := thisRef.caller.Invoke(ctx, playerAPI+".Clear", nil, &out)
+	return out, err
+}
+
+func (thisRef playerStub) Library(ctx context.Context) (Library, error) {
+	var out Library
+	err := thisRef.caller.Invoke(ctx, playerAPI+".Library", nil, &out)
+	return out, err
+}
+
+func (thisRef playerStub) AddFolder(ctx context.Context, in string) (Library, error) {
+	var out Library
+	err := thisRef.caller.Invoke(ctx, playerAPI+".AddFolder", in, &out)
+	return out, err
+}
+
+func (thisRef playerStub) RemoveFolder(ctx context.Context, in string) (Library, error) {
+	var out Library
+	err := thisRef.caller.Invoke(ctx, playerAPI+".RemoveFolder", in, &out)
+	return out, err
+}
+
+func (thisRef playerStub) Rescan(ctx context.Context) (Library, error) {
+	var out Library
+	err := thisRef.caller.Invoke(ctx, playerAPI+".Rescan", nil, &out)
+	return out, err
+}
+
+func (thisRef playerStub) Browse(ctx context.Context, in Browse) (Browsed, error) {
+	var out Browsed
+	err := thisRef.caller.Invoke(ctx, playerAPI+".Browse", in, &out)
+	return out, err
+}
+
+func (thisRef playerStub) Search(ctx context.Context, in Search) (Found, error) {
+	var out Found
+	err := thisRef.caller.Invoke(ctx, playerAPI+".Search", in, &out)
 	return out, err
 }

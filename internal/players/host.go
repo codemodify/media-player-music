@@ -1,6 +1,7 @@
 package players
 
 import (
+	"errors"
 	"time"
 
 	"goframework.io/desktop-ui"
@@ -83,6 +84,12 @@ type Host struct {
 	DeleteTrack  func()
 	SyncPlayback func()
 	ShowSettings func()
+	// ClearTracks empties the queue; SavePlaylistTo writes it as a
+	// playlist file (M3U8 or PLS by the name's extension). The shell's are
+	// the daemon's; nil, the model's own queue is cleared and nothing is
+	// saved.
+	ClearTracks    func()
+	SavePlaylistTo func(path string) error
 
 	lastSkin string
 }
@@ -117,6 +124,27 @@ func (h *Host) RemoveTrack() {
 	if h.DeleteTrack != nil {
 		h.DeleteTrack()
 	}
+}
+
+// ClearQueue empties the queue and stops.
+func (h *Host) ClearQueue() {
+	if h.ClearTracks != nil {
+		h.ClearTracks()
+		return
+	}
+	queue := h.Model.Transport.List
+	for queue.Len() > 0 {
+		queue.Remove(queue.Len()-1, h.Model.Transport.Random)
+	}
+	h.Command(CmdStop)
+}
+
+// SavePlaylist writes the queue as a playlist file at path.
+func (h *Host) SavePlaylist(path string) error {
+	if h.SavePlaylistTo == nil {
+		return errors.New("this player saves no playlists")
+	}
+	return h.SavePlaylistTo(path)
 }
 
 func (h *Host) OpenSettings() {

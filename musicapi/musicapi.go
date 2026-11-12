@@ -5,7 +5,7 @@
 // person does. Every renderer connected shows the same player: a track
 // chosen, a seek, a volume moved in one shows in all of them.
 //
-// The daemon tells its renderers three states (app-spec's states: each
+// The daemon tells its renderers four states (app-spec's states: each
 // renderer is given the newest at each connection, then each newer one,
 // never an older one after a newer one):
 //   - StateEvent, State: the transport, the levels, the equaliser,
@@ -13,9 +13,13 @@
 //     change;
 //   - QueueEvent, Queue: the queue's tracks, at each change of the queue;
 //   - NowEvent, Now: where the track playing is and the analyser's bands,
-//     about twenty times a second while it plays.
+//     about twenty times a second while it plays;
+//   - LibraryEvent, Library: the library in short (its folders, how much
+//     music, whether it is being read), at each change. What it holds is
+//     asked: Browse, Search.
 //
-// The stubs are generated, the Go one beside this file:
+// The stubs are generated, the Go one beside this file and the web UI's
+// TypeScript one into cmd/media-player-music-wui/web/src:
 //
 //	go generate ./musicapi
 package musicapi
@@ -27,9 +31,10 @@ import (
 )
 
 //go:generate go run goframework.io/app-plugin/stub Player
+//go:generate go run goframework.io/app-plugin/stub -typescript ../cmd/media-player-music-wui/web/src/musicapi.ts -client app-client-typescript -states Player=PlayerStates Player
 
 // Version is the API's version.
-const Version = "1.0.0"
+const Version = "1.2.0"
 
 // Name is the application's name, which its folders are named after
 // (goframework.io/vfs-source-disk's UserPlaces).
@@ -47,13 +52,14 @@ const TokenFile = "media-player-musicd.token"
 
 // The states the daemon keeps.
 const (
-	StateEvent = "player.state"
-	QueueEvent = "player.queue"
-	NowEvent   = "player.now"
+	StateEvent   = "player.state"
+	QueueEvent   = "player.queue"
+	NowEvent     = "player.now"
+	LibraryEvent = "player.library"
 )
 
 // PlayerStates are the states the daemon keeps.
-var PlayerStates = protocol.States{StateEvent: State{}, QueueEvent: Queue{}, NowEvent: Now{}}
+var PlayerStates = protocol.States{StateEvent: State{}, QueueEvent: Queue{}, NowEvent: Now{}, LibraryEvent: Library{}}
 
 // Player is offered by the daemon to its renderers.
 type Player interface {
@@ -79,19 +85,44 @@ type Player interface {
 	// SetReplayGain sets how tracks are levelled by their ReplayGain tags,
 	// heard at once.
 	SetReplayGain(ctx context.Context, gain ReplayGain) (State, error)
-	// Add adds files and folders (each folder's music within, in name
-	// order) to the queue's end, or in its place (Replace). A file of a
-	// format the player does not play, or a path that is not there, is an
-	// error and nothing changes; a folder's such files are left out and
-	// said in Added.Skipped. The queue starts playing when it was replaced
-	// or empty.
+	// Add adds files, playlists and folders (each folder's music within,
+	// in name order) to the queue's end, or in its place (Replace). A
+	// playlist (M3U, M3U8, PLS, CUE) adds its tracks; a CUE sheet's are
+	// parts of a file. A file of a format the player does not play, or a
+	// path that is not there, is an error and nothing changes; a folder's
+	// such files, and a playlist's missing files and streams, are left out
+	// and said in Added.Skipped. The queue starts playing when it was
+	// replaced or empty.
 	Add(ctx context.Context, add Add) (Added, error)
+	// SavePlaylist writes the queue as a playlist file at path: M3U8
+	// (".m3u", ".m3u8") or PLS (".pls"), by its extension, with absolute
+	// paths.
+	SavePlaylist(ctx context.Context, path string) (State, error)
 	// Remove takes the tracks at indexes out of the queue.
 	Remove(ctx context.Context, indexes []int) (State, error)
 	// Move moves the track at From to To, the others closing up.
 	Move(ctx context.Context, move Move) (State, error)
 	// Clear empties the queue and stops.
 	Clear(ctx context.Context) (State, error)
+
+	// Library is the library in short.
+	Library(ctx context.Context) (Library, error)
+	// AddFolder adds a folder to the library, read in the background and
+	// watched: an error for a path that is no folder.
+	AddFolder(ctx context.Context, path string) (Library, error)
+	// RemoveFolder takes a folder and its music out of the library.
+	RemoveFolder(ctx context.Context, path string) (Library, error)
+	// Rescan reads every folder of the library again, in the background
+	// (a file's tags only when it changed).
+	Rescan(ctx context.Context) (Library, error)
+	// Browse lists the library: its artists, albums, genres or years, or
+	// its tracks, among those of an artist, an album, a genre and a year,
+	// those given.
+	Browse(ctx context.Context, browse Browse) (Browsed, error)
+	// Search finds what was typed in the library: words and "phrases" in
+	// the tracks' titles, artists, albums and genres, without case or
+	// accents; artist:, album:, genre:, title: and year: keep to a field.
+	Search(ctx context.Context, search Search) (Found, error)
 }
 
 // The commands, as a player's keys give them.
@@ -156,6 +187,18 @@ type Track struct {
 	Rate     int `json:"rate,omitempty"`
 	Channels int `json:"channels,omitempty"`
 	Bitrate  int `json:"bitrate,omitempty"`
+	// AlbumArtist, Genre, Year (0 when none), Number and Disc (the
+	// track's and the disc's, 0 when none) are what the tags say.
+	AlbumArtist string `json:"albumArtist,omitempty"`
+	Genre       string `json:"genre,omitempty"`
+	Year        int    `json:"year,omitempty"`
+	Number      int    `json:"number,omitempty"`
+	Disc        int    `json:"disc,omitempty"`
+	// StartMS and EndMS are where a CUE sheet's track is in its file
+	// (EndMS 0: to the file's end); LengthMS and the positions are the
+	// track's own.
+	StartMS int64 `json:"startMs,omitempty"`
+	EndMS   int64 `json:"endMs,omitempty"`
 }
 
 // Queue is the queue's tracks, in the queue's order (shuffling plays
@@ -288,4 +331,93 @@ type Added struct {
 type Move struct {
 	From int `json:"from"`
 	To   int `json:"to"`
+}
+
+// Library is the library in short.
+type Library struct {
+	// Version changes at each change of the library.
+	Version uint64 `json:"version"`
+	// Folders are the folders the library holds the music of.
+	Folders []string `json:"folders"`
+	// Tracks, Artists, Albums and Genres are how many there are, and
+	// LengthMS how long the music plays.
+	Tracks   int   `json:"tracks"`
+	Artists  int   `json:"artists"`
+	Albums   int   `json:"albums"`
+	Genres   int   `json:"genres"`
+	LengthMS int64 `json:"lengthMs"`
+	// Scanning says the folders are being read; Scanned is how many files
+	// were read so far.
+	Scanning bool `json:"scanning,omitempty"`
+	Scanned  int  `json:"scanned,omitempty"`
+	// Error is why a folder could not be read or watched; "" when none.
+	Error string `json:"error,omitempty"`
+}
+
+// What Browse lists.
+const (
+	BrowseArtists = "artists"
+	BrowseAlbums  = "albums"
+	BrowseGenres  = "genres"
+	BrowseYears   = "years"
+	BrowseTracks  = "tracks"
+)
+
+// Browse is what Browse lists: By's groups (BrowseArtists, BrowseAlbums,
+// BrowseGenres, BrowseYears) or the tracks (BrowseTracks), among the
+// tracks of Artist (an album's artist, or a track's own), Album, Genre and
+// Year, those given ("" and 0: any). Offset and Limit (0: all) page the
+// list.
+type Browse struct {
+	By     string `json:"by"`
+	Artist string `json:"artist,omitempty"`
+	Album  string `json:"album,omitempty"`
+	Genre  string `json:"genre,omitempty"`
+	Year   int    `json:"year,omitempty"`
+	// Unknown names the fields that must be empty: "artist", "album",
+	// "genre", "year", for the group of the tracks whose tags do not say
+	// (a Group whose Name is "").
+	Unknown []string `json:"unknown,omitempty"`
+	Offset  int      `json:"offset,omitempty"`
+	Limit   int      `json:"limit,omitempty"`
+}
+
+// Browsed is what Browse found: Groups or Tracks, in the library's order
+// (names as a person sorts them, "The" left out, the unknown last; years
+// the newest first; tracks by artist, album, disc and number), and how
+// many there are in all.
+type Browsed struct {
+	Groups []Group `json:"groups,omitempty"`
+	Tracks []Track `json:"tracks,omitempty"`
+	Total  int     `json:"total"`
+}
+
+// Group is an artist, an album, a genre or a year of the library.
+type Group struct {
+	// Name is the artist's, the album's, the genre's or the year's; ""
+	// for the tracks whose tags do not say.
+	Name string `json:"name"`
+	// Artist is an album's artist.
+	Artist string `json:"artist,omitempty"`
+	// Year is an album's (its latest track's) or the year's.
+	Year     int   `json:"year,omitempty"`
+	Tracks   int   `json:"tracks"`
+	LengthMS int64 `json:"lengthMs"`
+}
+
+// Search is what Search finds: Text as typed, at most Limit of each kind
+// (50 when 0).
+type Search struct {
+	Text  string `json:"text"`
+	Limit int    `json:"limit,omitempty"`
+}
+
+// Found is what Search found: the artists and albums whose names hold
+// every word, and the tracks that do; More says there were more than the
+// limit.
+type Found struct {
+	Artists []Group `json:"artists,omitempty"`
+	Albums  []Group `json:"albums,omitempty"`
+	Tracks  []Track `json:"tracks,omitempty"`
+	More    bool    `json:"more,omitempty"`
 }

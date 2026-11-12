@@ -31,6 +31,14 @@ type Track struct {
 	// SampleRate is the rate the decoder reported, in Hz; Rate is it in
 	// kHz, as a display shows it.
 	SampleRate int
+	// What the file's tags say beside: the album's artist, the genre, the
+	// year, the track's and the disc's numbers (0 when none).
+	AlbumArtist, Genre string
+	Year, Number, Disc int
+	// Start and End are where a CUE sheet's track is in its file; End 0
+	// is the file's end. Length and the transport's position are the
+	// track's own.
+	Start, End time.Duration
 }
 
 // Video reports whether the track is one.
