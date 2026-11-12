@@ -121,6 +121,38 @@ pod, gauge, wingspan, aluminium, cobalt, utility, console, sidebar;
 players.SlateSkin, PodSkin, ...); the prose below, older than the rename,
 may use the old names.
 
+The labels did not change (the owner, 2026-11-13: the IDs are new, the
+names shown are the old ones). Each pack's label is its old one, and the
+menus show it with its family's prefix, as before the redraw:
+
+| ID | pack label | shown in the menus |
+| --- | --- | --- |
+| `slate` | Winamp | WinAmp - classic |
+| `silver` | Winamp Silver | WinAmp - Silver |
+| `dossier` | Winamp Classified | WinAmp - Classified |
+| `textmode` | DOSamp | WinAmp - DOSamp |
+| `bevel` | Windows 98 | WinAmp - Windows 98 |
+| `amber` | Winamp Classic Amber | WinAmp - Classic Amber |
+| `tally` | Calculator | WinAmp - Calculator |
+| `headunit` | Sony CDX-MP3 | WinAmp - Sony CDX-MP3 |
+| `graphing` | TI-82 | WinAmp - TI-82 |
+| `radar` | Radar Amp | WinAmp - Radar Amp |
+| `forge` | Quake 3 Arena | WinAmp - Quake 3 Arena |
+| `wingspan` | Win Media Player - Headspace | Win Media Player - Headspace |
+| `pod` | Win Media Player - Xbox | Win Media Player - Xbox |
+| `gauge` | Win Media Player - Half Life 2 | Win Media Player - Half Life 2 |
+| `fandom` | Win Media Player - Fandom | Win Media Player - Fandom |
+| `aluminium` | Mac OS X - iTunes | Mac OS X - iTunes |
+| `cobalt` | Win Media Player - Series 9 | Win Media Player - Series 9 |
+| `utility` | VLC - Classic | VLC - Classic |
+| `console` | RealPlayer - Classic | RealPlayer - Classic |
+| `sidebar` | KDE - Amarok 1.4 | KDE - Amarok 1.4 |
+| `fancy` | Fancy | Fancy |
+
+The faces' accessible names are the old ones too ("Xbox music player",
+"Half Life 2 equalizer", "SRS WOW Effects", "TruBass", "iTunes MiniPlayer",
+"Classic VLC Music Player", ...).
+
 | Choice | Layout | Windows |
 | --- | --- | --- |
 | `default` — Default | Ordinary themed controls, playback and equaliser on the left, playlist on the right | One resizable 920 × 560 window |

@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; then R102, R114, R121-R123 adopted and the face packages renamed; then the library window's flaky test fixed and the product names gone from Go names; see the last five sections)
+# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; then R102, R114, R121-R123 adopted and the face packages renamed; then the library window's flaky test fixed and the product names gone from Go names; then the old skin labels restored (IDs stay new); see the last six sections)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -620,6 +620,9 @@ old ID falls back to Default; old per-skin window placements are ignored).
 | amarok | sidebar | Sidebar | redrawn (sidebar.go) |
 | fancy | fancy | Fancy | ours, unchanged |
 
+**Superseded the same day (the owner, 2026-11-13):** the labels went back to the
+old ones; the IDs above stay. See "The old labels restored" at the end.
+
 - **How**: each redrawn skin is a geometry table, plans/geometry_<new>.go,
   generated once from the old pack's skin.json by a scratchpad script
   (sprite names, sizes, slices, sampling, tint; layouts and slots; window
@@ -799,3 +802,64 @@ Commits on dev (local, not pushed):
   538 s, internal/skins 125 s); on the final tree the library test again
   100 of 100 under -race; goframework's footprint.py --check passes (no
   program changed). Not run: anything on a display, the VMs (not needed).
+
+## The old labels restored, 2026-11-13 (the owner's instruction)
+The owner: keep the new art and the new skin IDs, but show every skin
+under the label it had before the redraw (c5d0a02). IDs, packages, Go
+names, art, layouts and behaviour unchanged.
+
+| ID | pack label (skin.json) | shown in the menus (SkinLabel) |
+|---|---|---|
+| slate | Winamp | WinAmp - classic |
+| silver | Winamp Silver | WinAmp - Silver |
+| dossier | Winamp Classified | WinAmp - Classified |
+| textmode | DOSamp | WinAmp - DOSamp |
+| bevel | Windows 98 | WinAmp - Windows 98 |
+| amber | Winamp Classic Amber | WinAmp - Classic Amber |
+| tally | Calculator | WinAmp - Calculator |
+| headunit | Sony CDX-MP3 | WinAmp - Sony CDX-MP3 |
+| graphing | TI-82 | WinAmp - TI-82 |
+| radar | Radar Amp | WinAmp - Radar Amp |
+| forge | Quake 3 Arena | WinAmp - Quake 3 Arena |
+| wingspan | Win Media Player - Headspace | Win Media Player - Headspace |
+| pod | Win Media Player - Xbox | Win Media Player - Xbox |
+| gauge | Win Media Player - Half Life 2 | Win Media Player - Half Life 2 |
+| fandom | Win Media Player - Fandom | Win Media Player - Fandom |
+| aluminium | Mac OS X - iTunes | Mac OS X - iTunes |
+| cobalt | Win Media Player - Series 9 | Win Media Player - Series 9 |
+| utility | VLC - Classic | VLC - Classic |
+| console | RealPlayer - Classic | RealPlayer - Classic |
+| sidebar | KDE - Amarok 1.4 | KDE - Amarok 1.4 |
+| fancy | Fancy | Fancy |
+
+- **Plans**: each plan's Label is the old pack label (slate.go, silver.go,
+  panelart.go, the genericSkin/build calls, fandom.go); packs regenerated
+  (`go run ./internal/skins/cmd/generate -out internal/skins/packs`): only
+  the 20 skin.json "label" lines changed, every sheet byte for byte the same.
+- **internal/players/skins.go**: the old catalogue labels and the old
+  SkinLabel / formatAppearanceLabel / FormatSkinLabel(label) back (the
+  "WinAmp - ", "Win Media Player - ", "Mac OS X - ", "VLC - ",
+  "RealPlayer - ", "KDE - " prefixes, user-pack labels formatted the same
+  way), on the new constants; familyLabels gone.
+- **Faces' accessible names and strings** back to c5d0a02^: "Xbox music
+  player", "Xbox playlist", "Half Life 2 music player/equalizer/playlist",
+  "SRS WOW Effects", "SRS speaker processing", "TruBass", "WOW Effect",
+  "iTunes music library", "iTunes MiniPlayer", "Series 9 Music Player",
+  "Series 9 display/equalizer/playback controls/compact player", "Classic
+  VLC Music Player", the VLC info menu ("VLC 0.8.6 wxWidgets appearance",
+  "Original VideoLAN toolbar artwork"), and the faces' layout errors
+  ("Winamp requires…", "Xbox requires…", ...). Layout names stay new.
+- **Tests**: plans TestNoProductNamesInAnySkin now allows a product name in
+  the label only (the rest of the manifest and the ID still checked; the
+  manifest's label must equal the plan's); new TestEverySkinKeepsItsOldLabel
+  pins each plan's label; TestNoGoNameNamesAProduct and TestGoNameNamesAProduct
+  unchanged (no Go identifier, file or package path names a product).
+  players TestSkinLabelsAreTheOldLabelsWithoutChangingIDs (every menu label
+  by ID, also from the catalogue alone), the old FormatSkinLabel and
+  user-override cases back; skins packLabels the old labels.
+- README and docs/faces.md say so (docs/faces.md has the table).
+- **Checked**: gofmt; vet on linux, windows, darwin, freebsd; every package
+  under -race one at a time, all pass (internal/shell 1341 s with -timeout
+  60m, internal/players/panel 579 s); footprint.py --check passes.
+- go.work rewired (app-workspace.py: codecs-image-gif, codecs-text-xml were
+  missing; local only).

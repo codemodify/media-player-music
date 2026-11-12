@@ -13,7 +13,7 @@ import (
 // playlist well and a dark status strip along its foot in green.
 func Console() *Plan {
 	p := consolePalette()
-	return genericSkin("console", "Console", "A warm grey console with a slate caption band, soft keys in a recessed tray, light panels, a dark playlist and a green status strip.", &geomConsole, p, func(u use) drawFunc { return consoleArt(p, u) },
+	return genericSkin("console", "RealPlayer - Classic", "A warm grey console with a slate caption band, soft keys in a recessed tray, light panels, a dark playlist and a green status strip.", &geomConsole, p, func(u use) drawFunc { return consoleArt(p, u) },
 		map[string]skingen.TextRole{
 			"player.current":      {Color: "#8FF0B4"},
 			"player.info":         {Color: "#46D28A"},

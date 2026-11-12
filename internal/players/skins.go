@@ -1,13 +1,15 @@
 package players
 
 import (
+	"regexp"
 	"strings"
 
 	"goframework.io/desktop-ui-skins"
 )
 
 // The skins' IDs. Every skin's art is the app's own, drawn in Go
-// (internal/skins/plans); the names are neutral, in Go as in the packs.
+// (internal/skins/plans); the IDs are neutral, in Go as in the packs. The
+// labels shown in the menus are the old ones (SkinLabel).
 const (
 	SlateSkin     = "slate"
 	SilverSkin    = "silver"
@@ -34,26 +36,20 @@ const (
 
 // panelSkins is the compact panel's skin catalogue. Every entry uses the
 // same panel controls and window family, with its own artwork and layout.
+// The labels are the ones the skins were shown under before the redraw (the
+// owner, 2026-11-13: the IDs are neutral, the names in the menus are not).
 var panelSkins = []struct{ id, label string }{
-	{SlateSkin, "Slate"},
-	{SilverSkin, "Silver"},
-	{DossierSkin, "Dossier"},
-	{TextModeSkin, "Text Mode"},
-	{BevelSkin, "Bevel"},
-	{AmberSkin, "Amber"},
-	{TallySkin, "Tally"},
-	{HeadUnitSkin, "Head Unit"},
-	{GraphingSkin, "Graphing"},
-	{RadarSkin, "Radar"},
-	{ForgeSkin, "Forge"},
-}
-
-// familyLabels names the other presentations' skins before their packs are
-// registered.
-var familyLabels = map[string]string{
-	WingspanSkin: "Wingspan", PodSkin: "Pod", GaugeSkin: "Gauge", FandomSkin: "Fandom",
-	AluminiumSkin: "Aluminium", CobaltSkin: "Cobalt", UtilitySkin: "Utility", ConsoleSkin: "Console",
-	SidebarSkin: "Sidebar", FancySkin: "Fancy",
+	{SlateSkin, "Winamp"},
+	{SilverSkin, "Winamp Silver"},
+	{DossierSkin, "Winamp Classified"},
+	{TextModeSkin, "DOSamp"},
+	{BevelSkin, "Windows 98"},
+	{AmberSkin, "Winamp Classic Amber"},
+	{TallySkin, "Calculator"},
+	{HeadUnitSkin, "Sony CDX-MP3"},
+	{GraphingSkin, "TI-82"},
+	{RadarSkin, "Radar Amp"},
+	{ForgeSkin, "Quake 3 Arena"},
 }
 
 // PanelSkins returns the compact panel's skins in menu and keyboard order.
@@ -91,9 +87,8 @@ func IsSkinned(id string) bool {
 // SkinChoices is the same catalogue expressed as command-line choices.
 func SkinChoices() string { return strings.Join(AppearanceIDs(), ", ") }
 
-// SkinLabel is a skin's name in the menus: its pack's label (a person's own
-// pack of that ID keeps its own), or the catalogue's before registration.
-// Fancy's is fixed.
+// SkinLabel respects user-supplied pack labels, except Fancy's fixed display
+// name. It also names choices before registration, for saved settings and help.
 func SkinLabel(id string) string {
 	if id == DefaultSkin || id == Themed {
 		return "Default (no skin)"
@@ -101,29 +96,106 @@ func SkinLabel(id string) string {
 	if id == FancySkin {
 		return "Fancy"
 	}
-	fallback, known := familyLabels[id]
+	if sk, ok := skins.LoadSkin(id); ok && sk.Label != "" {
+		return formatAppearanceLabel(id, sk.Label)
+	}
+	switch id {
+	case WingspanSkin:
+		return formatAppearanceLabel(id, "Headspace")
+	case PodSkin:
+		return formatAppearanceLabel(id, "Xbox")
+	case GaugeSkin:
+		return formatAppearanceLabel(id, "Half Life 2")
+	case FandomSkin:
+		return formatAppearanceLabel(id, "Fandom")
+	case AluminiumSkin:
+		return formatAppearanceLabel(id, "iTunes")
+	case CobaltSkin:
+		return formatAppearanceLabel(id, "Series 9")
+	case UtilitySkin, ConsoleSkin, SidebarSkin:
+		return formatAppearanceLabel(id, "")
+	}
 	for _, skin := range panelSkins {
 		if id == skin.id {
-			fallback, known = skin.label, true
+			return FormatSkinLabel(skin.label)
 		}
 	}
-	if !known {
-		return id
-	}
-	// A pack without a label is listed under its ID by the loader; the
-	// catalogue's name reads better.
-	if sk, ok := skins.LoadSkin(id); ok && sk.Label != id {
-		return FormatSkinLabel(sk.Label, fallback)
-	}
-	return fallback
+	return id
 }
 
-// FormatSkinLabel tidies a supplied label's white space, and gives the
-// fallback for an empty one.
-func FormatSkinLabel(label, fallback string) string {
-	label = strings.Join(strings.Fields(label), " ")
-	if label == "" {
-		return fallback
+var mediaPlayerLabelPrefix = regexp.MustCompile(`(?i)^win\s+media\s+player\s*-\s*`)
+var macOSLabelPrefix = regexp.MustCompile(`(?i)^mac\s+os\s+x\s*-\s*`)
+
+// formatAppearanceLabel gives each family's skins their menu prefix ("Win
+// Media Player - ", "Mac OS X - ", "VLC - ", "RealPlayer - ", "KDE - "),
+// as the menus showed them before the redraw.
+func formatAppearanceLabel(id, label string) string {
+	if id == UtilitySkin || id == ConsoleSkin || id == SidebarSkin {
+		prefix, fallback := "VLC", "Classic"
+		switch id {
+		case ConsoleSkin:
+			prefix = "RealPlayer"
+		case SidebarSkin:
+			prefix, fallback = "KDE", "Amarok 1.4"
+		}
+		label = strings.Join(strings.Fields(label), " ")
+		re := regexp.MustCompile(`(?i)^` + regexp.QuoteMeta(prefix) + `\s*-\s*`)
+		for re.MatchString(label) {
+			label = re.ReplaceAllString(label, "")
+		}
+		if label == "" {
+			label = fallback
+		}
+		return prefix + " - " + label
 	}
-	return label
+	if id == AluminiumSkin {
+		label = strings.Join(strings.Fields(label), " ")
+		for macOSLabelPrefix.MatchString(label) {
+			label = macOSLabelPrefix.ReplaceAllString(label, "")
+		}
+		if label == "" {
+			label = "iTunes"
+		}
+		return "Mac OS X - " + label
+	}
+	if id != WingspanSkin && id != PodSkin && id != GaugeSkin && id != FandomSkin && id != CobaltSkin {
+		return FormatSkinLabel(label)
+	}
+	label = strings.Join(strings.Fields(label), " ")
+	for mediaPlayerLabelPrefix.MatchString(label) {
+		label = mediaPlayerLabelPrefix.ReplaceAllString(label, "")
+	}
+	if label == "" {
+		switch id {
+		case CobaltSkin:
+			label = "Series 9"
+		case FandomSkin:
+			label = "Fandom"
+		case GaugeSkin:
+			label = "Half Life 2"
+		case PodSkin:
+			label = "Xbox"
+		default:
+			label = "Headspace"
+		}
+	}
+	return "Win Media Player - " + label
+}
+
+var skinLabelPrefix = regexp.MustCompile(`(?i)^winamp\s*-\s*`)
+var skinLabelBrand = regexp.MustCompile(`(?i)winamp`)
+
+// FormatSkinLabel gives the compact panel's skins their menu prefix
+// ("WinAmp - ") while preserving the supplied name's case and making
+// already prefixed labels stable.
+func FormatSkinLabel(label string) string {
+	label = strings.Join(strings.Fields(label), " ")
+	for skinLabelPrefix.MatchString(label) {
+		label = skinLabelPrefix.ReplaceAllString(label, "")
+	}
+	label = strings.Join(strings.Fields(skinLabelBrand.ReplaceAllString(label, "")), " ")
+	if label == "" {
+		label = "classic"
+	}
+	return "WinAmp - " + label
 }

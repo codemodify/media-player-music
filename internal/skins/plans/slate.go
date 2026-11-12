@@ -79,7 +79,7 @@ func slatePlan() *Plan {
 	l := &lay{sh: sh, gap: 2}
 	p := &Plan{
 		Name:    "slate",
-		Label:   "Slate",
+		Label:   "Winamp",
 		Year:    2026,
 		Lineage: "uitoolkit",
 		Summary: "The compact player's base-skin look of the era: slate-blue chrome, gold grooves, a black display with green segments — a pixel panel the player lays its own keys on.",

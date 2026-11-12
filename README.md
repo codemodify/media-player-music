@@ -32,8 +32,12 @@ repeatable pictures.
 
 Every skin's art is the app's own, drawn in Go by `internal/skins/plans`
 (paths, gradients and the app's own pixel faces; the generator reads no
-picture). The skins carry neutral names; each keeps the layout, controls and
-behaviour of the presentation it wears.
+picture). The skins carry neutral IDs; each keeps the layout, controls and
+behaviour of the presentation it wears. The menus, the skin lists and the
+accessible names show each skin under the label it had before the redraw
+(the owner, 2026-11-13): slate is listed as "WinAmp - classic", pod as
+"Win Media Player - Xbox", aluminium as "Mac OS X - iTunes", and so on (the
+table in docs/faces.md). The captions below use the IDs.
 
 | Slate | Silver | Dossier |
 | --- | --- | --- |

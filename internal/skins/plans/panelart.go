@@ -519,7 +519,7 @@ var sansFonts = []string{"Liberation Sans", "DejaVu Sans", "Nimbus Sans"}
 // Dossier: olive field-case chrome, a black display in pale green, a red
 // stamp for what is lit.
 func Dossier() *Plan {
-	return panelSkin("dossier", "Dossier", "Olive field-case chrome with riveted corners, khaki keys and a black display in pale green.", &geomDossier, &panelTheme{
+	return panelSkin("dossier", "Winamp Classified", "Olive field-case chrome with riveted corners, khaki keys and a black display in pale green.", &geomDossier, &panelTheme{
 		chrome: rgb("#4b5136"), chromeTop: rgb("#5d6444"), chromeBottom: rgb("#3a3f2a"), light: rgb("#7f8862"), shade: rgb("#23261a"), outline: rgb("#14160e"),
 		well: rgb("#0b0d08"), wellRim: rgb("#1a1d12"), lcd: rgb("#c2f09a"), lcdDim: rgb("#3e5530"),
 		keyTop: rgb("#a4a882"), keyBottom: rgb("#7b7f5d"), keyEdge: rgb("#2d3021"), keyInk: rgb("#23261a"), keyLit: rgb("#d0342a"),
@@ -532,7 +532,7 @@ func Dossier() *Plan {
 // Textmode: a character-cell screen: deep blue panels, double rules, grey
 // text and cyan highlights.
 func Textmode() *Plan {
-	return panelSkin("textmode", "Text Mode", "A character-cell screen: deep blue panels, flat bracketed keys, grey text and cyan highlights.", &geomTextmode, &panelTheme{
+	return panelSkin("textmode", "DOSamp", "A character-cell screen: deep blue panels, flat bracketed keys, grey text and cyan highlights.", &geomTextmode, &panelTheme{
 		chrome: rgb("#10208a"), chromeTop: rgb("#10208a"), chromeBottom: rgb("#10208a"), light: rgb("#5a6ad8"), shade: rgb("#060c40"), outline: rgb("#000000"),
 		well: rgb("#000000"), wellRim: rgb("#6a7ad0"), lcd: rgb("#c8c8c8"), lcdDim: rgb("#4a4a4a"),
 		keyTop: rgb("#b8b8b8"), keyBottom: rgb("#b8b8b8"), keyEdge: rgb("#000000"), keyInk: rgb("#10208a"), keyLit: rgb("#007f7f"),
@@ -545,7 +545,7 @@ func Textmode() *Plan {
 // Bevel: the light grey bevelled desktop of the late nineties, a teal
 // caption and square keys.
 func Bevel() *Plan {
-	return panelSkin("bevel", "Bevel", "Light grey bevelled chrome, a teal caption, square raised keys and a black display.", &geomBevel, &panelTheme{
+	return panelSkin("bevel", "Windows 98", "Light grey bevelled chrome, a teal caption, square raised keys and a black display.", &geomBevel, &panelTheme{
 		chrome: rgb("#c3c3c3"), chromeTop: rgb("#c3c3c3"), chromeBottom: rgb("#c3c3c3"), light: rgb("#ffffff"), shade: rgb("#7b7b7b"), outline: rgb("#000000"),
 		well: rgb("#000000"), wellRim: rgb("#404040"), lcd: rgb("#3cf06a"), lcdDim: rgb("#1c5a2c"),
 		keyTop: rgb("#cfcfcf"), keyBottom: rgb("#bdbdbd"), keyEdge: rgb("#000000"), keyInk: rgb("#000000"), keyLit: rgb("#006c6c"),
@@ -557,7 +557,7 @@ func Bevel() *Plan {
 
 // Amber: a dark terminal in amber phosphor, scanlines on every surface.
 func Amber() *Plan {
-	return panelSkin("amber", "Amber", "Near-black chrome in amber phosphor: scanlined displays, outlined amber keys and warm rules.", &geomAmber, &panelTheme{
+	return panelSkin("amber", "Winamp Classic Amber", "Near-black chrome in amber phosphor: scanlined displays, outlined amber keys and warm rules.", &geomAmber, &panelTheme{
 		chrome: rgb("#1d150c"), chromeTop: rgb("#271c10"), chromeBottom: rgb("#140e07"), light: rgb("#5a3e1a"), shade: rgb("#080502"), outline: rgb("#000000"),
 		well: rgb("#0a0603"), wellRim: rgb("#3a2810"), lcd: rgb("#ffb030"), lcdDim: rgb("#5a3a10"),
 		keyTop: rgb("#2c1f10"), keyBottom: rgb("#20160b"), keyEdge: rgb("#c88420"), keyInk: rgb("#ffb030"), keyLit: rgb("#fff0b0"),
@@ -570,7 +570,7 @@ func Amber() *Plan {
 // Tally: a desk adding machine: beige case, cream keys with an orange one,
 // a grey-green liquid-crystal window.
 func Tally() *Plan {
-	return panelSkin("tally", "Tally", "A desk adding machine: speckled beige case, cream rounded keys and a grey-green liquid-crystal window.", &geomTally, &panelTheme{
+	return panelSkin("tally", "Calculator", "A desk adding machine: speckled beige case, cream rounded keys and a grey-green liquid-crystal window.", &geomTally, &panelTheme{
 		chrome: rgb("#d8cbaa"), chromeTop: rgb("#e6dbbf"), chromeBottom: rgb("#c6b791"), light: rgb("#f6efdc"), shade: rgb("#8f8366"), outline: rgb("#5a5140"),
 		well: rgb("#a9b496"), wellRim: rgb("#5f6652"), lcd: rgb("#1f261a"), lcdDim: rgb("#8a9678"),
 		keyTop: rgb("#fbf6e8"), keyBottom: rgb("#ddd3ba"), keyEdge: rgb("#7a6f56"), keyInk: rgb("#3a3326"), keyLit: rgb("#e2661c"),
@@ -583,7 +583,7 @@ func Tally() *Plan {
 // Headunit: a dashboard stereo: black brushed fascia, rubber keys and an
 // orange segment display.
 func Headunit() *Plan {
-	return panelSkin("headunit", "Head Unit", "A dashboard stereo: black brushed fascia, rubber keys and an orange segment display.", &geomHeadunit, &panelTheme{
+	return panelSkin("headunit", "Sony CDX-MP3", "A dashboard stereo: black brushed fascia, rubber keys and an orange segment display.", &geomHeadunit, &panelTheme{
 		chrome: rgb("#1b1c1e"), chromeTop: rgb("#2a2b2e"), chromeBottom: rgb("#0f1011"), light: rgb("#4a4c50"), shade: rgb("#050505"), outline: rgb("#000000"),
 		well: rgb("#090604"), wellRim: rgb("#2a2420"), lcd: rgb("#ff8a24"), lcdDim: rgb("#4a2a10"),
 		keyTop: rgb("#36383c"), keyBottom: rgb("#1c1d20"), keyEdge: rgb("#000000"), keyInk: rgb("#d8dadc"), keyLit: rgb("#ff8a24"),
@@ -596,7 +596,7 @@ func Headunit() *Plan {
 // Graphing: a school calculator: slate case, dark rounded keys and a
 // gridded olive screen.
 func Graphing() *Plan {
-	return panelSkin("graphing", "Graphing", "A school calculator: slate case, dark rounded keys and a gridded olive screen in dark ink.", &geomGraphing, &panelTheme{
+	return panelSkin("graphing", "TI-82", "A school calculator: slate case, dark rounded keys and a gridded olive screen in dark ink.", &geomGraphing, &panelTheme{
 		chrome: rgb("#4e5762"), chromeTop: rgb("#5d6772"), chromeBottom: rgb("#3e4650"), light: rgb("#7d8894"), shade: rgb("#262c33"), outline: rgb("#16191d"),
 		well: rgb("#b9c39d"), wellRim: rgb("#3a3f33"), lcd: rgb("#272c22"), lcdDim: rgb("#8f9a78"),
 		keyTop: rgb("#3a4049"), keyBottom: rgb("#262b31"), keyEdge: rgb("#101215"), keyInk: rgb("#e8ecf0"), keyLit: rgb("#7cc4f0"),
@@ -608,7 +608,7 @@ func Graphing() *Plan {
 
 // Radar: a phosphor scope: black glass, green wire rules and outlined keys.
 func Radar() *Plan {
-	return panelSkin("radar", "Radar", "A phosphor scope: black glass with a green grid, wire-outlined keys and bright green readouts.", &geomRadar, &panelTheme{
+	return panelSkin("radar", "Radar Amp", "A phosphor scope: black glass with a green grid, wire-outlined keys and bright green readouts.", &geomRadar, &panelTheme{
 		chrome: rgb("#020a03"), chromeTop: rgb("#031005"), chromeBottom: rgb("#010502"), light: rgb("#1f8a2c"), shade: rgb("#000000"), outline: rgb("#2ed84a"),
 		well: rgb("#000000"), wellRim: rgb("#2ed84a"), lcd: rgb("#4cff6a"), lcdDim: rgb("#126a22"),
 		keyTop: rgb("#031206"), keyBottom: rgb("#020a03"), keyEdge: rgb("#2ed84a"), keyInk: rgb("#4cff6a"), keyLit: rgb("#d8ffd8"),
@@ -620,7 +620,7 @@ func Radar() *Plan {
 
 // Forge: dark iron with rust and a red glow.
 func Forge() *Plan {
-	return panelSkin("forge", "Forge", "Dark iron plate with rivets and rust, red-lit keys and an ember display.", &geomForge, &panelTheme{
+	return panelSkin("forge", "Quake 3 Arena", "Dark iron plate with rivets and rust, red-lit keys and an ember display.", &geomForge, &panelTheme{
 		chrome: rgb("#2e2420"), chromeTop: rgb("#3c2f29"), chromeBottom: rgb("#1e1714"), light: rgb("#6a5246"), shade: rgb("#0e0a08"), outline: rgb("#000000"),
 		well: rgb("#0c0605"), wellRim: rgb("#3a1c14"), lcd: rgb("#ff5a3a"), lcdDim: rgb("#5a1e14"),
 		keyTop: rgb("#4a3a33"), keyBottom: rgb("#2a201c"), keyEdge: rgb("#0e0a08"), keyInk: rgb("#e04a2a"), keyLit: rgb("#ffc070"),

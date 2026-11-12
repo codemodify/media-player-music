@@ -14,7 +14,7 @@ import (
 // that closes over the dial in two steps, a light steel equaliser bay and a
 // framed playlist. Drawn from circles, arcs and gradients only.
 func Gauge() *Plan {
-	return build(skinArt{id: "gauge", label: "Gauge", g: &geomGauge,
+	return build(skinArt{id: "gauge", label: "Win Media Player - Half Life 2", g: &geomGauge,
 		summary: "A round gunmetal instrument with a copper bezel: arc scales for seek and volume, a key cluster, an iris shutter, a steel equaliser bay and a framed playlist.",
 		paint:   gaugeArt,
 		text: map[string]skingen.TextRole{

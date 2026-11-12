@@ -35,7 +35,7 @@ func newBody(p *Player) *body {
 	b := &body{p: p, slots: uiskins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), visualOn: true}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Aluminium music library")
+	b.SetAccessibleName("iTunes music library")
 	button := func(slot, label string, glyph players.Glyph, action func()) *players.GlyphButton {
 		c := skinButton(LayoutMain, slot, label, glyph, action)
 		b.buttons[slot] = c
@@ -325,7 +325,7 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 	return false
 }
 func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
-func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Aluminium music library" }
+func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "iTunes music library" }
 func (b *body) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy

@@ -1,6 +1,7 @@
 package plans
 
 import (
+	"encoding/json"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -100,8 +101,10 @@ func rel(root, f string) string {
 	return r
 }
 
-// productNames are names no skin of the app's may carry: in its file, its
-// label, its layouts, sheets or sprites.
+// productNames are names no skin of the app's may carry: in its ID, its
+// layouts, sheets or sprites, anywhere in its file but its label. The labels
+// are the ones the skins were shown under before the redraw (the owner,
+// 2026-11-13), pinned by TestEverySkinKeepsItsOldLabel.
 var productNames = regexp.MustCompile(`(?i)winamp|\bwindows\b|media\s*player|\bwmp\b|xbox|half[\s-]*life|valve|itunes|apple|mac\s*os|aqua|realplayer|realnetworks|\bvlc\b|videolan|\bkde\b|amarok|quake|\bsony\b|\bti-?\d|texas instruments|microsoft|\bdosamp\b|ms-dos|headspace`)
 
 func TestNoProductNamesInAnySkin(t *testing.T) {
@@ -110,11 +113,23 @@ func TestNoProductNamesInAnySkin(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if m := productNames.FindAll(doc, -1); len(m) > 0 {
-			t.Errorf("%s's skin.json names %q", p.Name, m)
+		var manifest map[string]any
+		if err := json.Unmarshal(doc, &manifest); err != nil {
+			t.Fatal(err)
 		}
-		if productNames.MatchString(p.Name + " " + p.Label) {
-			t.Errorf("%s is named %q", p.Name, p.Label)
+		if manifest["label"] != p.Label {
+			t.Errorf("%s's skin.json is labelled %q, its plan %q", p.Name, manifest["label"], p.Label)
+		}
+		delete(manifest, "label")
+		rest, err := json.Marshal(manifest)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if m := productNames.FindAll(rest, -1); len(m) > 0 {
+			t.Errorf("%s's skin.json names %q outside its label", p.Name, m)
+		}
+		if productNames.MatchString(p.Name) {
+			t.Errorf("%s's ID names a product", p.Name)
 		}
 	}
 	// and the geometry tables the redrawn skins are built on
@@ -130,6 +145,48 @@ func TestNoProductNamesInAnySkin(t *testing.T) {
 		}
 		if m := productNames.FindAllString(body, -1); len(m) > 0 {
 			t.Errorf("%s names %q", f, m)
+		}
+	}
+}
+
+// Every skin carries the label it was shown under before the redraw (the
+// owner, 2026-11-13); only its ID is new.
+func TestEverySkinKeepsItsOldLabel(t *testing.T) {
+	want := map[string]string{
+		"slate":     "Winamp",
+		"silver":    "Winamp Silver",
+		"dossier":   "Winamp Classified",
+		"textmode":  "DOSamp",
+		"bevel":     "Windows 98",
+		"amber":     "Winamp Classic Amber",
+		"tally":     "Calculator",
+		"headunit":  "Sony CDX-MP3",
+		"graphing":  "TI-82",
+		"radar":     "Radar Amp",
+		"forge":     "Quake 3 Arena",
+		"wingspan":  "Win Media Player - Headspace",
+		"pod":       "Win Media Player - Xbox",
+		"gauge":     "Win Media Player - Half Life 2",
+		"fandom":    "Win Media Player - Fandom",
+		"aluminium": "Mac OS X - iTunes",
+		"cobalt":    "Win Media Player - Series 9",
+		"utility":   "VLC - Classic",
+		"console":   "RealPlayer - Classic",
+		"sidebar":   "KDE - Amarok 1.4",
+		"fancy":     "Fancy",
+	}
+	seen := map[string]bool{}
+	for _, p := range Plans() {
+		seen[p.Name] = true
+		if label, ok := want[p.Name]; !ok {
+			t.Errorf("%s: no label pinned", p.Name)
+		} else if p.Label != label {
+			t.Errorf("%s is labelled %q, want %q", p.Name, p.Label, label)
+		}
+	}
+	for name := range want {
+		if !seen[name] {
+			t.Errorf("no plan %s", name)
 		}
 	}
 }

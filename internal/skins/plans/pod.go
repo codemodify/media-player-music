@@ -13,7 +13,7 @@ import (
 // round a deep well.
 func Pod() *Plan {
 	p := podPalette()
-	return genericSkin("pod", "Pod", "A gunmetal capsule with a jewel disc, a smoked-glass screen with arcs of lime light, and a framed playlist.", &geomPod, p, func(u use) drawFunc { return podArt(p, u) }, nil, nil)
+	return genericSkin("pod", "Win Media Player - Xbox", "A gunmetal capsule with a jewel disc, a smoked-glass screen with arcs of lime light, and a framed playlist.", &geomPod, p, func(u use) drawFunc { return podArt(p, u) }, nil, nil)
 }
 
 func podPalette() *palette {

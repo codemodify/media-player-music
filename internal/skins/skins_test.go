@@ -16,11 +16,13 @@ import (
 
 var packNames = []string{"aluminium", "amber", "bevel", "cobalt", "console", "dossier", "fancy", "fandom", "forge", "gauge", "graphing", "headunit", "pod", "radar", "sidebar", "silver", "slate", "tally", "textmode", "utility", "wingspan"}
 
+// packLabels are the labels the skins were shown under before the redraw
+// (the owner, 2026-11-13); only the IDs are new.
 var packLabels = map[string]string{
-	"slate": "Slate", "silver": "Silver", "dossier": "Dossier", "textmode": "Text Mode", "bevel": "Bevel",
-	"amber": "Amber", "tally": "Tally", "headunit": "Head Unit", "graphing": "Graphing", "radar": "Radar", "forge": "Forge",
-	"wingspan": "Wingspan", "pod": "Pod", "gauge": "Gauge", "fandom": "Fandom", "aluminium": "Aluminium",
-	"cobalt": "Cobalt", "utility": "Utility", "console": "Console", "sidebar": "Sidebar", "fancy": "Fancy",
+	"slate": "Winamp", "silver": "Winamp Silver", "dossier": "Winamp Classified", "textmode": "DOSamp", "bevel": "Windows 98",
+	"amber": "Winamp Classic Amber", "tally": "Calculator", "headunit": "Sony CDX-MP3", "graphing": "TI-82", "radar": "Radar Amp", "forge": "Quake 3 Arena",
+	"wingspan": "Win Media Player - Headspace", "pod": "Win Media Player - Xbox", "gauge": "Win Media Player - Half Life 2", "fandom": "Win Media Player - Fandom", "aluminium": "Mac OS X - iTunes",
+	"cobalt": "Win Media Player - Series 9", "utility": "VLC - Classic", "console": "RealPlayer - Classic", "sidebar": "KDE - Amarok 1.4", "fancy": "Fancy",
 }
 
 var packLayouts = map[string][]string{
@@ -193,7 +195,7 @@ func TestRegistrationPreservesUserOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 	uiskins.InvalidateSkinCache()
-	if sk, ok := uiskins.LoadSkin("slate"); !ok || sk.Label != "Slate" {
+	if sk, ok := uiskins.LoadSkin("slate"); !ok || sk.Label != "Winamp" {
 		t.Fatalf("removing the override did not restore the embedded app skin: %#v, %v", sk, ok)
 	}
 }

@@ -28,7 +28,7 @@ func newBody(p *Player) *body {
 	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: map[string]*widgets.Button{}}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Utility Music Player")
+	b.SetAccessibleName("Classic VLC Music Player")
 	b.button("open", "Open music files", "eject", func() { p.Host.OpenFiles(b.buttons["open"], false) })
 	b.button("play", "Play / pause", "play", func() { p.Host.Command(players.CmdPlayPause) })
 	b.button("stop", "Stop", "stop", func() { p.Host.Command(players.CmdStop) })
@@ -152,7 +152,7 @@ func (b *body) newMenu() *widgets.MenuBar {
 		})),
 		widgets.NewMenu("Audio", widgets.Item("Play / pause", func() { h.Command(players.CmdPlayPause) }), widgets.Item("Stop", func() { h.Command(players.CmdStop) }), widgets.Item("Mute / restore", func() { h.Command(players.CmdMute) })),
 		widgets.NewMenu("Help", widgets.Item("About this appearance", func() {
-			widgets.ShowContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())), infoItem("Utility appearance"), infoItem("The app's own toolbar artwork"))
+			widgets.ShowContextMenu(b, widget.DeviceOrigin(b).Add(paint2d.Pt(8*p.Main.Scale(), 48*p.Main.Scale())), infoItem("VLC 0.8.6 wxWidgets appearance"), infoItem("Original VideoLAN toolbar artwork"))
 		})),
 	)
 }
@@ -270,7 +270,7 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 	return false
 }
 func (b *body) Describe(n *a11y.Node) {
-	n.Role, n.Name, n.Description = a11y.RoleGroup, "Utility Music Player", b.p.Host.StatusText()
+	n.Role, n.Name, n.Description = a11y.RoleGroup, "Classic VLC Music Player", b.p.Host.StatusText()
 }
 func (b *body) DropTypes() []string { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {

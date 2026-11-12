@@ -86,7 +86,7 @@ func Fandom() *Plan {
 		{Name: "title", At: [4]int{13, 12, 32, 15}, StretchX: true},
 		{Name: "status", At: [4]int{77, 4, 20, 14}, StretchX: true, FromBottom: true},
 	}}
-	return &Plan{Name: "fandom", Label: "Fandom", Year: 2026,
+	return &Plan{Name: "fandom", Label: "Win Media Player - Fandom", Year: 2026,
 		Lineage: "media-player-music",
 		Summary: "Silver tablet, Settings wing and separate playlist, in the project's generated artwork.",
 		Family:  "fandom", Base: "win95", Sheets: []*Sheet{sh}, Layouts: []LayoutSpec{main, playlist},

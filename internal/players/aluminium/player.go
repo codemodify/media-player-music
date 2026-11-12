@@ -58,7 +58,7 @@ type Player struct {
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutMini, LayoutEqualizer} {
 		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
-			return nil, fmt.Errorf("Aluminium requires skin layout %q", role)
+			return nil, fmt.Errorf("iTunes requires skin layout %q", role)
 		}
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser,

@@ -21,7 +21,7 @@ func Aluminium() *Plan {
 		"player.selectedText": {Color: "#FFFFFF"},
 		"player.text":         {Color: "#283020"},
 	}
-	return genericSkin("aluminium", "Aluminium", "Pale brushed aluminium with rounded corners, a pill-shaped display, round glassy keys, graphite window gems and a floating equaliser.", &geomAluminium, p, func(u use) drawFunc { return aluminiumArt(p, u) }, text, map[string]string{"focus": "#3A6FB8"})
+	return genericSkin("aluminium", "Mac OS X - iTunes", "Pale brushed aluminium with rounded corners, a pill-shaped display, round glassy keys, graphite window gems and a floating equaliser.", &geomAluminium, p, func(u use) drawFunc { return aluminiumArt(p, u) }, text, map[string]string{"focus": "#3A6FB8"})
 }
 
 func aluminiumPalette() *palette {

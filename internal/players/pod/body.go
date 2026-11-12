@@ -31,7 +31,7 @@ func newBody(p *Player) *body {
 	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Pod music player")
+	b.SetAccessibleName("Xbox music player")
 	// The visualization is behind the curved volume track and its controls.
 	b.visual = newVisualizer(p)
 	b.slots.Bind("analyser", b.visual)
@@ -259,7 +259,7 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 	return false
 }
 func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
-func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Pod music player" }
+func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Xbox music player" }
 func (b *body) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy

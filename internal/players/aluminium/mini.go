@@ -31,7 +31,7 @@ func newMiniPane(p *Player) *miniPane {
 	b := &miniPane{p: p, slots: skins.NewSlots(LayoutMini), buttons: make(map[string]*players.GlyphButton), information: true}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Aluminium mini player")
+	b.SetAccessibleName("iTunes MiniPlayer")
 	button := func(slot, label string, glyph players.Glyph, action func()) *players.GlyphButton {
 		c := skinButton(LayoutMini, slot, label, glyph, action)
 		b.buttons[slot] = c
@@ -124,7 +124,7 @@ func (b *miniPane) MousePress(e widget.MouseEvent) bool {
 	return false
 }
 func (b *miniPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main, e) }
-func (b *miniPane) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Aluminium mini player" }
+func (b *miniPane) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "iTunes MiniPlayer" }
 func (b *miniPane) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *miniPane) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy

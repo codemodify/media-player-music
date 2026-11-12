@@ -49,7 +49,7 @@ type Player struct {
 func New(h *players.Host, opts Options) (*Player, error) {
 	for _, role := range []string{LayoutMain, LayoutPlaylist} {
 		if _, ok := skins.SkinLayoutOf(h.App.Look(), role); !ok {
-			return nil, fmt.Errorf("Pod requires a skin with layout %q", role)
+			return nil, fmt.Errorf("Xbox requires a skin with layout %q", role)
 		}
 	}
 	p := &Player{Host: h, App: h.App, Transport: h.Model.Transport, Spectrum: h.Model.Spectrum, Equaliser: h.Model.Equaliser,

@@ -28,7 +28,7 @@ func newEqualizerPane(p *Player) *equalizerPane {
 	b := &equalizerPane{p: p, slots: skins.NewSlots(LayoutEqualizer), buttons: make(map[string]*players.GlyphButton)}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Gauge equalizer")
+	b.SetAccessibleName("Half Life 2 equalizer")
 	button := func(slot, name string, glyph players.Glyph, action func()) *players.GlyphButton {
 		c := skinButton(LayoutEqualizer, slot, name, glyph, action)
 		b.buttons[slot] = c
@@ -44,7 +44,7 @@ func newEqualizerPane(p *Player) *equalizerPane {
 		p.Host.SetPan(0)
 	})
 	button("on", "Equalizer on", players.GlyphSliders, func() { p.Equaliser.SetOn(!p.Equaliser.On) }).Toggle = true
-	for _, item := range []struct{ slot, label string }{{"crossfade", "Crossfade"}, {"srs", "Surround Effects"}, {"speaker", "Speaker processing"}} {
+	for _, item := range []struct{ slot, label string }{{"crossfade", "Crossfade"}, {"srs", "SRS WOW Effects"}, {"speaker", "SRS speaker processing"}} {
 		c := button(item.slot, item.label, players.GlyphNone, nil)
 		c.SetEnabled(false)
 		c.Tip = item.label + " is not in this player"
@@ -81,7 +81,7 @@ func newEqualizerPane(p *Player) *equalizerPane {
 	paintHorizontal(b.balance, "balance")
 	b.slots.Bind("balance", b.balance)
 	b.Add(b.balance)
-	for _, item := range []struct{ slot, label string }{{"trubass", "Bass Boost"}, {"wow", "Stereo Width"}} {
+	for _, item := range []struct{ slot, label string }{{"trubass", "TruBass"}, {"wow", "WOW Effect"}} {
 		f := players.NewBar(0, 100, 0, item.label, nil)
 		f.Travel = 5.5
 		paintHorizontal(f, "effect")
@@ -180,7 +180,7 @@ func (b *equalizerPane) Paint(ctx *paint2d.Context) {
 	skins.DrawSkinLayout(lk, ctx, box, LayoutEqualizer)
 	f := players.ScaledFace(lk.Font(), style.Dip(lk, 8))
 	col := paint2d.RGB(.1, .1, .1)
-	for _, item := range []struct{ slot, text string }{{"balance.label", "Balance"}, {"srs.label", "Surround Effects"}, {"speaker.label", "Normal Speakers"}, {"trubass.label", "Bass Boost"}, {"wow.label", "Stereo Width"}} {
+	for _, item := range []struct{ slot, text string }{{"balance.label", "Balance"}, {"srs.label", "SRS WOW Effects"}, {"speaker.label", "Normal Speakers"}, {"trubass.label", "TruBass"}, {"wow.label", "WOW Effect"}} {
 		r, _ := skins.SkinSlotRect(lk, LayoutEqualizer, item.slot, box)
 		players.DrawTextIn(ctx, f, r, item.text, col, style.AlignStart)
 	}
@@ -198,7 +198,7 @@ func (b *equalizerPane) MousePress(e widget.MouseEvent) bool {
 }
 func (b *equalizerPane) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Eq(), e) }
 func (b *equalizerPane) Describe(n *a11y.Node) {
-	n.Role, n.Name = a11y.RoleGroup, "Gauge equalizer"
+	n.Role, n.Name = a11y.RoleGroup, "Half Life 2 equalizer"
 }
 func (b *equalizerPane) DropTypes() []string { return []string{"text/uri-list"} }
 func (b *equalizerPane) DropActionFor(offered platform.DragAction) platform.DragAction {

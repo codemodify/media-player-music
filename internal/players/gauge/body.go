@@ -33,7 +33,7 @@ func newBody(p *Player) *body {
 	b := &body{p: p, slots: skins.NewSlots(LayoutMain), buttons: make(map[string]*players.GlyphButton), lastVolume: max(p.Transport.Volume, .5)}
 	b.Init(b)
 	b.SetManagesChildren(true)
-	b.SetAccessibleName("Gauge music player")
+	b.SetAccessibleName("Half Life 2 music player")
 	b.visual = players.NewAnalyserView(p.Spectrum)
 	b.visual.Tint = orange()
 	b.visual.Peaks = true
@@ -237,7 +237,7 @@ func (b *body) MousePress(e widget.MouseEvent) bool {
 	return false
 }
 func (b *body) KeyPress(e widget.KeyEvent) bool { return b.p.keys(b.p.Main(), e) }
-func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Gauge music player" }
+func (b *body) Describe(n *a11y.Node)           { n.Role, n.Name = a11y.RoleGroup, "Half Life 2 music player" }
 func (b *body) DropTypes() []string             { return []string{"text/uri-list"} }
 func (b *body) DropActionFor(offered platform.DragAction) platform.DragAction {
 	return offered & platform.DragCopy

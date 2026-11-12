@@ -13,7 +13,7 @@ import (
 // playlist drawer to the left and a compact mode. Drawn from gradients and
 // rounded shapes only.
 func Cobalt() *Plan {
-	return build(skinArt{id: "cobalt", label: "Cobalt", g: &geomCobalt,
+	return build(skinArt{id: "cobalt", label: "Win Media Player - Series 9", g: &geomCobalt,
 		summary: "Deep cobalt and pale steel: a wide display under a bar of glossy keys, a steel transport shelf, drawers for the playlist and equaliser, and a compact mode.",
 		paint:   cobaltArt,
 		text: map[string]skingen.TextRole{

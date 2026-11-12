@@ -15,7 +15,7 @@ import (
 // icons, the marks and the cover.
 func Sidebar() *Plan {
 	p := sidebarPalette()
-	return genericSkin("sidebar", "Sidebar", "A light library window with an indigo caption, two-tone indigo toolbar icons, a tabbed sidebar and a multi-column playlist.", &geomSidebar, p, func(u use) drawFunc { return sidebarArt(p, u) },
+	return genericSkin("sidebar", "KDE - Amarok 1.4", "A light library window with an indigo caption, two-tone indigo toolbar icons, a tabbed sidebar and a multi-column playlist.", &geomSidebar, p, func(u use) drawFunc { return sidebarArt(p, u) },
 		map[string]skingen.TextRole{
 			"player.current":      {Color: "#2B3590"},
 			"player.info":         {Color: "#33334A"},

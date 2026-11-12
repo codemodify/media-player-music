@@ -13,7 +13,7 @@ import (
 // leaves a short fin on the head that carries its grip.
 func Wingspan() *Plan {
 	p := wingspanPalette()
-	return genericSkin("wingspan", "Wingspan", "A jade console with a dark glass display and speaker wings that fold out for the equaliser and the playlist.", &geomWingspan, p, func(u use) drawFunc { return wingspanArt(p, u) }, nil, nil)
+	return genericSkin("wingspan", "Win Media Player - Headspace", "A jade console with a dark glass display and speaker wings that fold out for the equaliser and the playlist.", &geomWingspan, p, func(u use) drawFunc { return wingspanArt(p, u) }, nil, nil)
 }
 
 func wingspanPalette() *palette {

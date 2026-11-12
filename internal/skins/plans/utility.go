@@ -22,7 +22,7 @@ func Utility() *Plan {
 		"player.text":         {Color: "#1C252E"},
 	}
 	colors := map[string]string{"control": "#D5D8DB", "focus": "#2F5D8A", "panel": "#D5D8DB", "selection": "#2F5D8A", "selectionText": "#FFFFFF", "text": "#1C252E", "textMuted": "#59626B", "window": "#D5D8DB"}
-	return genericSkin("utility", "Utility", "A plain cool-grey utility window: a slate caption, flat square controls and a toolbar of small two-tone icons, with the equaliser and the playlist below.", &geomUtility, p, func(u use) drawFunc { return utilityArt(p, u) }, text, colors)
+	return genericSkin("utility", "VLC - Classic", "A plain cool-grey utility window: a slate caption, flat square controls and a toolbar of small two-tone icons, with the equaliser and the playlist below.", &geomUtility, p, func(u use) drawFunc { return utilityArt(p, u) }, text, colors)
 }
 
 func utilityPalette() *palette {
