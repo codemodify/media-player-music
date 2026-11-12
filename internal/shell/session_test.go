@@ -45,7 +45,7 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 			transport.List.Tracks[1].Length = time.Minute
 			transport.List.Select(1)
 			transport.Pos = 9250 * time.Millisecond
-			first.MainWindow().Move(420, 210)
+			desktopMove(t, firstApp, first, first.MainWindow(), 420, 210)
 			first.presentation.Advance(0)
 			first.presentation.ShowEqualiser(false)
 			if skin == players.DefaultSkin {
@@ -54,7 +54,9 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 			}
 			first.Close()
 
-			_, next, backend := rememberedShell(t, "")
+			nextApp, next, backend := rememberedShell(t, "")
+			// The saved place holds through the settle, past the desktop's own.
+			awaitSettled(t, nextApp, next)
 			model := next.Host.Model
 			if next.Skin() != skin || model.Transport.List.Len() != 2 || model.Transport.List.Index() != 1 {
 				t.Fatalf("restored skin=%s queue=%d selection=%d", next.Skin(), model.Transport.List.Len(), model.Transport.List.Index())
@@ -87,7 +89,7 @@ func TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay(t *testing.
 func TestSessionRetainsSeparateDefaultAndSkinArrangements(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	a, s, _ := rememberedShell(t, winamp.Skin)
-	s.MainWindow().Move(380, 230)
+	desktopMove(t, a, s, s.MainWindow(), 380, 230)
 	s.presentation.Advance(0)
 	if err := s.SetSkin(players.DefaultSkin); err != nil {
 		t.Fatal(err)
@@ -138,7 +140,7 @@ func TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault(t *testing.T) 
 		t.Fatal(err)
 	}
 	settle()
-	s.MainWindow().Move(380, 230)
+	desktopMove(t, a, s, s.MainWindow(), 380, 230)
 	s.presentation.Advance(0)
 	if err := s.SetSkin(players.HeadspaceSkin); err != nil {
 		t.Fatal(err)

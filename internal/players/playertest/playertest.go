@@ -10,15 +10,28 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/skins"
+	"github.com/codemodify/media-player-music/internal/testenv"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/a11y"
 	"goframework.io/desktop-ui/platform"
 	"goframework.io/desktop-ui/widget"
 )
 
-// Main gives UI tests the same app-owned skin packs as the executable.
-// Registration happens before any theme is selected or window is created.
+// Main gives UI tests the same app-owned skin packs as the executable, in an
+// environment of their own (testenv: no look, folder or session of the
+// person's, R102). Registration happens before any theme is selected or
+// window is created.
 func Main(m *testing.M) int {
+	dir, err := os.MkdirTemp("", "media-player-test-")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer os.RemoveAll(dir)
+	if err := testenv.Isolate(dir); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
 	if err := skins.Register(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

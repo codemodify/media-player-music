@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -107,16 +108,18 @@ func TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies(t *testing.T) 
 			t.Fatal(err)
 		}
 		settle()
-		s.MainWindow().Move(pos.x, pos.y)
+		desktopMove(t, a, s, s.MainWindow(), pos.x, pos.y)
 		s.presentation.Advance(0)
 	}
 	for _, named := range s.Windows() {
 		switch named.Name {
 		case "equaliser":
-			named.Window.Move(700, 530)
+			desktopMove(t, a, s, named.Window, 700, 530)
 		case "playlist":
-			named.Window.Move(1080, 290)
+			desktopMove(t, a, s, named.Window, 1080, 290)
 			named.Window.SetSize(610, 430)
+			// The group takes the new size from the window's resize, two turns on.
+			playertest.Follow(a)
 		}
 	}
 	settle()
@@ -135,7 +138,8 @@ func TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies(t *testing.T) 
 		t.Fatal("window family state was merged or started playback")
 	}
 	s.Close()
-	_, reopened, nextBackend := rememberedShell(t, "")
+	reopenedApp, reopened, nextBackend := rememberedShell(t, "")
+	awaitSettled(t, reopenedApp, reopened)
 	if reopened.Skin() != players.HalfLife2Skin || len(reopened.Windows()) != 3 || countCommand(nextBackend, playback.OpLoad) != 0 {
 		t.Fatal("Half Life 2 session did not reopen all windows without autoplay")
 	}

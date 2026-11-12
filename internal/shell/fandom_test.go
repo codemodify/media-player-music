@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/platform"
@@ -101,13 +102,15 @@ func TestFandomSessionKeepsItsMainAndPlaylistSeparateFromEveryFamily(t *testing.
 			t.Fatal(err)
 		}
 		settle()
-		s.MainWindow().Move(pos.x, pos.y)
+		desktopMove(t, a, s, s.MainWindow(), pos.x, pos.y)
 		s.presentation.Advance(0)
 	}
 	for _, named := range s.Windows() {
 		if named.Name == "playlist" {
-			named.Window.Move(1140, 320)
+			desktopMove(t, a, s, named.Window, 1140, 320)
 			named.Window.SetSize(310, 356)
+			// The group takes the new size from the window's resize, two turns on.
+			playertest.Follow(a)
 		}
 	}
 	settle()
@@ -126,7 +129,8 @@ func TestFandomSessionKeepsItsMainAndPlaylistSeparateFromEveryFamily(t *testing.
 		t.Fatal("window family state was merged or started playback")
 	}
 	s.Close()
-	_, reopened, nextBackend := rememberedShell(t, "")
+	reopenedApp, reopened, nextBackend := rememberedShell(t, "")
+	awaitSettled(t, reopenedApp, reopened)
 	if reopened.Skin() != players.FandomSkin || len(reopened.Windows()) != 2 || countCommand(nextBackend, playback.OpLoad) != 0 {
 		t.Fatal("Fandom session did not reopen both windows without autoplay")
 	}

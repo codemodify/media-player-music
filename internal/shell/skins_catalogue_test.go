@@ -21,11 +21,13 @@ func TestImportedSkinsPreserveThePlayingQueueAndWindowGroup(t *testing.T) {
 			tr.SetPan(-.4)
 			s.Pose(97 * time.Second)
 			s.Pulse().Stop()
-			s.MainWindow().Move(420, 210)
+			// The user's moves, as the desktop reports them: the group
+			// follows those, not a program's own Move.
+			desktopMove(t, a, s, s.MainWindow(), 420, 210)
 			s.presentation.Advance(0)
 			for _, named := range s.Windows() {
 				if named.Name == "playlist" {
-					named.Window.Move(850, 540)
+					desktopMove(t, a, s, named.Window, 850, 540)
 				}
 			}
 			s.presentation.Advance(0)

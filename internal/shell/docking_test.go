@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codemodify/media-player-music/internal/players"
+	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/players/winamp"
 	"goframework.io/desktop-ui"
 	"goframework.io/desktop-ui/platform"
@@ -39,6 +40,39 @@ func awaitPositions(t *testing.T, a *ui.Application, windows []*ui.Window, posit
 	})
 }
 
+// awaitSettled pumps a's loop until s's face has put its windows in place.
+// A racked face (winamp, fancy, fandom, halflife2) keeps them on a
+// rack.Group, which, while it settles, puts back a window the desktop moves
+// where its bond or saved place says (the window manager placing it, not the
+// user). The other faces have nothing to settle.
+func awaitSettled(t *testing.T, a *ui.Application, s *Shell) {
+	t.Helper()
+	racked, ok := s.presentation.(interface{ Settled() bool })
+	if !ok {
+		return
+	}
+	for deadline := time.Now().Add(10 * time.Second); !racked.Settled(); time.Sleep(2 * time.Millisecond) {
+		if time.Now().After(deadline) {
+			t.Fatal("the face's windows did not settle")
+		}
+		a.PumpOnce()
+	}
+	a.PumpOnce()
+}
+
+// desktopMove is the user moving w to x, y, as the desktop reports it, once
+// s's face has settled; then the two turns of a's loop a racked face's group
+// takes to follow it (playertest.Follow). A program's w.Move is the
+// application's own request and the desktop reports no move for it, so a
+// rack.Group does not follow it and its saved placement keeps the panes where
+// they were.
+func desktopMove(t *testing.T, a *ui.Application, s *Shell, w *ui.Window, x, y int) {
+	t.Helper()
+	awaitSettled(t, a, s)
+	w.Surface().(*platform.Offscreen).SimulateDesktopMove(x, y)
+	playertest.Follow(a)
+}
+
 func TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped(t *testing.T) {
 	for _, skin := range []string{winamp.Skin, winamp.SkinSilver} {
 		for _, state := range []players.State{players.Stopped, players.Paused} {
@@ -57,7 +91,9 @@ func TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped(t *testing.T) {
 				if !main.CanMove() {
 					t.Fatal("headless fixture must support window placement")
 				}
-				// Allow the initial mapping/stacking maintenance to settle.
+				// Allow the initial mapping/stacking maintenance to settle:
+				// until the group has, a desktop move is put back.
+				awaitSettled(t, a, s)
 				_, mainH := main.Size()
 				_, eqH := eq.Size()
 				x, y, _ := main.Position()
@@ -81,7 +117,10 @@ func TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped(t *testing.T) {
 				// Pull the playlist away, move the main group, and verify
 				// the detached playlist stays put.
 				move(list, 900, 700)
-				a.PumpOnce()
+				// The group follows a batch of desktop moves at once: the
+				// playlist must have come loose before the player moves,
+				// or it goes along.
+				awaitPositions(t, a, all, [][2]int{{400, 260}, {400, 260 + mainH}, {900, 700}})
 				move(main, 430, 290)
 				awaitPositions(t, a, all, [][2]int{{430, 290}, {430, 290 + mainH}, {900, 700}})
 				move(list, 434, 290+mainH+eqH+3)

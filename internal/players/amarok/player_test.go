@@ -15,6 +15,7 @@ import (
 	"github.com/codemodify/media-player-music/internal/players/playertest"
 	"github.com/codemodify/media-player-music/internal/skins"
 	"github.com/codemodify/media-player-music/internal/skins/plans"
+	"github.com/codemodify/media-player-music/internal/testenv"
 	"goframework.io/desktop-ui"
 	uiskins "goframework.io/desktop-ui-skins"
 	"goframework.io/desktop-ui/a11y"
@@ -25,6 +26,15 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	// No look, folder or session of the person's (testenv, R102).
+	isolated, err := os.MkdirTemp("", "media-player-test-")
+	if err == nil {
+		err = testenv.Isolate(isolated)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	if err := skins.Register(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -50,6 +60,7 @@ func TestMain(m *testing.M) {
 	if temporary != "" {
 		os.RemoveAll(temporary)
 	}
+	os.RemoveAll(isolated)
 	os.Exit(code)
 }
 func open(t *testing.T, scale float32) (*ui.Application, *Player) {

@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-12, R94 and R95 adopted; see the last section)
+# Handover: media-player-music (as of 2026-11-12, the shell placement tests fixed, tests isolated (R102); see the last section)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -495,3 +495,70 @@ test." What changed:
 - Next: the four shell placement tests (with rack.Group); R97, R98, R100,
   R101 when the framework answers (drop `internal/tags/replaygain.go`'s
   readers then); the owner on R101 (WMA, APE decoders).
+
+## Shell placement tests fixed; tests kept off the owner's environment, 2026-11-12 (R102)
+- **The four failing internal/shell tests** (TestSnappedWindowsFollowWhilePlaybackIsPausedOrStopped,
+  TestFandomSessionKeepsItsMainAndPlaylistSeparateFromEveryFamily,
+  TestHalfLife2SessionKeepsAllWindowsSeparateFromOtherFamilies,
+  TestSessionRestoresQueueSelectionSkinAndPositionWithoutAutoplay) were
+  stale, not the app: they moved windows with `w.Move`, a program's own
+  request, which the headless desktop reports no move for (by design), so
+  the racked faces' rack.Group never followed it and saved the panes where
+  they were (0,0); and they moved them before the group had settled, when
+  it puts a window back where its bond or saved place says. Checked first
+  that the app is right: a desktop move after the settle is saved and
+  restored at once (420,210 read back through a closed and reopened shell).
+  Fix: `desktopMove` (docking_test.go: wait for the face to settle, then
+  `Offscreen.SimulateDesktopMove` and playertest.Follow) and `awaitSettled`;
+  the racked faces (winamp, fancy, fandom, halflife2) got
+  `Settled() bool` (their group's), which the shell's tests ask through an
+  interface; a playlist's SetSize is followed (two turns) before it is
+  hidden; a reopened shell is settled before its positions are read; the
+  docking test waits for the pulled-away playlist to come loose before the
+  player moves (the group follows a batch of moves at once). Three more
+  shell tests had the same `w.Move` on a racked face and passed only when
+  the move landed inside the settle (whose adoption took it): they failed
+  in a full run of the package (both with an empty and an odd home, so
+  not the isolation: timing), and now use `desktopMove` too
+  (TestSessionRetainsSeparateDefaultAndSkinArrangements,
+  TestWMPSessionKeepsEachPlacementSeparateFromWinampAndDefault,
+  TestImportedSkinsPreserveThePlayingQueueAndWindowGroup). The tests now
+  catch a real restore bug: with RestoreGroup's `g.Place` taken out, three
+  of them fail.
+- Not changed, worth a look: TestFancySessionRestoresCompactAndAllPanelPlacementIndependently
+  passes but proves little: it also uses `w.Move`, and compares captured
+  placements before and after, which never held the moves.
+- **Tests and the owner's environment**: nothing redirected HOME, so a test
+  run without the handover's XDG_* variables read the owner's look.json,
+  themes, skins and fonts (~/.config/goframework-desktop-ui, uitoolkit's)
+  and the GOFRAMEWORK_DESKTOP_UI_* look variables (the video player's tests
+  were seen drawing in "hangar"). `internal/testenv` (new): `Main(m)` /
+  `Isolate(dir)`: HOME, XDG_CONFIG/CACHE/DATA/STATE_HOME, XDG_RUNTIME_DIR
+  (and USERPROFILE, APPDATA, LOCALAPPDATA on Windows) in a temp folder
+  removed after, XDG_CONFIG_DIRS and desktop-ui's look variables unset
+  (`lookEnv`); a display given on purpose keeps its XAUTHORITY. Called by
+  playertest.Main (every face and the shell), amarok's TestMain, and new
+  TestMains in internal/players, players/vlc, internal/skins,
+  skins/plans. Its own test checks every desktop-ui folder is inside and
+  the look is the default. internal/playback, internal/tags,
+  internal/appicon and skins/sources do not build on desktop-ui and were
+  left alone (internal/playback was another session's work in flight).
+  **R102** (ledger): desktop-ui has no one call for this; testenv's list is
+  kept by hand (tagged R102).
+- Proof: `go test -count=1 -v` of internal/testenv, internal/players/...,
+  internal/skins/..., internal/shell with HOME at an empty folder and at
+  one whose look.json (both folders) names hangar with odd corners, icons,
+  decorations, renderer and fonts, and every look variable set (theme
+  hangar, colour scheme dark, direction rtl, scale 2...): identical
+  PASS/FAIL lists, "hangar" nowhere in the output.
+- Checked: vet on linux, windows, darwin, freebsd; `go test -race
+  -count=5` of the seven placement tests above: pass; `go test -race` of
+  internal/testenv, internal/players and all twelve faces,
+  internal/skins, internal/skins/plans: pass (one package at a time: four
+  at once went past capped.sh's 10G and were killed); internal/shell:
+  everything passes but TestSinglePreferenceAndScreenshotIsolation, which
+  a4a7605 (ReplayGain's default track gain, another session's) broke: the
+  settings file of a new install now holds `"replaygain": {"mode":
+  "track"}` beside the skin, and the test wants the skin alone. Left to
+  that work (is track, the default, meant to be written?). goframework's
+  footprint.py --check passes (no program changed).

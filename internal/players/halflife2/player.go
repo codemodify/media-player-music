@@ -123,6 +123,12 @@ func (p *Player) List() *ui.Window { return p.g.Window(p.iList) }
 // the player is in, as the group's first member's OnClose.
 func (p *Player) SetOnClose(fn func() bool) { p.onClose = fn }
 
+// Settled reports whether the panels' group has put its windows in place
+// (rack.Group.Settled). Until then a window the desktop moves is put back
+// where its bond or its saved place says: the window manager placing it,
+// not the user.
+func (p *Player) Settled() bool { return p.g.Settled() }
+
 // closeMain is the player closed: the application's word, else it goes.
 func (p *Player) closeMain() bool { return p.onClose == nil || p.onClose() }
 
