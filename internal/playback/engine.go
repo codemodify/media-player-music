@@ -29,7 +29,7 @@ const (
 	OpSeek
 	OpVolume
 	OpDSP
-	OpReplayGain // the ReplayGain settings, heard from the next load
+	OpReplayGain // the ReplayGain settings, heard at once
 )
 
 // Generation identifies a load, including repeated loads of the same path.

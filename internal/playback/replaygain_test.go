@@ -180,6 +180,52 @@ func TestReplayGainFromVorbisComments(t *testing.T) {
 	near(t, "off (the preamp unused)", decibels(reference, off), 0)
 }
 
+// TestReplayGainChangesWhilePlaying turns ReplayGain on while a track
+// plays, all of it decoded ahead: the rest of it is heard at its gain,
+// without restarting it (goframework R100).
+func TestReplayGainChangesWhilePlaying(t *testing.T) {
+	tagged := flacTone(t, 0.25, map[string]string{"REPLAYGAIN_TRACK_GAIN": "-12.00 dB"})
+	synctest.Test(t, func(t *testing.T) {
+		b, system := builtinOn(t)
+		b.Apply(Command{Op: OpVolume, Volume: 1})
+		b.Apply(Command{Op: OpReplayGain, ReplayGain: ReplayGain{Mode: ReplayGainOff}})
+		b.Apply(Command{Op: OpLoad, Generation: 1, Path: tagged, Epoch: 1})
+		time.Sleep(400 * time.Millisecond)
+		b.Apply(Command{Op: OpReplayGain, ReplayGain: ReplayGain{Mode: ReplayGainTrack}})
+		var loads int
+		for _, u := range collect(t, b, 1, UpdateEnded, 10*time.Second) {
+			switch u.Kind {
+			case UpdateError:
+				t.Fatal(u.Error)
+			case UpdateLoaded:
+				loads++
+			}
+		}
+		if loads != 1 {
+			t.Errorf("the track loaded %d times", loads)
+		}
+		out, err := system.Played(audiotest.Speaker)
+		if err != nil {
+			t.Fatal(err)
+		}
+		channels := out.Format.Channels
+		samples := out.F32[:out.Samples*channels]
+		start := 0
+		for start < len(samples) && samples[start] == 0 {
+			start++
+		}
+		rate := out.Format.Rate * channels
+		energy := func(from, to float64) float64 {
+			sum := 0.0
+			for _, s := range samples[start+int(from*float64(rate)) : start+int(to*float64(rate))] {
+				sum += float64(s) * float64(s)
+			}
+			return sum
+		}
+		near(t, "after the change", decibels(energy(0.05, 0.25), energy(0.7, 0.9)), -12)
+	})
+}
+
 func TestReplayGainPeakPreventsClipping(t *testing.T) {
 	audio := mp3Audio(t)
 	reference, peak := played(t, writeFile(t, "plain.mp3", audio), ReplayGain{})

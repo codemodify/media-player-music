@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/codemodify/media-player-music/internal/tags"
 	"goframework.io/audio-dsp/eq"
 	"goframework.io/audio-dsp/replaygain"
 	"goframework.io/audio-dsp/spectrum"
@@ -19,8 +18,10 @@ import (
 	// ALAC, WAV, AIFF, AU.
 	_ "goframework.io/audio-playback/all"
 	// ID3 tags (v1, v2.2 to 2.4) of MP3 and ADTS files in the stream's
-	// Tags: the now-playing title, artist and album.
+	// Tags: the now-playing title, artist and album, and ReplayGain's
+	// TXXX and RVA2 frames; and an MP3's APE tag (mp3gain's ReplayGain).
 	aspec "goframework.io/codecs-audio-spec"
+	_ "goframework.io/codecs-container-apetag"
 	_ "goframework.io/codecs-container-id3"
 	container "goframework.io/codecs-container-spec"
 	sound "goframework.io/system-audio-spec"
@@ -157,7 +158,7 @@ func (b *Builtin) execute(command Command) error {
 		b.drop()
 		l := &builtinLoad{generation: command.Generation}
 		l.epoch.Store(command.Epoch)
-		p, err := inproc.New(inproc.Settings{System: b.opts.System, Name: b.opts.Name, ReplayGain: b.replayGain(command.Path),
+		p, err := inproc.New(inproc.Settings{System: b.opts.System, Name: b.opts.Name, ReplayGain: b.replayGain(),
 			Events: func(event inproc.Event) { b.event(l, event) }})
 		if err != nil {
 			return err
@@ -227,9 +228,12 @@ func (b *Builtin) execute(command Command) error {
 		}
 		return nil
 	case OpReplayGain:
-		// audio-playback takes its ReplayGain as a player is made, so the
-		// settings are heard from the next load (R100).
+		// Heard at once: the track playing moves to its new gain over
+		// audio-playback's 5 ms ramp.
 		b.rg = command.ReplayGain
+		if b.load != nil {
+			b.load.player.SetReplayGain(b.replayGain())
+		}
 		return nil
 	case OpDSP:
 		b.dsp = command.DSP
@@ -243,25 +247,18 @@ func (b *Builtin) execute(command Command) error {
 	}
 }
 
-// replayGain is the ReplayGain a load's player plays at: the tags' gain by
-// the settings' mode and preamp, lowered so that the tags' peak does not
-// clip, or none.
-func (b *Builtin) replayGain(path string) replaygain.Settings {
-	settings := replaygain.Settings{Mode: replaygain.Track, Preamp: b.rg.Preamp}
+// replayGain is the ReplayGain the players play at: audio-playback levels
+// each track by its stream's tags (ID3's TXXX and RVA2, APE, Vorbis
+// comments, MP4's items) by the settings' mode and preamp, lowered so that
+// the tags' peak does not clip.
+func (b *Builtin) replayGain() replaygain.Settings {
 	switch b.rg.Mode {
-	case ReplayGainOff:
-		return replaygain.Settings{Mode: replaygain.Off}
+	case ReplayGainTrack:
+		return replaygain.Settings{Mode: replaygain.Track, Preamp: b.rg.Preamp}
 	case ReplayGainAlbum:
-		settings.Mode = replaygain.Album
+		return replaygain.Settings{Mode: replaygain.Album, Preamp: b.rg.Preamp}
 	}
-	// R97, R98: ID3's and APE's gains are not in the stream's tags, where
-	// audio-playback looks: read here, and given as the gain of every
-	// track (Mode Off's fallback), the peak already applied.
-	if found, ok := tags.ReplayGain(path); ok {
-		gain, _ := settings.Gain(found)
-		return replaygain.Settings{Mode: replaygain.Off, Fallback: gain}
-	}
-	return settings
+	return replaygain.Settings{Mode: replaygain.Off}
 }
 
 // gain is the volume's: the cube of the slider, as mpv's volume is, so

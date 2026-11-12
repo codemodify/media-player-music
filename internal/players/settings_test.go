@@ -14,16 +14,20 @@ func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 		json string
 		want Settings
 	}{
-		{`{"skin":"winamp"}`, Settings{Skin: WinampSkin}},
-		{`{"skin":"winamp-classified"}`, Settings{Skin: WinampClassifiedSkin}},
-		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin}},
+		// ReplayGain's default, when none is saved, is track gain (the
+		// owner, 2026-11-12).
+		{`{"skin":"winamp"}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
+		{`{"skin":"winamp-classified"}`, Settings{Skin: WinampClassifiedSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
+		{`{"skin":"unsupported"}`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
 		// What earlier test builds saved is not carried over: an old
 		// skin name or engine is simply not the player's.
-		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin}},
-		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin}},
+		{`{"skin":"minim-classic","audio_backend":"mpv"}`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
+		{`{"face":"minim","skins":{"minim":"minim-classic"}}`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
 		{`{"skin":"winamp","replaygain":{"mode":"album","preamp_db":-3.5}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainAlbum, Preamp: -3.5}}},
-		{`{"skin":"winamp","replaygain":{"mode":"loudest","preamp_db":99}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Preamp: MaxPreamp}}},
-		{`not json`, Settings{Skin: DefaultSkin}},
+		{`{"skin":"winamp","replaygain":{"mode":"off"}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff}}},
+		{`{"skin":"winamp","replaygain":{"preamp_db":2}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack, Preamp: 2}}},
+		{`{"skin":"winamp","replaygain":{"mode":"loudest","preamp_db":99}}`, Settings{Skin: WinampSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff, Preamp: MaxPreamp}}},
+		{`not json`, Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainTrack}}},
 	} {
 		t.Run(test.json, func(t *testing.T) {
 			t.Setenv("XDG_CONFIG_HOME", t.TempDir())
@@ -41,14 +45,28 @@ func TestSettingsLoadOnlyWhatThePlayerHas(t *testing.T) {
 	}
 }
 
-func TestSettingsOmitReplayGainWhenOff(t *testing.T) {
+// TestSettingsReplayGainDefaultsToTrack: nothing saved is track gain, and
+// off, once chosen, is saved and kept (the owner, 2026-11-12).
+func TestSettingsReplayGainDefaultsToTrack(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainTrack}) {
+		t.Fatalf("with no settings file: %+v, want track gain", got)
+	}
 	if err := (Settings{Skin: DefaultSkin}).Save(); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(SettingsPath())
 	if err != nil || strings.Contains(string(data), "replaygain") || strings.Contains(string(data), "audio_backend") {
 		t.Fatalf("saved %s, %v", data, err)
+	}
+	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainTrack}) {
+		t.Fatalf("with none saved: %+v, want track gain", got)
+	}
+	if err := (Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{Mode: ReplayGainOff}}).Save(); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadSettings().ReplayGain; got != (ReplayGain{Mode: ReplayGainOff}) {
+		t.Fatalf("off saved: %+v", got)
 	}
 }
 

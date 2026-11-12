@@ -3,7 +3,9 @@
 A Go desktop music player with one default layout and twenty-one optional skins.
 Audio plays in the player itself, on goframework's audio-playback (MP3, AAC,
 FLAC, Ogg Vorbis and Opus, ALAC, WAV, AIFF, AU: nothing to install), with
-ReplayGain (off, track or album; a preamp; the peak keeps it from clipping).
+ReplayGain (track gain by default, or album, or off; a preamp; the peak keeps
+it from clipping; a change is heard at once), read from ID3 (TXXX, RVA2), APE,
+Vorbis comments and MP4 tags.
 WMA, APE (Monkey's Audio), Musepack and WavPack files do not play. The playlist
 shows MP3 and AAC files' ID3 tags as they are added, and the default layout
 shows the playing file's front cover. Headless screenshots and

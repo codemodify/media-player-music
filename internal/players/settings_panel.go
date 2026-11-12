@@ -60,7 +60,7 @@ func NewSettings(state SettingsState, change func(ReplayGain)) *SettingsPanel {
 	p.preamp.OnInput = func(float32) { p.edited() }
 	p.hint = widgets.NewLabel("Tracks are levelled by their ReplayGain tags (ID3, APE, Vorbis comments, MP4). " +
 		"A track without the chosen gain takes the other one, and its peak keeps the gain from clipping. " +
-		"A change is heard from the next track.")
+		"A change is heard at once, on the track playing too.")
 	p.hint.Wrap = true
 	p.status = widgets.NewLabel("")
 	p.status.Wrap = true

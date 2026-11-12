@@ -21,9 +21,11 @@ type Settings struct {
 	Presentations map[string]PresentationState          `json:"presentations,omitempty"`
 }
 
-// ReplayGain is how tracks are levelled by their ReplayGain tags.
+// ReplayGain is how tracks are levelled by their ReplayGain tags. Its zero
+// value is the default: track gain, no preamp (the owner, 2026-11-12).
 type ReplayGain struct {
-	// Mode is ReplayGainOff (""), ReplayGainTrack or ReplayGainAlbum.
+	// Mode is ReplayGainOff, ReplayGainTrack or ReplayGainAlbum; "" (none
+	// saved) is ReplayGainTrack, the default.
 	Mode string `json:"mode,omitempty"`
 	// Preamp is added to the tags' gain, in dB, from MinPreamp to MaxPreamp.
 	Preamp float64 `json:"preamp_db,omitempty"`
@@ -31,7 +33,7 @@ type ReplayGain struct {
 
 // The ReplayGain modes, as saved.
 const (
-	ReplayGainOff   = ""
+	ReplayGainOff   = "off"
 	ReplayGainTrack = "track"
 	ReplayGainAlbum = "album"
 )
@@ -42,10 +44,14 @@ const (
 	MaxPreamp = 15
 )
 
-// Normal returns the settings with an unknown mode as off and the preamp
-// within its range.
+// Normal returns the settings with no mode as the default, track gain, a
+// mode the player does not know as off, and the preamp within its range.
 func (r ReplayGain) Normal() ReplayGain {
-	if r.Mode != ReplayGainTrack && r.Mode != ReplayGainAlbum {
+	switch r.Mode {
+	case "":
+		r.Mode = ReplayGainTrack
+	case ReplayGainOff, ReplayGainTrack, ReplayGainAlbum:
+	default:
 		r.Mode = ReplayGainOff
 	}
 	if !(r.Preamp >= MinPreamp) { // NaN too
@@ -122,7 +128,7 @@ func LoadSettings() Settings {
 	var saved Settings
 	data, err := os.ReadFile(SettingsPath())
 	if err != nil || json.Unmarshal(data, &saved) != nil {
-		return Settings{Skin: DefaultSkin}
+		return Settings{Skin: DefaultSkin, ReplayGain: ReplayGain{}.Normal()}
 	}
 	saved.ReplayGain = saved.ReplayGain.Normal()
 	if skin, ok := NormalizeSkin(saved.Skin); ok {
