@@ -692,6 +692,40 @@ func TestEmpty(t *testing.T) {
 	}
 }
 
+// TestArrowsSeekInEveryView: Left and Right seek in each view (change in
+// the settings) and never switch it; Ctrl+Page Down and Up do, from inside
+// a view (R121).
+func TestArrowsSeekInEveryView(t *testing.T) {
+	h := start(t, 80, 24, true)
+	h.add("Teacher")
+	h.service.Inject(playback.Update{Kind: playback.UpdateLoaded, Generation: h.service.Generation()})
+	h.service.Inject(playback.Update{Kind: playback.UpdateDuration, Generation: h.service.Generation(), Duration: 3 * time.Minute})
+	for view, key := range []string{"1", "2", "3", "4", "5"} {
+		h.driver.Press(key)
+		if view == ViewSearch {
+			h.driver.Press("escape") // out of the search's text
+		}
+		h.driver.Settle()
+		position := h.view.state.PositionMS
+		h.driver.Press("right")
+		if view != ViewSettings {
+			h.wait("5 s on in view "+key, func() bool { return h.view.state.PositionMS == position+5000 })
+			h.driver.Press("left")
+			h.wait("5 s back in view "+key, func() bool { return h.view.state.PositionMS == position })
+		} else {
+			h.driver.Press("left")
+		}
+		h.driver.Settle()
+		if h.view.Shown() != view || h.view.tabs.Selected() != view {
+			t.Fatalf("view %s: the arrows switched to %d (tabs %d)", key, h.view.Shown(), h.view.tabs.Selected())
+		}
+	}
+	h.driver.Press("2", "ctrl+pagedown")
+	h.wait("the search by Ctrl+Page Down", func() bool { return h.view.Shown() == ViewSearch })
+	h.driver.Press("escape", "ctrl+pageup")
+	h.wait("the queue by Ctrl+Page Up", func() bool { return h.view.Shown() == ViewQueue })
+}
+
 // TestNarrow: at 40 × 12 every view fits, long and wide titles cut by the
 // cells they take, the status lines whole.
 func TestNarrow(t *testing.T) {

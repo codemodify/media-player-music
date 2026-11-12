@@ -98,27 +98,18 @@ func (thisRef *View) Build() ui.Widget {
 	thisRef.help = newHelpPage(thisRef)
 	thisRef.pages = []page{thisRef.library_, thisRef.queue_, thisRef.search, thisRef.settings, thisRef.help}
 
-	// the tabs are a bar alone, the pages below it shown by the view: a
-	// Tabs holding its pages takes Left and Right from them, which seek
-	// (R121)
+	// the pages in the tabs: Left and Right switch them only while the
+	// bar has the focus, so a page's seek keys keep the view (R121)
 	thisRef.tabs = widgets.NewTabs()
-	thisRef.tabs.SetFocusable(false)
 	for index, title := range []string{"Library", "Queue", "Search", "Settings", "Help"} {
-		thisRef.tabs.AddTab(strconv.Itoa(index+1)+" "+title, nil)
+		thisRef.tabs.AddTab(strconv.Itoa(index+1)+" "+title, thisRef.pages[index].root())
 	}
 	thisRef.tabs.OnChange(func(index int) {
 		if index != thisRef.shown {
 			thisRef.Show(index)
 		}
 	})
-	body := ui.Column()
-	body.SetHeight(ui.Fill(1))
-	for index, each := range thisRef.pages {
-		root := each.root()
-		ui.NodeOf(root).SetHeight(ui.Fill(1))
-		ui.NodeOf(root).SetHidden(index != thisRef.shown)
-		body.Add(root)
-	}
+	thisRef.tabs.SetHeight(ui.Fill(1))
 
 	thisRef.track = widgets.NewLabel("")
 	thisRef.track.SetTruncate(widgets.TruncateEnd)
@@ -139,7 +130,7 @@ func (thisRef *View) Build() ui.Widget {
 	thisRef.addCommands()
 	thisRef.showStatus()
 	thisRef.app.Do(func() { thisRef.pages[thisRef.shown].focus() })
-	return ui.Column(thisRef.tabs, body, thisRef.track, thisRef.transport, thisRef.message, thisRef.prompt)
+	return ui.Column(thisRef.tabs, thisRef.track, thisRef.transport, thisRef.message, thisRef.prompt)
 }
 
 // Shown is the view shown: ViewLibrary…ViewHelp.
@@ -150,11 +141,7 @@ func (thisRef *View) Show(index int) {
 	if index < 0 || index >= len(thisRef.pages) {
 		return
 	}
-	if index != thisRef.shown {
-		ui.NodeOf(thisRef.pages[thisRef.shown].root()).SetHidden(true)
-		ui.NodeOf(thisRef.pages[index].root()).SetHidden(false)
-		thisRef.shown = index
-	}
+	thisRef.shown = index
 	if thisRef.tabs.Selected() != index {
 		thisRef.tabs.Select(index)
 	}
