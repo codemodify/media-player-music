@@ -31,7 +31,7 @@ import (
 )
 
 //go:generate go run goframework.io/app-plugin/stub Player
-//go:generate go run goframework.io/app-plugin/stub -typescript ../cmd/media-player-music-wui/web/src/musicapi.ts -client app-client-typescript -states Player=PlayerStates Player
+//go:generate go run goframework.io/app-plugin/stub -typescript ../cmd/media-player-music-wui/web/src/musicapi.ts -client app-client-typescript -states Player=PlayerStates -constants -values Presets,Bands Player
 
 // Version is the API's version.
 const Version = "1.2.0"

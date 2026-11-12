@@ -9,7 +9,25 @@ import { connect, NotConnectedError, type Status } from "app-client-typescript";
 import type { App, View } from "./app.ts";
 import { $, isField, toast } from "./dom.ts";
 import { LibraryView } from "./library.ts";
-import { LibraryEvent, newPlayer, NowEvent, playerStates, QueueEvent, StateEvent } from "./musicapi.ts";
+import {
+	CommandMute,
+	CommandNext,
+	CommandPlayPause,
+	CommandPrevious,
+	CommandRepeat,
+	CommandSeekBack,
+	CommandSeekForward,
+	CommandShuffle,
+	CommandStop,
+	CommandVolumeDown,
+	CommandVolumeUp,
+	LibraryEvent,
+	newPlayer,
+	NowEvent,
+	playerStates,
+	QueueEvent,
+	StateEvent,
+} from "./musicapi.ts";
 import type { Library, Player, State } from "./musicapi.ts";
 import { PlayerView } from "./player.ts";
 import { QueueView } from "./queue.ts";
@@ -196,21 +214,21 @@ function renderLink(): void {
 // --- the keys -------------------------------------------------------------------
 
 const commands: Record<string, string> = {
-	" ": "play-pause",
-	ArrowLeft: "seek-back",
-	ArrowRight: "seek-forward",
-	ArrowUp: "volume-up",
-	ArrowDown: "volume-down",
-	n: "next",
-	p: "previous",
-	s: "stop",
-	m: "mute",
-	z: "shuffle",
-	r: "repeat",
-	MediaPlayPause: "play-pause",
-	MediaTrackNext: "next",
-	MediaTrackPrevious: "previous",
-	MediaStop: "stop",
+	" ": CommandPlayPause,
+	ArrowLeft: CommandSeekBack,
+	ArrowRight: CommandSeekForward,
+	ArrowUp: CommandVolumeUp,
+	ArrowDown: CommandVolumeDown,
+	n: CommandNext,
+	p: CommandPrevious,
+	s: CommandStop,
+	m: CommandMute,
+	z: CommandShuffle,
+	r: CommandRepeat,
+	MediaPlayPause: CommandPlayPause,
+	MediaTrackNext: CommandNext,
+	MediaTrackPrevious: CommandPrevious,
+	MediaStop: CommandStop,
 };
 
 document.addEventListener("keydown", (event) => {

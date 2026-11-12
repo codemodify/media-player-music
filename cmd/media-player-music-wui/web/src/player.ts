@@ -3,7 +3,7 @@
 
 import type { App } from "./app.ts";
 import { $, latest, spoken, time } from "./dom.ts";
-import type { Now, State } from "./musicapi.ts";
+import { CommandMute, CommandNext, CommandPlayPause, CommandPrevious, CommandRepeat, CommandShuffle, CommandStop, RepeatOff, RepeatOne, StatusPlaying, type Now, type State } from "./musicapi.ts";
 
 export class PlayerView {
 	private readonly seek = $<HTMLInputElement>("seek");
@@ -19,13 +19,13 @@ export class PlayerView {
 
 	constructor(app: App) {
 		const command = (name: string) => () => void app.call((p) => p.Command(name));
-		$("previous").addEventListener("click", command("previous"));
-		$("play").addEventListener("click", command("play-pause"));
-		$("stop").addEventListener("click", command("stop"));
-		$("next").addEventListener("click", command("next"));
-		$("shuffle").addEventListener("click", command("shuffle"));
-		$("repeat").addEventListener("click", command("repeat"));
-		$("mute").addEventListener("click", command("mute"));
+		$("previous").addEventListener("click", command(CommandPrevious));
+		$("play").addEventListener("click", command(CommandPlayPause));
+		$("stop").addEventListener("click", command(CommandStop));
+		$("next").addEventListener("click", command(CommandNext));
+		$("shuffle").addEventListener("click", command(CommandShuffle));
+		$("repeat").addEventListener("click", command(CommandRepeat));
+		$("mute").addEventListener("click", command(CommandMute));
 
 		this.seek.addEventListener("input", () => {
 			this.seeking = true;
@@ -70,19 +70,19 @@ export class PlayerView {
 			playing && state.queue.length > 1 ? `track ${state.index + 1} of ${state.queue.length}` : "",
 		].filter(Boolean);
 		$("format").textContent = playing ? format.join(" · ") : "";
-		document.title = playing && state.status === "playing" ? `▶ ${$("title").textContent} — media-player-music` : "media-player-music";
+		document.title = playing && state.status === StatusPlaying ? `▶ ${$("title").textContent} — media-player-music` : "media-player-music";
 
 		const play = $("play");
-		const isPlaying = state.status === "playing";
+		const isPlaying = state.status === StatusPlaying;
 		play.textContent = isPlaying ? "⏸" : "▶";
 		play.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
 
 		const shuffle = $("shuffle");
 		shuffle.setAttribute("aria-pressed", String(state.shuffle));
 		const repeat = $("repeat");
-		repeat.textContent = state.repeat === "one" ? "🔂" : "🔁";
+		repeat.textContent = state.repeat === RepeatOne ? "🔂" : "🔁";
 		repeat.setAttribute("aria-label", `Repeat: ${state.repeat}`);
-		repeat.setAttribute("aria-pressed", String(state.repeat !== "off"));
+		repeat.setAttribute("aria-pressed", String(state.repeat !== RepeatOff));
 		repeat.title = `Repeat: ${state.repeat} (R: off, all, one)`;
 
 		if (!this.held.has(this.volume) && document.activeElement !== this.volume) this.volume.value = String(Math.round(state.volume * 100));
@@ -94,7 +94,7 @@ export class PlayerView {
 
 		this.lengthMS = track.lengthMs ?? 0;
 		this.place(state.positionMs, this.lengthMS);
-		if (state.status !== "playing") this.draw([]);
+		if (state.status !== StatusPlaying) this.draw([]);
 	}
 
 	// now shows where the track playing is, and the analyser's bands.

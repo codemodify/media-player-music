@@ -1,9 +1,9 @@
 // The settings: the equaliser, ReplayGain, and the library's folders (add,
 // remove, read again) with how the reading goes.
 
-import { Bands, EqualizerRange, Presets, type App } from "./app.ts";
+import type { App } from "./app.ts";
 import { $, button, el, latest, plural, time, toast } from "./dom.ts";
-import type { Equalizer, Library, ReplayGain, State } from "./musicapi.ts";
+import { Bands, EqualizerRange, Presets, ReplayGainOff, type Equalizer, type Library, type ReplayGain, type State } from "./musicapi.ts";
 
 export class SettingsView {
 	private readonly on = $<HTMLInputElement>("eq-on");
@@ -76,7 +76,7 @@ export class SettingsView {
 
 		// ReplayGain
 		for (const choice of $("rg-mode").querySelectorAll<HTMLButtonElement>("button")) {
-			choice.addEventListener("click", () => this.changeGain((g) => (g.mode = choice.dataset.mode ?? "off")));
+			choice.addEventListener("click", () => this.changeGain((g) => (g.mode = choice.dataset.mode ?? ReplayGainOff)));
 		}
 		this.rgPreamp.addEventListener("pointerdown", () => this.held.add(this.rgPreamp));
 		this.rgPreamp.addEventListener("pointerup", () => this.held.delete(this.rgPreamp));
@@ -154,7 +154,7 @@ export class SettingsView {
 		if (!this.held.has(this.rgPreamp)) this.rgPreamp.value = String(g.preamp);
 		$("rg-preamp-value").textContent = dB(Number(this.rgPreamp.value));
 		this.rgPreamp.setAttribute("aria-valuetext", dB(Number(this.rgPreamp.value)));
-		this.rgPreamp.disabled = g.mode === "off";
+		this.rgPreamp.disabled = g.mode === ReplayGainOff;
 	}
 
 	// library shows the library in short: how much, its folders, how the

@@ -3,14 +3,6 @@
 
 import type { Library, Player, State } from "./musicapi.ts";
 
-// R123: Presets are the equaliser's presets (musicapi.Presets), Bands its
-// bands' labels (musicapi.Bands), EqualizerRange how far a band goes
-// either way (musicapi.EqualizerRange): the Go tests hold them to the
-// API's.
-export const Presets = ["Flat", "Full bass", "Full treble", "Vocal", "Late night", "Small speakers"];
-export const Bands = ["31", "62", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"];
-export const EqualizerRange = 12;
-
 export type View = "queue" | "library" | "settings";
 
 export interface App {

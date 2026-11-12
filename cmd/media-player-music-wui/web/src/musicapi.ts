@@ -274,3 +274,42 @@ export function implementPlayer(implementation: PlayerImplementation): Implement
 		},
 	};
 }
+
+// The values of the API's package (-constants, -values), as encoding/json
+// writes them.
+export const Version = "1.2.0";
+export const Name = "media-player-music";
+export const DaemonName = "media-player-musicd";
+export const SocketName = "media-player-musicd.sock";
+export const TokenFile = "media-player-musicd.token";
+export const CommandPlay = "play";
+export const CommandPlayPause = "play-pause";
+export const CommandStop = "stop";
+export const CommandNext = "next";
+export const CommandPrevious = "previous";
+export const CommandSeekBack = "seek-back";
+export const CommandSeekForward = "seek-forward";
+export const CommandVolumeUp = "volume-up";
+export const CommandVolumeDown = "volume-down";
+export const CommandMute = "mute";
+export const CommandShuffle = "shuffle";
+export const CommandRepeat = "repeat";
+export const StatusStopped = "stopped";
+export const StatusPlaying = "playing";
+export const StatusPaused = "paused";
+export const RepeatOff = "off";
+export const RepeatAll = "all";
+export const RepeatOne = "one";
+export const ReplayGainOff = "off";
+export const ReplayGainTrack = "track";
+export const ReplayGainAlbum = "album";
+export const MinReplayGainPreamp = -15;
+export const MaxReplayGainPreamp = 15;
+export const EqualizerRange = 12;
+export const BrowseArtists = "artists";
+export const BrowseAlbums = "albums";
+export const BrowseGenres = "genres";
+export const BrowseYears = "years";
+export const BrowseTracks = "tracks";
+export const Presets = ["Flat","Full bass","Full treble","Vocal","Late night","Small speakers"];
+export const Bands = ["31","62","125","250","500","1k","2k","4k","8k","16k"];

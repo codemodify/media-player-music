@@ -2,19 +2,16 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"testing/fstest"
 
 	"github.com/codemodify/media-player-music/cmd/media-player-music-wui/internal/server"
-	"github.com/codemodify/media-player-music/musicapi"
 	httpserver "goframework.io/networking-http-server"
 	disk "goframework.io/vfs-source-disk"
 )
@@ -139,34 +136,5 @@ func TestTheDefaultsAgreeWithTheDaemon(t *testing.T) {
 		if !bytes.Contains(source, []byte(want)) {
 			t.Errorf("media-player-musicd's main.go has no %s", want)
 		}
-	}
-}
-
-// The page's equaliser presets, bands and range (web/src/app.ts) are the
-// API's: musicapi.Presets, Bands and EqualizerRange.
-func TestThePageKnowsTheEqualiser(t *testing.T) {
-	source, err := os.ReadFile(filepath.Join("web", "src", "app.ts"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	list := func(name string) []string {
-		match := regexp.MustCompile(`export const ` + name + ` = (\[[^\]]*\]);`).FindSubmatch(source)
-		if match == nil {
-			t.Fatalf("app.ts has no %s", name)
-		}
-		var values []string
-		if err := json.Unmarshal(match[1], &values); err != nil {
-			t.Fatalf("app.ts's %s: %v", name, err)
-		}
-		return values
-	}
-	if got := list("Presets"); fmt.Sprint(got) != fmt.Sprint(musicapi.Presets) {
-		t.Errorf("app.ts's Presets %q, the API's %q", got, musicapi.Presets)
-	}
-	if got := list("Bands"); fmt.Sprint(got) != fmt.Sprint(musicapi.Bands) {
-		t.Errorf("app.ts's Bands %q, the API's %q", got, musicapi.Bands)
-	}
-	if want := fmt.Sprintf("export const EqualizerRange = %d;", musicapi.EqualizerRange); !bytes.Contains(source, []byte(want)) {
-		t.Errorf("app.ts has no %s", want)
 	}
 }
