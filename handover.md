@@ -1,4 +1,4 @@
-# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; then R102, R114, R121-R123 adopted and the face packages renamed; see the last four sections)
+# Handover: media-player-music (as of 2026-11-13: the daemon split, the library, playlists, the TUI and the WUI; then F1, APE and the GUI's library window; then the skins redrawn and renamed; then R102, R114, R121-R123 adopted and the face packages renamed; then the library window's flaky test fixed and the product names gone from Go names; see the last five sections)
 
 For whoever picks this up next, a Claude session or a person: what this
 is, the rules the owner set, how to build and check it, where it
@@ -755,3 +755,47 @@ Commits on dev (local, not pushed), one per step:
   ShowLibrary rewrites the status only when the library's version,
   scanning or error changed, or the add's message stays until the next
   action. goframework's footprint.py --check passes (no program changed).
+
+## The library window's flaky test fixed; the product names gone from Go names, 2026-11-12 (overnight)
+Commits on dev (local, not pushed):
+- **86d7cc3 the flaky test**: TestTheLibraryWindowsButtonsAndChanges failed
+  3 of 30 runs (12 of 30 at c5d0a02) because the daemon tells the same
+  library state twice (service.Publish, then LibraryChanged's 250 ms timer)
+  and Shell.ShowLibrary rewrote the window's status at each, replacing "3
+  tracks added to the queue". ShowLibrary now rewrites the status only when
+  what it says changed (libraryStatusChanged: version, scanning, scanned,
+  error, folders). The test tells the same library again (status kept) and
+  another version (status rewritten). Checked: the test alone, `-race
+  -count=100 -timeout 60m -run '^TestTheLibraryWindowsButtonsAndChanges$'`:
+  100 pass, 0 fail; without the fix it fails at once; internal/shell under
+  -race 1287 s, all pass; vet on 4 OSes.
+- **5a3e215 the rename leftovers of ec2d66d**, no behaviour change:
+  the skins' layout packages internal/skins/amarok → sidebar, halflife2 →
+  gauge, headspace → wingspan, itunes → aluminium, realplayer → console,
+  series9 → cobalt, vlc → utility, xbox → pod (their import aliases in the
+  shell and the faces follow: sidebarskin, gaugeskin, ...; sidebarlayout,
+  wingspanlayout, utilitylayout, consolelayout); plans/winamp.go → slate.go
+  (Winamp() → Slate(), winamp() → slatePlan()), winamp_silver.go →
+  silver.go (WinampSilver() → Silver()), winampLayouts → panelLayouts; the
+  shell's iTunesModes/series9Modes → aluminiumModes/cobaltModes; the tests
+  TestXbox*/TestVLC*/TestSeries9*/TestRealPlayer*/TestITunes*/TestHalfLife2*
+  → TestPod*/TestUtility*/TestCobalt*/TestConsole*/TestAluminium*/TestGauge*,
+  TestWMP* → TestSkinned*, TestWinampRequiresAPanelLayout →
+  TestPanelRequiresAPanelLayout; the probes' files (tools/probes/xbox_shape.go
+  → pod_shape.go, ...; each still vets). New: plans
+  TestNoGoNameNamesAProduct (every .go file outside internal/skins/sources:
+  no package folder, file name, import path or identifier names Winamp,
+  Xbox, HalfLife, iTunes, VLC, RealPlayer, Amarok, Series9, Headspace,
+  Quake, Sony, TI82, Windows98 or WMP; names are split into words so FlexBox
+  or svLCD are not taken for one) and TestGoNameNamesAProduct (the word
+  splitting). Before the rename it listed 132 names; after, none.
+  **Left**: comments and strings still name the old products in about 113
+  lines over 53 files (history notes, test messages); not Go names, so
+  outside this pass. internal/skins/sources, the old packs, the old
+  screenshots and the older handover sections are unchanged (the owner's
+  history rewrite).
+- Checked for 5a3e215: gofmt; vet on 4 OSes; every package under -race
+  one at a time, all pass (internal/shell 1448 s, internal/players/panel
+  538 s, internal/skins 125 s); on the final tree the library test again
+  100 of 100 under -race; goframework's footprint.py --check passes (no
+  program changed). Not run: anything on a display, the VMs (not needed).
