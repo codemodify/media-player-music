@@ -75,8 +75,8 @@ screenshots in the README show those deterministic fixtures.
 Winamp and Winamp Silver generate their artwork, bitmap alphabet and clock
 digits from app-owned drawing code. The nine imported skins adapt original
 Winamp bitmap artwork into the same app-defined skin and layout format.
-Their unchanged archives, credits and notices live in
-[skin sources](../internal/skins/sources/README.md). The menu prefixes Winamp
+Their archives, credits and notices were in internal/skins/sources, which
+left the repository and its history on 2026-11-13. The menu prefixes Winamp
 skin names with `WinAmp -`, removes any repeated
 Winamp name, and calls the original skin `WinAmp - classic`. Skin IDs and
 source credits retain their original names. The toolkit renders the supplied

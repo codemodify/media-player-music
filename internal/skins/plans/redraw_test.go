@@ -19,8 +19,8 @@ const module = "github.com/codemodify/media-player-music/"
 
 // The generator draws every skin from code: neither it nor any of the
 // app's packages it imports opens a file, and none of them is, or names,
-// anything under internal/skins/sources (the originals, kept until the
-// owner's history rewrite).
+// anything under internal/skins/sources (where the originals were, until
+// they left the repository and its history on 2026-11-13).
 func TestGeneratorReadsNoOriginals(t *testing.T) {
 	root, err := filepath.Abs("../../..")
 	if err != nil {
@@ -255,9 +255,9 @@ func TestGoNameNamesAProduct(t *testing.T) {
 
 // No Go name of the app's names a product the skins were once named for:
 // no package path or file name, no identifier (a package, a type, a
-// function, a test, a variable, an import's name). The originals and the
-// old plans that cut them (internal/skins/sources) await the owner's
-// history rewrite and are left out.
+// function, a test, a variable, an import's name). internal/skins/sources
+// (the originals and the old plans that cut them, removed on 2026-11-13)
+// stays left out should it come back.
 func TestNoGoNameNamesAProduct(t *testing.T) {
 	root, err := filepath.Abs("../../..")
 	if err != nil {

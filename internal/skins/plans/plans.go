@@ -3,8 +3,9 @@
 // and encodes the manifests without knowing anything about a music player.
 // Every skin's art is the app's own: Slate and Silver (slate.go,
 // silver.go), Fancy and Fandom as they were, and the rest redrawn in
-// Go over geometry tables (redraw.go). The generator reads no file under
-// internal/skins/sources (TestGeneratorReadsNoOriginals).
+// Go over geometry tables (redraw.go). The generator reads no file
+// (TestGeneratorReadsNoOriginals); the originals and internal/skins/sources
+// left the repository and its history on 2026-11-13.
 package plans
 
 import "goframework.io/desktop-ui-skingen"

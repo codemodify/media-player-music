@@ -117,7 +117,7 @@ process on a fake engine.
 | `internal/shell` | the desktop UI: face switcher, the model kept in step with the daemon (playback.go: ShowState/ShowQueue/ShowNow, syncPlayback), files and drops, Ctrl+S save playlist, settings window, tray |
 | `internal/tui`, `cmd/media-player-music-tui` | the terminal UI |
 | `cmd/media-player-music-wui` | the web UI: main, internal/server, internal/frontend (the built page), web/ (TypeScript sources, build.sh) |
-| `internal/skins` | skin registration (embeds only the redrawn packs), plans (every skin drawn in Go; geometry_*.go tables), packs, fandomart (Fandom's own raster), sources (the originals and, in sources/oldplans, the old plans that cut them; built into nothing; await the owner's history rewrite) |
+| `internal/skins` | skin registration (embeds only the redrawn packs), plans (every skin drawn in Go; geometry_*.go tables), packs, fandomart (Fandom's own raster); the originals (internal/skins/sources) left the repository and its history on 2026-11-13 |
 | `e2e` | the daemon as a program (apptest), two renderers |
 
 `media-player-music` (a binary at the root) and `out/` are build and shot
@@ -863,3 +863,22 @@ names, art, layouts and behaviour unchanged.
   60m, internal/players/panel 579 s); footprint.py --check passes.
 - go.work rewired (app-workspace.py: codecs-image-gif, codecs-text-xml were
   missing; local only).
+
+## History rewrite, 2026-11-13 (the owner: "Yes, now, with backups")
+- **Removed from every commit** (all branches and refs, git-filter-repo
+  `--invert-paths`): internal/skins/sources/ (the originals and oldplans/), the 19 old-named packs not embedded (internal/skins/packs/amarok, calculator, dosamp, half-life-2, headspace, itunes, quake-3-arena, radar-amp, realplayer, series-9, sony-cdx-mp3, ti-82, vlc, winamp, winamp-amber, winamp-classified, winamp-silver, windows-98, xbox), the 31 old-named screenshots in docs/screenshots (amarok-main.png ... xbox-playlist.png), and the old plans' and old art tests' earlier homes (internal/skins/plans/{amarok,halflife2,headspace,import_bmp,itunes,realplayer,series9,vlc,winamp_classified,winamp_imported,xbox}.go and their tests; internal/skins/{branding,classified_art,classified_provenance,imported_art}_test.go). Kept: the 21 embedded packs, the new screenshots, default.png and the first commit's lantern/marquee/minim pictures (the app's own faces). A stale tree ref of another tool (refs/codex/turn-diffs/..., a tree holding the originals) was deleted; it is in the bundle.
+- **Backup** of the whole history before it: `/tmp/claude-1000/-home-user-go-src-github-com-codemodify/7b809a20-a0ed-4fba-a142-31a73b50fbf4/scratchpad/history-backup/media-player-music.bundle`
+  (`git bundle create --all`, verified with `git bundle verify` and a
+  mirror clone's fsck; checksums in bundles.sha256; the refs before in
+  media-player-music-refs-before.txt). `git clone media-player-music.bundle` restores it.
+  The folder is under /tmp: copy it somewhere kept before tmp cleaning.
+- **Every commit ID changed** (dev was 6f97ec4, is e6e8532 before this
+  section's commit). Commit IDs quoted above this section, in
+  suite-handover.md and in goframework.io's app-requests.md predate the
+  rewrite: translate them with `/tmp/claude-1000/-home-user-go-src-github-com-codemodify/7b809a20-a0ed-4fba-a142-31a73b50fbf4/scratchpad/history-backup/media-player-music-commit-map.txt`
+  (old new, one commit a line; filter-repo's own map).
+- origin re-added with its URL as it was; the remote-tracking refs are
+  gone (filter-repo drops them).
+- GitHub's dev (never pushed since) is still e55ef1e of 2026-10-05, which holds internal/skins/sources, the old packs and screenshots: the rewrite does not reach it. What to do there is the owner's.
+- .git: 60.3 MB -> 10.6 MB (after `git gc --prune=now`).
+- This section's commit also: comments in internal/skins/skins.go, plans/plans.go, plans/redraw_test.go, README.md and docs/faces.md no longer point at the removed folders. Checked: `git log --all` empty for every removed path; vet on linux, windows, darwin, freebsd; `go test -race` of internal/skins (123 s), internal/skins/plans and internal/players pass; footprint.py --check passes.

@@ -486,8 +486,8 @@ the native data transfer. Normal runs leave this logging disabled.
 The Free License — see [LICENSE](LICENSE).
 
 Every skin's artwork is the app's own, drawn in Go (internal/skins/plans).
-The originals the earlier skins were cut from stay in internal/skins/sources,
-built into nothing, until the owner's history rewrite removes them.
+The originals the earlier skins were cut from, their converted packs and
+their screenshots left the repository and its history on 2026-11-13.
 
 ### Monkey's Audio
 
